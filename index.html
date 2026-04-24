@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>StaffPortal — Admin Dashboard</title>
+<title>LENG DEPOT TRADING — Admin Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -372,7 +372,7 @@ body{font-family:var(--font);background:var(--n50);color:var(--n800);-webkit-fon
           </svg>
         </div>
         <div>
-          <div class="brand-name">StaffPortal</div>
+          <div class="brand-name">LENG DEPOT TRADING</div>
           <div class="brand-role">Admin Console</div>
         </div>
       </div>
@@ -411,7 +411,7 @@ body{font-family:var(--font);background:var(--n50);color:var(--n800);-webkit-fon
             </svg>
           </div>
           <div>
-            <div class="sidebar-brand-name">StaffPortal</div>
+            <div class="sidebar-brand-name">LENG DEPOT TRADING</div>
             <div class="sidebar-brand-sub">Admin</div>
           </div>
         </div>
@@ -927,7 +927,7 @@ function exportUserPDF(userId) {
 // ════════════════════════════════════════
 function exportAllPDF() {
   const data = allUsers.map(u => ({ user: u, submissions: allSubmissions.filter(s => s.userId === u.id) }));
-  generatePDF(data, 'StaffPortal_All_Records');
+  generatePDF(data, 'LENG DEPOT TRADING_All_Records');
 }
 
 function generatePDF(records, filename) {
@@ -1031,7 +1031,7 @@ function generatePDF(records, filename) {
     doc.setFillColor(249,250,251);
     doc.rect(0, PH-10, PW, 10, 'F');
     doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(156,163,175);
-    doc.text('StaffPortal Admin Report — Confidential', ML, PH-4);
+    doc.text('LENG DEPOT TRADING Admin Report — Confidential', ML, PH-4);
     doc.text(`Page ${i} of ${pageCount}`, PW-MR, PH-4, {align:'right'});
   }
 
