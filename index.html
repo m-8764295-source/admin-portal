@@ -345,6 +345,45 @@ body{font-family:var(--font);background:var(--n50);color:var(--n800);-webkit-fon
 /* ── LOADING OVERLAY ── */
 .loading-row td{text-align:center;padding:40px;color:var(--n400);font-size:13px;}
 
+/* ── EXCEL TABLE ── */
+.excel-section{background:var(--n0);border:1px solid var(--n150);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-xs);margin-bottom:20px;}
+.excel-header{padding:14px 20px;border-bottom:1px solid var(--n150);display:flex;align-items:center;justify-content:space-between;background:var(--n50);}
+.excel-title{font-size:13px;font-weight:700;color:var(--n800);display:flex;align-items:center;gap:8px;}
+.excel-title svg{width:15px;height:15px;color:var(--g500);}
+.excel-count{font-size:11px;font-weight:600;color:var(--n500);background:var(--n150);padding:2px 8px;border-radius:100px;}
+.excel-wrap{overflow-x:auto;}
+.excel-table{width:100%;border-collapse:collapse;font-size:12px;}
+.excel-table th{
+  padding:9px 12px;text-align:left;font-size:10px;font-weight:700;color:var(--n500);
+  background:#f0f4ff;border-bottom:2px solid var(--n200);letter-spacing:0.4px;
+  text-transform:uppercase;white-space:nowrap;position:sticky;top:0;
+}
+.excel-table th:first-child{background:#e8f0fe;color:var(--s500);}
+.excel-table td{
+  padding:9px 12px;color:var(--n700);border-bottom:1px solid var(--n100);
+  white-space:nowrap;vertical-align:middle;
+}
+.excel-table td:first-child{font-weight:700;color:var(--n900);background:var(--n50);}
+.excel-table tbody tr:hover td{background:var(--g50);}
+.excel-table tbody tr:hover td:first-child{background:var(--g100);}
+.excel-table tbody tr:last-child td{border-bottom:none;}
+.row-num{font-size:10px;color:var(--n400);font-family:var(--mono);}
+.cell-date{font-family:var(--mono);font-size:11px;color:var(--n500);}
+.cell-outlet{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:100px;font-size:10px;font-weight:600;}
+.cell-outlet.mep{background:#eff6ff;color:#2563eb;}
+.cell-outlet.hybrid{background:#faf5ff;color:#7c3aed;}
+.cell-outlet.none{color:var(--n300);}
+
+/* ── PRINT STYLES ── */
+@media print{
+  .sidebar,.topbar,.back-btn,.detail-actions,.filter-bar,.topbar-actions{display:none!important;}
+  .main-content{margin-left:0!important;}
+  .page-body{padding:0!important;}
+  .excel-section{box-shadow:none!important;border:1px solid #ccc!important;break-inside:avoid;}
+  .excel-table th,.excel-table td{font-size:9pt!important;}
+  .detail-header-card{box-shadow:none!important;border:1px solid #ccc!important;}
+}
+
 /* ── RESPONSIVE ── */
 @media(max-width:900px){
   :root{--sidebar-w:200px;}
@@ -734,46 +773,72 @@ function renderEmployeeTable() {
 }
 
 // ════════════════════════════════════════
+//  CATEGORY COLUMN DEFINITIONS
+// ════════════════════════════════════════
+const CAT_COLS = {
+  fibre:  [ {key:'name',label:'Full Name'}, {key:'ic',label:'IC Number'}, {key:'plan',label:'Plan'}, {key:'outlet',label:'Outlet'} ],
+  mobile: [ {key:'name',label:'Full Name'}, {key:'ic',label:'IC Number'}, {key:'phone',label:'Phone Number'}, {key:'plan',label:'Plan'}, {key:'outlet',label:'Outlet'} ],
+  device: [ {key:'name',label:'Full Name'}, {key:'phone',label:'Phone Number'}, {key:'model',label:'Device Model'}, {key:'imei',label:'IMEI Number'}, {key:'outlet',label:'Outlet'} ],
+  wifi:   [ {key:'name',label:'Full Name'}, {key:'ic',label:'IC Number'}, {key:'plan',label:'Plan'}, {key:'outlet',label:'Outlet'} ]
+};
+const CAT_LABELS = {fibre:'Fibre',mobile:'Mobile Line',device:'Device',wifi:'Home WiFi 5G'};
+const CAT_ICONS = {
+  fibre:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>',
+  mobile:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
+  device:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
+  wifi:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>'
+};
+
+function outletCell(val) {
+  if (!val) return '<span class="cell-outlet none">—</span>';
+  const cls = val.toLowerCase() === 'mep' ? 'mep' : 'hybrid';
+  return `<span class="cell-outlet ${cls}">${val}</span>`;
+}
+
+function buildExcelTable(cat, recs) {
+  const cols = CAT_COLS[cat];
+  const thead = `<tr><th style="width:36px">#</th>${cols.map(c=>`<th>${c.label}</th>`).join('')}<th>Submit Date</th></tr>`;
+  const tbody = recs.map((r,i) => {
+    const fd = r.formData || {};
+    const cells = cols.map(c => {
+      if (c.key === 'outlet') return `<td>${outletCell(fd[c.key])}</td>`;
+      return `<td>${fd[c.key] || '<span style="color:var(--n300)">—</span>'}</td>`;
+    }).join('');
+    const dt = fmtDateTime(r.createdAt);
+    return `<tr><td class="row-num">${i+1}</td>${cells}<td class="cell-date">${dt}</td></tr>`;
+  }).join('');
+  return `<thead>${thead}</thead><tbody>${tbody}</tbody>`;
+}
+
+// ════════════════════════════════════════
 //  DETAIL VIEW
 // ════════════════════════════════════════
 function viewDetail(userId) {
   const user = allUsers.find(u => u.id === userId);
   if (!user) return;
   currentDetailUser = user;
-  const userSubs = allSubmissions.filter(s => s.userId === userId);
-  const categories = ['fibre','mobile','device','wifi'];
-  const catLabels = {fibre:'Fibre',mobile:'Mobile Line',device:'Device',wifi:'Home WiFi 5G'};
-  const catIcons = {
-    fibre:'<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/>',
-    mobile:'<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/>',
-    device:'<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>',
-    wifi:'<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/>'
-  };
+  const userSubs = allSubmissions.filter(s => s.userId === userId)
+    .sort((a,b) => {
+      const ta = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt||0);
+      const tb = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt||0);
+      return ta - tb;
+    });
 
-  const subsHtml = categories.map(cat => {
+  const cats = ['fibre','mobile','device','wifi'];
+  const subsHtml = cats.map(cat => {
     const recs = userSubs.filter(s => s.category === cat);
     if (!recs.length) return '';
-    const recsHtml = recs.map(r => {
-      const fd = r.formData || {};
-      const fields = Object.entries(fd).map(([k,v]) => `
-        <div class="record-field">
-          <label>${k.replace(/_/g,' ')}</label>
-          <span>${v||'—'}</span>
-        </div>`).join('');
-      return `<div class="record-item">
-        <div class="record-fields">${fields}</div>
-        <div class="record-ts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round"/></svg>${fmtDateTime(r.createdAt)}</div>
-      </div>`;
-    }).join('');
-    return `<div class="category-section">
-      <div class="category-header">
-        <div class="category-title">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${catIcons[cat]}</svg>
-          ${catLabels[cat]}
+    return `<div class="excel-section">
+      <div class="excel-header">
+        <div class="excel-title">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">${CAT_ICONS[cat]}</svg>
+          ${CAT_LABELS[cat]}
         </div>
-        <span class="category-count">${recs.length} record${recs.length>1?'s':''}</span>
+        <span class="excel-count">${recs.length} record${recs.length>1?'s':''}</span>
       </div>
-      ${recsHtml}
+      <div class="excel-wrap">
+        <table class="excel-table">${buildExcelTable(cat, recs)}</table>
+      </div>
     </div>`;
   }).filter(Boolean).join('');
 
@@ -811,10 +876,9 @@ function viewDetail(userId) {
         </button>
       </div>
     </div>
-    <div style="margin-bottom:14px;font-size:14px;font-weight:600;color:var(--n700);">Submissions</div>
-    <div class="submissions-grid">
-      ${subsHtml || `<div class="table-card"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div class="empty-title">No submissions yet</div><div class="empty-desc">This employee has not submitted any forms.</div></div></div>`}
-    </div>`;
+    <div style="margin-bottom:14px;font-size:13px;font-weight:700;color:var(--n700);">Submission Records</div>
+    ${subsHtml || `<div class="table-card"><div class="empty-state"><div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div class="empty-title">No submissions yet</div><div class="empty-desc">This employee has not submitted any forms.</div></div></div>`}
+  `;
   navTo('detail');
 }
 
@@ -932,110 +996,170 @@ function exportAllPDF() {
 
 function generatePDF(records, filename) {
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
-  const PW = 210, PH = 297, ML = 15, MR = 15, MT = 18, W = PW - ML - MR;
+  // Landscape A4 for wider tables
+  const doc = new jsPDF({ orientation:'l', unit:'mm', format:'a4' });
+  const PW=297, PH=210, ML=10, MR=10, MT=10, W=PW-ML-MR;
   let y = MT;
 
-  const checkPage = (need=10) => { if (y + need > PH - 15) { doc.addPage(); y = MT; } };
+  const checkPage = (need=10) => {
+    if (y + need > PH - 12) { doc.addPage(); y = MT + 8; drawPageHeader(); }
+  };
 
-  // Header
-  doc.setFillColor(26,26,24);
-  doc.rect(0,0,PW,14,'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(9);
-  doc.setTextColor(255,255,255);
-  doc.text('STAFFPORTAL — EMPLOYEE RECORDS REPORT', ML, 9);
-  doc.setFontSize(8);
-  doc.setFont('helvetica','normal');
-  doc.text('Generated: ' + new Date().toLocaleString('en-MY'), PW - MR, 9, {align:'right'});
-  y = 22;
+  function drawPageHeader() {
+    doc.setFillColor(22,22,22);
+    doc.rect(0,0,PW,10,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+    doc.text('LENG DEPOT TRADING — EMPLOYEE RECORDS REPORT', ML, 7);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7);
+    doc.text('Generated: ' + new Date().toLocaleString('en-MY'), PW-MR, 7, {align:'right'});
+  }
 
-  const catLabels = {fibre:'Fibre',mobile:'Mobile Line',device:'Device',wifi:'Home WiFi 5G'};
+  drawPageHeader();
+  y = 16;
+
+  // Column definitions per category
+  const colDefs = {
+    fibre:  [{k:'name',l:'Full Name',w:50},{k:'ic',l:'IC Number',w:38},{k:'plan',l:'Plan',w:45},{k:'outlet',l:'Outlet',w:22}],
+    mobile: [{k:'name',l:'Full Name',w:44},{k:'ic',l:'IC Number',w:36},{k:'phone',l:'Phone Number',w:34},{k:'plan',l:'Plan',w:40},{k:'outlet',l:'Outlet',w:22}],
+    device: [{k:'name',l:'Full Name',w:44},{k:'phone',l:'Phone Number',w:34},{k:'model',l:'Device Model',w:50},{k:'imei',l:'IMEI Number',w:40},{k:'outlet',l:'Outlet',w:22}],
+    wifi:   [{k:'name',l:'Full Name',w:50},{k:'ic',l:'IC Number',w:38},{k:'plan',l:'Plan',w:45},{k:'outlet',l:'Outlet',w:22}]
+  };
+  const catOrder = ['fibre','mobile','device','wifi'];
+  const catLabels = {fibre:'FIBRE',mobile:'MOBILE LINE',device:'DEVICE',wifi:'HOME WIFI 5G'};
 
   records.forEach(({user, submissions}, ri) => {
-    checkPage(20);
-    // User block
-    doc.setFillColor(248,250,252);
-    doc.roundedRect(ML, y, W, 14, 2, 2, 'F');
-    doc.setFont('helvetica','bold');
-    doc.setFontSize(11);
-    doc.setTextColor(17,24,39);
-    doc.text(user.name || '—', ML+4, y+6);
-    // Status pill
-    const statusColors = {pending:[245,158,11], approved:[58,150,104], suspended:[220,38,38]};
-    const sc = statusColors[user.status] || [107,114,128];
+    // ── Employee banner ──
+    checkPage(16);
+    doc.setFillColor(240,249,244);
+    doc.rect(ML, y, W, 10, 'F');
+    doc.setDrawColor(168,223,192); doc.setLineWidth(0.5);
+    doc.rect(ML, y, W, 10, 'S');
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(17,24,39);
+    doc.text(user.name||'—', ML+4, y+7);
+    // status badge
+    const sColors = {pending:[245,158,11],approved:[58,150,104],suspended:[220,38,38]};
+    const sc = sColors[user.status]||[107,114,128];
     doc.setFillColor(...sc);
-    doc.roundedRect(ML+4, y+7.5, 20, 4.5, 1, 1, 'F');
-    doc.setFontSize(7);
-    doc.setTextColor(255,255,255);
-    doc.setFont('helvetica','bold');
-    doc.text((user.status||'').toUpperCase(), ML+14, y+10.5, {align:'center'});
-    doc.setFont('helvetica','normal');
-    doc.setFontSize(8);
-    doc.setTextColor(107,114,128);
-    doc.text('Joined: ' + fmtDate(user.createdAt), PW-MR, y+6, {align:'right'});
-    doc.text('Submissions: ' + submissions.length, PW-MR, y+11, {align:'right'});
-    y += 18;
+    doc.roundedRect(ML+60, y+2.5, 24, 5, 1,1,'F');
+    doc.setFontSize(7); doc.setTextColor(255,255,255);
+    doc.text((user.status||'').toUpperCase(), ML+72, y+6.3, {align:'center'});
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(107,114,128);
+    doc.text('Joined: '+fmtDate(user.createdAt)+'   |   Total Submissions: '+submissions.length, PW-MR, y+7, {align:'right'});
+    y += 14;
 
     if (!submissions.length) {
       checkPage(8);
-      doc.setFontSize(9); doc.setTextColor(156,163,175); doc.setFont('helvetica','italic');
-      doc.text('No submissions recorded.', ML+4, y);
-      y += 8;
+      doc.setFontSize(8); doc.setTextColor(156,163,175); doc.setFont('helvetica','italic');
+      doc.text('No submissions recorded.', ML+4, y+5);
+      y += 10;
+      return;
     }
 
-    const categories = ['fibre','mobile','device','wifi'];
-    categories.forEach(cat => {
-      const recs = submissions.filter(s => s.category === cat);
-      if (!recs.length) return;
-      checkPage(14);
-      doc.setFillColor(240,250,244);
-      doc.rect(ML, y, W, 7, 'F');
-      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(45,122,83);
-      doc.text((catLabels[cat]||cat).toUpperCase() + `  (${recs.length})`, ML+3, y+4.8);
-      y += 10;
-      recs.forEach((rec, rIdx) => {
-        const fd = rec.formData || {};
-        const entries = Object.entries(fd);
-        checkPage(8 + entries.length * 6);
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(107,114,128);
-        doc.text(`#${rIdx+1}  ${fmtDateTime(rec.createdAt)}`, ML+3, y);
-        y += 5;
-        entries.forEach(([k,v]) => {
-          checkPage(6);
-          doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(75,85,99);
-          doc.text(k.charAt(0).toUpperCase()+k.slice(1).replace(/_/g,' ')+':', ML+5, y);
-          doc.setFont('helvetica','normal'); doc.setTextColor(17,24,39);
-          doc.text(String(v||'—'), ML+40, y);
-          y += 5.5;
+    catOrder.forEach(cat => {
+      const recs = submissions.filter(s => s.category === cat)
+        .sort((a,b)=>{
+          const ta=a.createdAt?.toDate?a.createdAt.toDate():new Date(a.createdAt||0);
+          const tb=b.createdAt?.toDate?b.createdAt.toDate():new Date(b.createdAt||0);
+          return ta-tb;
         });
-        y += 2;
-        // divider
-        doc.setDrawColor(229,231,235); doc.setLineWidth(0.3);
-        doc.line(ML, y, ML+W, y); y += 4;
+      if (!recs.length) return;
+
+      const cols = colDefs[cat];
+      const dateColW = 42;
+      const totalColW = cols.reduce((s,c)=>s+c.w,0) + dateColW + 10; // 10 for # col
+      const startX = ML;
+
+      // ── Category header ──
+      checkPage(20);
+      doc.setFillColor(232,240,254);
+      doc.rect(startX, y, totalColW, 7, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(37,99,235);
+      doc.text(catLabels[cat] + '  (' + recs.length + ' records)', startX+3, y+5);
+      y += 9;
+
+      // ── Column headers ──
+      checkPage(8);
+      doc.setFillColor(248,250,252);
+      doc.rect(startX, y, totalColW, 7, 'F');
+      doc.setDrawColor(209,213,219); doc.setLineWidth(0.3);
+      doc.rect(startX, y, totalColW, 7, 'S');
+      doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(107,114,128);
+
+      let cx = startX;
+      // # col
+      doc.text('#', cx+3, y+5); cx += 10;
+      cols.forEach(c => {
+        doc.line(cx,y,cx,y+7);
+        doc.text(c.l.toUpperCase(), cx+2, y+5);
+        cx += c.w;
       });
-      y += 2;
+      // Date col
+      doc.line(cx,y,cx,y+7);
+      doc.text('SUBMIT DATE', cx+2, y+5);
+      y += 7;
+
+      // ── Rows ──
+      recs.forEach((rec, idx) => {
+        const fd = rec.formData || {};
+        const rowH = 7;
+        checkPage(rowH + 2);
+
+        // Alternating row bg
+        if (idx % 2 === 0) {
+          doc.setFillColor(255,255,255);
+        } else {
+          doc.setFillColor(249,250,251);
+        }
+        doc.rect(startX, y, totalColW, rowH, 'F');
+        doc.setDrawColor(229,231,235); doc.setLineWidth(0.2);
+        doc.rect(startX, y, totalColW, rowH, 'S');
+
+        let rx = startX;
+        // Row number
+        doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(156,163,175);
+        doc.text(String(idx+1), rx+3, y+5);
+        rx += 10;
+
+        cols.forEach(c => {
+          doc.line(rx,y,rx,y+rowH);
+          const val = fd[c.key]||'';
+          doc.setFont('helvetica', c.key==='name'?'bold':'normal');
+          doc.setTextColor(c.key==='name'?17:55, c.key==='name'?24:65, c.key==='name'?39:81);
+          const txt = doc.splitTextToSize(val||'—', c.w-4);
+          doc.text(txt[0]||'', rx+2, y+5);
+          rx += c.w;
+        });
+
+        // Date
+        doc.line(rx,y,rx,y+rowH);
+        doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(107,114,128);
+        doc.text(fmtDateTime(rec.createdAt), rx+2, y+5);
+
+        y += rowH;
+      });
+      y += 6;
     });
 
+    // Separator between employees
     if (ri < records.length-1) {
       checkPage(10);
-      doc.setDrawColor(209,213,219); doc.setLineWidth(0.5);
+      doc.setDrawColor(209,213,219); doc.setLineWidth(0.6);
       doc.line(ML, y, ML+W, y); y += 8;
     }
   });
 
-  // Footer on each page
+  // ── Footer on every page ──
   const pageCount = doc.internal.getNumberOfPages();
   for (let i=1; i<=pageCount; i++) {
     doc.setPage(i);
     doc.setFillColor(249,250,251);
-    doc.rect(0, PH-10, PW, 10, 'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(156,163,175);
-    doc.text('LENG DEPOT TRADING Admin Report — Confidential', ML, PH-4);
-    doc.text(`Page ${i} of ${pageCount}`, PW-MR, PH-4, {align:'right'});
+    doc.rect(0,PH-8,PW,8,'F');
+    doc.setFont('helvetica','normal'); doc.setFontSize(6.5); doc.setTextColor(156,163,175);
+    doc.text('LENG DEPOT TRADING — Confidential Report', ML, PH-3);
+    doc.text(`Page ${i} of ${pageCount}`, PW-MR, PH-3, {align:'right'});
   }
 
-  doc.save(filename + '.pdf');
+  doc.save(filename.replace(/\s+/g,'_') + '.pdf');
   toast('PDF exported successfully!', 'success');
 }
 
