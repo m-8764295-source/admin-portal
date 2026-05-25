@@ -1,4 +1,13 @@
 const phone = document.querySelector(".phone");
+
+function setAppHeight() {
+  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+}
+
+setAppHeight();
+window.addEventListener("resize", setAppHeight);
+window.addEventListener("orientationchange", setAppHeight);
+
 const tabs = document.querySelectorAll(".tab");
 const heart = document.querySelector(".heart");
 const search = document.querySelector('input[type="search"]');
