@@ -88,14 +88,26 @@ let auth = null;
 let googleProvider = null;
 let isSignupMode = false;
 
-if (window.firebase) {
-  firebase.initializeApp(firebaseConfig);
-  db = firebase.firestore();
-  if (firebase.auth) {
+function initFirebase() {
+  if (!window.firebase) return false;
+
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  if (!db && firebase.firestore) {
+    db = firebase.firestore();
+  }
+
+  if (!auth && firebase.auth) {
     auth = firebase.auth();
     googleProvider = new firebase.auth.GoogleAuthProvider();
   }
+
+  return Boolean(auth);
 }
+
+initFirebase();
 
 const menuSections = [
   {
@@ -338,6 +350,10 @@ authForm.addEventListener("submit", async (event) => {
   showAuthMessage();
 
   if (!auth) {
+    initFirebase();
+  }
+
+  if (!auth) {
     showAuthMessage("Firebase Auth is not ready.");
     return;
   }
@@ -383,33 +399,51 @@ authForm.addEventListener("submit", async (event) => {
 
 googleLogin.addEventListener("click", async () => {
   showAuthMessage();
+  initFirebase();
+
   if (!auth || !googleProvider) {
     showAuthMessage("Firebase Auth is not ready.");
     return;
   }
 
+  googleLogin.disabled = true;
+
   try {
-    const credential = await auth.signInWithPopup(googleProvider);
-    if (db && credential.user) {
-      await db.collection("users").doc(credential.user.uid).set(
-        {
-          name: credential.user.displayName || "",
-          email: credential.user.email || "",
-          provider: "google",
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-    }
-    setScreen("home");
+    googleLogin.querySelector("strong").textContent = "Opening Google...";
+    await auth.signInWithRedirect(googleProvider);
   } catch (error) {
     showAuthMessage(authErrorMessage(error));
+    googleLogin.disabled = false;
+    googleLogin.querySelector("strong").textContent = "Continue with Google";
   }
 });
 
 setAuthMode(false);
 
+initFirebase();
+
 if (auth) {
+  auth
+    .getRedirectResult()
+    .then(async (credential) => {
+      if (credential?.user && db) {
+        await db.collection("users").doc(credential.user.uid).set(
+          {
+            name: credential.user.displayName || "",
+            email: credential.user.email || "",
+            provider: "google",
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+    })
+    .catch((error) => {
+      showAuthMessage(authErrorMessage(error));
+      googleLogin.disabled = false;
+      googleLogin.querySelector("strong").textContent = "Continue with Google";
+    });
+
   auth.onAuthStateChanged((user) => {
     if (user && phone.classList.contains("auth-view")) {
       setScreen("home");
