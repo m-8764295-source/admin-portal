@@ -1,4 +1,22 @@
 const phone = document.querySelector(".phone");
+const splashScreen = document.querySelector(".splash-screen");
+const authScreen = document.querySelector(".auth-screen");
+const authTitle = document.querySelector("#authTitle");
+const authSubtitle = document.querySelector("#authSubtitle");
+const authForm = document.querySelector(".auth-form");
+const authName = document.querySelector("#authName");
+const authEmail = document.querySelector("#authEmail");
+const authPassword = document.querySelector("#authPassword");
+const authConfirm = document.querySelector("#authConfirm");
+const authTerms = document.querySelector("#authTerms");
+const authMessage = document.querySelector(".auth-message");
+const authSubmit = document.querySelector(".auth-submit");
+const authSwitchText = document.querySelector("#authSwitchText");
+const authSwitchButton = document.querySelector("#authSwitchButton");
+const authBack = document.querySelector(".auth-back");
+const authClose = document.querySelector(".auth-close");
+const googleLogin = document.querySelector(".google-login");
+const passwordToggle = document.querySelector(".password-toggle");
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -7,6 +25,12 @@ function setAppHeight() {
 setAppHeight();
 window.addEventListener("resize", setAppHeight);
 window.addEventListener("orientationchange", setAppHeight);
+
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    splashScreen.classList.add("is-hidden");
+  }, 2000);
+});
 
 const tabs = document.querySelectorAll(".tab");
 const heart = document.querySelector(".heart");
@@ -33,8 +57,11 @@ const summaryTotal = document.querySelector("#summaryTotal");
 const cartPageQty = document.querySelector("#cartPageQty");
 const cartPageSubtotal = document.querySelector("#cartPageSubtotal");
 const cartPageDelivery = document.querySelector("#cartPageDelivery");
+const cartInlineDelivery = document.querySelector("#cartInlineDelivery");
+const cartFreeRow = document.querySelector(".cart-free-row");
 const clearCartButton = document.querySelector(".cart-delete");
 const checkoutButton = document.querySelector(".cart-page-bar .cart-active");
+const summaryCheckoutButton = document.querySelector(".cart-summary .checkout-button");
 const checkoutBack = document.querySelector(".checkout-back");
 const checkoutItems = document.querySelector("#checkoutItems");
 const checkoutItemsTitle = document.querySelector("#checkoutItemsTitle");
@@ -42,9 +69,33 @@ const checkoutSubtotal = document.querySelector("#checkoutSubtotal");
 const checkoutDelivery = document.querySelector("#checkoutDelivery");
 const checkoutTotal = document.querySelector("#checkoutTotal");
 const placeOrderTotal = document.querySelector("#placeOrderTotal");
+const placeOrderButton = document.querySelector(".place-order-bar button");
 
 const FREE_DELIVERY_TARGET = 50;
 const DELIVERY_FEE = 3;
+const firebaseConfig = {
+  apiKey: "AIzaSyACnUILcO28dC9pZvXzSrCYxxfSL-fPe7Q",
+  authDomain: "nova-63fc5.firebaseapp.com",
+  projectId: "nova-63fc5",
+  storageBucket: "nova-63fc5.firebasestorage.app",
+  messagingSenderId: "615245427236",
+  appId: "1:615245427236:web:4e5eac0dcd0bf3e4621eb1",
+  measurementId: "G-TWSG5VQRGY",
+};
+
+let db = null;
+let auth = null;
+let googleProvider = null;
+let isSignupMode = false;
+
+if (window.firebase) {
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  if (firebase.auth) {
+    auth = firebase.auth();
+    googleProvider = new firebase.auth.GoogleAuthProvider();
+  }
+}
 
 const menuSections = [
   {
@@ -194,9 +245,44 @@ function deliveryMessage(subtotal) {
   return remaining > 0 ? `Add ${money(remaining)} more for free delivery` : "Free delivery unlocked";
 }
 
+function activeChoice(groupId) {
+  return document.querySelector(`#${groupId} .choice.active`)?.dataset.value || "";
+}
+
 function setScreen(screen) {
-  phone.classList.remove("home-view", "detail-view", "cart-view", "checkout-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view");
   phone.classList.add(`${screen}-view`);
+}
+
+function showAuthMessage(message = "") {
+  authMessage.textContent = message;
+}
+
+function setAuthMode(signup) {
+  isSignupMode = signup;
+  authScreen.classList.toggle("signup-mode", signup);
+  authScreen.classList.toggle("login-mode", !signup);
+  authTitle.textContent = signup ? "Create your account" : "Welcome back!";
+  authSubtitle.textContent = signup ? "Sign up to enjoy exclusive deals and group orders." : "Login to continue discovering amazing restaurants.";
+  authSubmit.textContent = signup ? "Sign up" : "Login";
+  authSwitchText.textContent = signup ? "Already have an account?" : "Don't have an account?";
+  authSwitchButton.textContent = signup ? "Login" : "Sign up";
+  authPassword.autocomplete = signup ? "new-password" : "current-password";
+  showAuthMessage();
+}
+
+function authErrorMessage(error) {
+  const messages = {
+    "auth/email-already-in-use": "This email is already registered.",
+    "auth/invalid-email": "Please enter a valid email.",
+    "auth/missing-password": "Please enter your password.",
+    "auth/user-not-found": "No account found with this email.",
+    "auth/wrong-password": "Wrong password.",
+    "auth/invalid-credential": "Email or password is incorrect.",
+    "auth/popup-closed-by-user": "Google login was closed.",
+    "auth/weak-password": "Password must be at least 6 characters.",
+  };
+  return messages[error?.code] || "Login failed. Please try again.";
 }
 
 tabs.forEach((tab) => {
@@ -237,6 +323,100 @@ backButton.addEventListener("click", () => setScreen("home"));
 cartBack.addEventListener("click", () => setScreen("detail"));
 checkoutBack.addEventListener("click", () => setScreen("cart"));
 
+authSwitchButton.addEventListener("click", () => setAuthMode(!isSignupMode));
+authBack.addEventListener("click", () => setAuthMode(false));
+authClose?.addEventListener("click", () => setScreen("home"));
+
+passwordToggle.addEventListener("click", () => {
+  const nextType = authPassword.type === "password" ? "text" : "password";
+  authPassword.type = nextType;
+  authConfirm.type = nextType;
+});
+
+authForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  showAuthMessage();
+
+  if (!auth) {
+    showAuthMessage("Firebase Auth is not ready.");
+    return;
+  }
+
+  const email = authEmail.value.trim();
+  const password = authPassword.value;
+  const name = authName.value.trim();
+
+  if (isSignupMode && password !== authConfirm.value) {
+    showAuthMessage("Passwords do not match.");
+    return;
+  }
+
+  authSubmit.disabled = true;
+  authSubmit.textContent = isSignupMode ? "Signing up..." : "Logging in...";
+
+  try {
+    if (isSignupMode) {
+      const credential = await auth.createUserWithEmailAndPassword(email, password);
+      await credential.user.updateProfile({ displayName: name });
+      if (db) {
+        await db.collection("users").doc(credential.user.uid).set(
+          {
+            name,
+            email,
+            provider: "password",
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+    setScreen("home");
+  } catch (error) {
+    showAuthMessage(authErrorMessage(error));
+  } finally {
+    authSubmit.disabled = false;
+    authSubmit.textContent = isSignupMode ? "Sign up" : "Login";
+  }
+});
+
+googleLogin.addEventListener("click", async () => {
+  showAuthMessage();
+  if (!auth || !googleProvider) {
+    showAuthMessage("Firebase Auth is not ready.");
+    return;
+  }
+
+  try {
+    const credential = await auth.signInWithPopup(googleProvider);
+    if (db && credential.user) {
+      await db.collection("users").doc(credential.user.uid).set(
+        {
+          name: credential.user.displayName || "",
+          email: credential.user.email || "",
+          provider: "google",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    setScreen("home");
+  } catch (error) {
+    showAuthMessage(authErrorMessage(error));
+  }
+});
+
+setAuthMode(false);
+
+if (auth) {
+  auth.onAuthStateChanged((user) => {
+    if (user && phone.classList.contains("auth-view")) {
+      setScreen("home");
+    }
+  });
+}
+
 function renderMenus() {
   menuList.innerHTML = menuSections
     .map((section) => {
@@ -275,6 +455,7 @@ function updateAllCartViews() {
   cartTotal.textContent = money(current.subtotal);
   detailDeliveryText.textContent = message;
   viewCart.disabled = current.qty === 0;
+  phone.classList.toggle("has-cart", current.qty > 0);
 
   cartItemsTitle.textContent = `Items (${current.qty})`;
   cartDeliveryText.textContent = remaining > 0 ? `Add ${money(remaining)} more to enjoy free delivery!` : "You have unlocked free delivery!";
@@ -284,8 +465,10 @@ function updateAllCartViews() {
   summaryDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
   summaryTotal.textContent = money(current.total);
   cartPageQty.textContent = current.qty;
-  cartPageSubtotal.textContent = money(current.subtotal);
+  cartPageSubtotal.textContent = money(current.total);
   cartPageDelivery.textContent = message;
+  cartInlineDelivery.textContent = message;
+  cartFreeRow.style.setProperty("--free-progress", `${progress}%`);
   checkoutItemsTitle.textContent = `Order Items (${current.qty})`;
   checkoutSubtotal.textContent = money(current.subtotal);
   checkoutDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
@@ -393,6 +576,57 @@ checkoutButton.addEventListener("click", () => {
   if (cart.size === 0) return;
   window.scrollTo(0, 0);
   setScreen("checkout");
+});
+
+summaryCheckoutButton.addEventListener("click", () => {
+  if (cart.size === 0) return;
+  window.scrollTo(0, 0);
+  setScreen("checkout");
+});
+
+placeOrderButton.addEventListener("click", async () => {
+  if (cart.size === 0 || placeOrderButton.disabled) return;
+  if (!db) {
+    alert("Firebase is not ready. Please check your connection.");
+    return;
+  }
+
+  const current = totals();
+  const originalText = placeOrderButton.innerHTML;
+  placeOrderButton.disabled = true;
+  placeOrderButton.innerHTML = "<span>Placing Order...</span>";
+
+  try {
+    await db.collection("orders").add({
+      restaurant: "Mori Cafe Bukit Beruang",
+      address: activeChoice("addressChoices"),
+      slot: activeChoice("slotChoices"),
+      paymentMethod: "Touch 'n Go eWallet",
+      items: [...cart.values()].map((item) => ({
+        code: item.code,
+        name: item.name,
+        chineseName: item.cn,
+        price: item.price,
+        quantity: item.qty,
+        lineTotal: Number((item.price * item.qty).toFixed(2)),
+      })),
+      subtotal: Number(current.subtotal.toFixed(2)),
+      deliveryFee: Number(current.delivery.toFixed(2)),
+      total: Number(current.total.toFixed(2)),
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+
+    alert("Order placed successfully!");
+    cart.clear();
+    updateAllCartViews();
+    setScreen("home");
+  } catch (error) {
+    console.error(error);
+    alert("Order failed. Please try again.");
+  } finally {
+    placeOrderButton.disabled = false;
+    placeOrderButton.innerHTML = originalText;
+  }
 });
 
 document.querySelectorAll(".choice-grid").forEach((group) => {
