@@ -102,6 +102,7 @@ function initFirebase() {
   if (!auth && firebase.auth) {
     auth = firebase.auth();
     googleProvider = new firebase.auth.GoogleAuthProvider();
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(() => {});
   }
 
   return Boolean(auth);
@@ -410,9 +411,31 @@ googleLogin.addEventListener("click", async () => {
 
   try {
     googleLogin.querySelector("strong").textContent = "Opening Google...";
-    await auth.signInWithRedirect(googleProvider);
+    const credential = await auth.signInWithPopup(googleProvider);
+    if (db && credential.user) {
+      await db.collection("users").doc(credential.user.uid).set(
+        {
+          name: credential.user.displayName || "",
+          email: credential.user.email || "",
+          provider: "google",
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    localStorage.setItem("novaLoggedIn", "1");
+    setScreen("home");
   } catch (error) {
-    showAuthMessage(authErrorMessage(error));
+    if (error?.code === "auth/popup-blocked" || error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+      try {
+        await auth.signInWithRedirect(googleProvider);
+        return;
+      } catch (redirectError) {
+        showAuthMessage(authErrorMessage(redirectError));
+      }
+    } else {
+      showAuthMessage(authErrorMessage(error));
+    }
     googleLogin.disabled = false;
     googleLogin.querySelector("strong").textContent = "Continue with Google";
   }
@@ -437,6 +460,10 @@ if (auth) {
           { merge: true }
         );
       }
+      if (credential?.user) {
+        localStorage.setItem("novaLoggedIn", "1");
+        setScreen("home");
+      }
     })
     .catch((error) => {
       showAuthMessage(authErrorMessage(error));
@@ -446,9 +473,14 @@ if (auth) {
 
   auth.onAuthStateChanged((user) => {
     if (user && phone.classList.contains("auth-view")) {
+      localStorage.setItem("novaLoggedIn", "1");
       setScreen("home");
     }
   });
+}
+
+if (localStorage.getItem("novaLoggedIn") === "1") {
+  setScreen("home");
 }
 
 function renderMenus() {
