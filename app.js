@@ -16,7 +16,11 @@ const authSwitchButton = document.querySelector("#authSwitchButton");
 const authBack = document.querySelector(".auth-back");
 const authClose = document.querySelector(".auth-close");
 const googleLogin = document.querySelector(".google-login");
+const guestLogin = document.querySelector(".guest-login");
 const passwordToggle = document.querySelector(".password-toggle");
+const usernameForm = document.querySelector(".username-form");
+const usernameInput = document.querySelector("#usernameInput");
+const usernameMessage = document.querySelector(".username-message");
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -87,6 +91,8 @@ let db = null;
 let auth = null;
 let googleProvider = null;
 let isSignupMode = false;
+let onboardingUser = null;
+let suppressAuthRedirect = false;
 
 function initFirebase() {
   if (!window.firebase) return false;
@@ -271,8 +277,47 @@ function showAuthMessage(message = "") {
   authMessage.textContent = message;
 }
 
+function setAuthLoading(isLoading) {
+  authScreen.classList.toggle("is-loading", isLoading);
+}
+
+function continueToHome() {
+  localStorage.setItem("novaLoggedIn", "1");
+  authScreen.classList.remove("onboarding-mode");
+  setScreen("home");
+}
+
+async function getUserProfile(user) {
+  if (!db || !user) return null;
+  const snapshot = await db.collection("users").doc(user.uid).get();
+  return snapshot.exists ? snapshot.data() : null;
+}
+
+async function routeAfterAuth(user) {
+  const profile = await getUserProfile(user);
+  if (profile?.username) {
+    continueToHome();
+    return;
+  }
+  showOnboarding(user);
+}
+
+function showOnboarding(user) {
+  onboardingUser = user;
+  usernameInput.value = "";
+  usernameMessage.textContent = "";
+  authScreen.classList.add("onboarding-mode");
+  setScreen("auth");
+  requestAnimationFrame(() => usernameInput.focus());
+}
+
+function cleanUsername(value) {
+  return value.trim().replace(/\s+/g, "");
+}
+
 function setAuthMode(signup) {
   isSignupMode = signup;
+  authScreen.classList.remove("onboarding-mode");
   authScreen.classList.toggle("signup-mode", signup);
   authScreen.classList.toggle("login-mode", !signup);
   authTitle.textContent = signup ? "Create your account" : "Welcome back!";
@@ -339,6 +384,9 @@ checkoutBack.addEventListener("click", () => setScreen("cart"));
 authSwitchButton.addEventListener("click", () => setAuthMode(!isSignupMode));
 authBack.addEventListener("click", () => setAuthMode(false));
 authClose?.addEventListener("click", () => setScreen("home"));
+guestLogin.addEventListener("click", () => {
+  setScreen("home");
+});
 
 passwordToggle.addEventListener("click", () => {
   const nextType = authPassword.type === "password" ? "text" : "password";
@@ -370,6 +418,8 @@ authForm.addEventListener("submit", async (event) => {
 
   authSubmit.disabled = true;
   authSubmit.textContent = isSignupMode ? "Signing up..." : "Logging in...";
+  setAuthLoading(true);
+  suppressAuthRedirect = true;
 
   try {
     if (isSignupMode) {
@@ -381,20 +431,64 @@ authForm.addEventListener("submit", async (event) => {
             name,
             email,
             provider: "password",
+            username: "",
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
       }
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      showOnboarding(credential.user);
     } else {
-      await auth.signInWithEmailAndPassword(email, password);
+      const credential = await auth.signInWithEmailAndPassword(email, password);
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      await routeAfterAuth(credential.user);
     }
-    setScreen("home");
   } catch (error) {
     showAuthMessage(authErrorMessage(error));
   } finally {
+    suppressAuthRedirect = false;
+    setAuthLoading(false);
     authSubmit.disabled = false;
     authSubmit.textContent = isSignupMode ? "Sign up" : "Login";
+  }
+});
+
+usernameForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  usernameMessage.textContent = "";
+
+  const username = cleanUsername(usernameInput.value);
+  if (username.length < 3) {
+    usernameMessage.textContent = "Username must be at least 3 characters.";
+    return;
+  }
+
+  if (!onboardingUser) {
+    usernameMessage.textContent = "Please login again.";
+    return;
+  }
+
+  setAuthLoading(true);
+  try {
+    if (db) {
+      await db.collection("users").doc(onboardingUser.uid).set(
+        {
+          username,
+          usernameLower: username.toLowerCase(),
+          email: onboardingUser.email || "",
+          name: onboardingUser.displayName || authName.value.trim() || username,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    }
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    continueToHome();
+  } catch (error) {
+    usernameMessage.textContent = "Could not save username. Please try again.";
+  } finally {
+    setAuthLoading(false);
   }
 });
 
@@ -408,6 +502,7 @@ googleLogin.addEventListener("click", async () => {
   }
 
   googleLogin.disabled = true;
+  setAuthLoading(true);
 
   try {
     googleLogin.querySelector("strong").textContent = "Opening Google...";
@@ -423,8 +518,7 @@ googleLogin.addEventListener("click", async () => {
         { merge: true }
       );
     }
-    localStorage.setItem("novaLoggedIn", "1");
-    setScreen("home");
+    await routeAfterAuth(credential.user);
   } catch (error) {
     if (error?.code === "auth/popup-blocked" || error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
       try {
@@ -438,6 +532,8 @@ googleLogin.addEventListener("click", async () => {
     }
     googleLogin.disabled = false;
     googleLogin.querySelector("strong").textContent = "Continue with Google";
+  } finally {
+    setAuthLoading(false);
   }
 });
 
@@ -461,8 +557,7 @@ if (auth) {
         );
       }
       if (credential?.user) {
-        localStorage.setItem("novaLoggedIn", "1");
-        setScreen("home");
+        await routeAfterAuth(credential.user);
       }
     })
     .catch((error) => {
@@ -472,15 +567,11 @@ if (auth) {
     });
 
   auth.onAuthStateChanged((user) => {
-    if (user && phone.classList.contains("auth-view")) {
-      localStorage.setItem("novaLoggedIn", "1");
-      setScreen("home");
+    if (user && phone.classList.contains("auth-view") && !suppressAuthRedirect && !authScreen.classList.contains("onboarding-mode")) {
+      setAuthLoading(true);
+      routeAfterAuth(user).finally(() => setAuthLoading(false));
     }
   });
-}
-
-if (localStorage.getItem("novaLoggedIn") === "1") {
-  setScreen("home");
 }
 
 function renderMenus() {

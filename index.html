@@ -72,10 +72,32 @@
             <strong>Continue with Google</strong>
           </button>
 
+          <button class="guest-login" type="button">Continue as guest</button>
+
           <p class="auth-switch">
             <span id="authSwitchText">Don't have an account?</span>
             <button id="authSwitchButton" type="button">Sign up</button>
           </p>
+        </div>
+
+        <section class="auth-onboarding" aria-label="Welcome to Nova">
+          <img class="onboarding-logo" src="assets/logo.png" alt="nova" />
+          <div class="onboarding-copy">
+            <h1>Welcome to Nova</h1>
+            <p>We are the cheapest delivery app for your campus cravings.</p>
+          </div>
+          <form class="username-form">
+            <label class="auth-field">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" /><path d="M5 21c1-4 3.5-6 7-6s6 2 7 6" /></svg>
+              <input id="usernameInput" type="text" autocomplete="username" placeholder="Choose your username" />
+            </label>
+            <p class="username-message" aria-live="polite"></p>
+            <button class="auth-submit" type="submit">Continue</button>
+          </form>
+        </section>
+
+        <div class="auth-loading" aria-hidden="true">
+          <span></span>
         </div>
 
         <img class="auth-food" src="assets/login.png" alt="" />
@@ -258,17 +280,43 @@
       <section class="cart-screen" data-screen="cart" aria-label="Your Cart">
         <div class="cart-page-scroll">
           <header class="cart-header">
+            <div class="cart-brand-row">
+              <img class="cart-brand-logo" src="assets/logo.png" alt="nova" />
+              <button class="icon-button bell" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                  <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                </svg>
+                <span></span>
+              </button>
+            </div>
             <div class="cart-title-row">
               <button class="cart-back round-action" aria-label="Back to restaurant">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
               </button>
-              <h1>My Cart</h1>
+              <h1>Your Cart</h1>
               <button class="cart-delete round-action" aria-label="Clear cart">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16" /><path d="M10 11v6M14 11v6" /><path d="M6 7l1 14h10l1-14" /><path d="M9 7V4h6v3" /></svg>
                 <span>Clear all</span>
               </button>
             </div>
           </header>
+
+          <section class="cart-shop-card" aria-label="Restaurant">
+            <div class="cart-shop-main">
+              <img src="assets/mori.png" alt="Mori Cafe" />
+              <div>
+                <h2>Mori Cafe</h2>
+                <p>15-25 min <span>•</span> 0.8 km</p>
+              </div>
+              <strong>From RM3.90</strong>
+            </div>
+            <button class="cart-shop-note" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" /><path d="M6 4h9l3 3v13H6z" /><path d="M9 15h4" /><path d="m14 4 4 4" /></svg>
+              <span>Add a note for Mori Cafe</span>
+              <b>›</b>
+            </button>
+          </section>
 
           <section class="delivery-progress" aria-label="Free delivery progress">
             <div class="delivery-copy">
@@ -314,6 +362,17 @@
               <article><h3>Assorted Cake</h3><strong>RM 12.90</strong><button>+</button></article>
             </div>
           </section>
+
+          <section class="cart-group-card">
+            <div class="cart-tag-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
+            </div>
+            <div>
+              <h2>You’re saving on delivery!</h2>
+              <p>Create a group order to save more.</p>
+            </div>
+            <button type="button">Start Group Order <span>→</span></button>
+          </section>
         </div>
 
         <footer class="cart-page-bar">
@@ -322,6 +381,7 @@
             <span id="cartPageQty">0</span>
           </div>
           <div class="cart-total">
+            <span>Total</span>
             <strong id="cartPageSubtotal">RM0.00</strong>
             <span id="cartPageDelivery">Add RM50.00 more for free delivery</span>
           </div>
