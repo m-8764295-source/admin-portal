@@ -371,6 +371,15 @@ async function getUserProfile(user) {
   return profile;
 }
 
+async function waitForUserProfile(user) {
+  let profile = await getUserProfile(user);
+  if (profile?.username) return profile;
+
+  await new Promise((resolve) => setTimeout(resolve, 700));
+  profile = await getUserProfile(user);
+  return profile;
+}
+
 async function routeAfterAuth(user) {
   if (authRouting) return;
   authRouting = true;
@@ -379,7 +388,7 @@ async function routeAfterAuth(user) {
   authScreen.classList.remove("onboarding-mode");
 
   try {
-    const profile = await getUserProfile(user);
+    const profile = await waitForUserProfile(user);
     if (profile?.username) {
       currentProfile = profile;
       await new Promise((resolve) => setTimeout(resolve, 250));
@@ -387,10 +396,15 @@ async function routeAfterAuth(user) {
       return;
     }
     showOnboarding(user);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
   } finally {
     authRouting = false;
     if (authScreen.classList.contains("onboarding-mode")) {
-      setAuthRoutingView(false);
+      setTimeout(() => {
+        if (authScreen.classList.contains("onboarding-mode")) {
+          setAuthRoutingView(false);
+        }
+      }, 180);
     }
   }
 }
