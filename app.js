@@ -27,6 +27,12 @@ const profileGreeting = document.querySelector("#profileGreeting");
 const profileUsername = document.querySelector("#profileUsername");
 const profileEmail = document.querySelector("#profileEmail");
 const guestSignupButton = document.querySelector("#guestSignupButton");
+const friendsBack = document.querySelector(".friends-back");
+const friendsSearchInput = document.querySelector("#friendsSearchInput");
+const friendRequestsList = document.querySelector("#friendRequestsList");
+const allFriendsList = document.querySelector("#allFriendsList");
+const friendRequestCount = document.querySelector("#friendRequestCount");
+const allFriendsTitle = document.querySelector("#allFriendsTitle");
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -279,7 +285,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -350,6 +356,73 @@ async function openProfile() {
   }
   updateProfileView();
   setScreen("profile");
+}
+
+function readFriendData(key) {
+  try {
+    return JSON.parse(localStorage.getItem(key) || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function friendAvatar(name) {
+  return firstLetter(name || "Friend");
+}
+
+function renderFriends() {
+  const query = friendsSearchInput.value.trim().toLowerCase();
+  const requests = readFriendData("novaFriendRequests");
+  const friends = readFriendData("novaFriends").filter((friend) => {
+    const username = (friend.username || "").toLowerCase();
+    return !query || username.includes(query);
+  });
+
+  friendRequestCount.textContent = requests.length;
+  allFriendsTitle.textContent = `All Friends (${friends.length})`;
+
+  friendRequestsList.innerHTML = requests
+    .map(
+      (friend) => `
+        <article class="friend-row">
+          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          <div class="friend-info">
+            <h3>${friend.name || friend.username}</h3>
+            <p>@${friend.username || ""}</p>
+          </div>
+          <div class="request-actions">
+            <button type="button" aria-label="Decline ${friend.username || "request"}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+            <button class="accept-request" type="button" aria-label="Accept ${friend.username || "request"}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7" /></svg>
+            </button>
+          </div>
+        </article>
+      `
+    )
+    .join("");
+
+  allFriendsList.innerHTML = friends
+    .map(
+      (friend) => `
+        <article class="friend-row">
+          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          <div class="friend-info">
+            <h3>${friend.name || friend.username}</h3>
+            <p>@${friend.username || ""}</p>
+          </div>
+          <button class="message-friend" type="button">Message</button>
+        </article>
+      `
+    )
+    .join("");
+}
+
+function openFriends() {
+  friendsSearchInput.value = "";
+  renderFriends();
+  setScreen("friends");
 }
 
 async function getUserProfile(user) {
@@ -475,6 +548,16 @@ document.querySelectorAll(".profile-nav").forEach((item) => {
     openProfile();
   });
 });
+
+document.querySelectorAll(".profile-card").forEach((card) => {
+  const title = card.querySelector("h2")?.textContent.trim();
+  if (title === "My Friends") {
+    card.addEventListener("click", openFriends);
+  }
+});
+
+friendsBack.addEventListener("click", openProfile);
+friendsSearchInput.addEventListener("input", renderFriends);
 
 guestSignupButton.addEventListener("click", () => {
   isGuestUser = false;

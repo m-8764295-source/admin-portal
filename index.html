@@ -335,6 +335,66 @@
         </nav>
       </section>
 
+      <section class="friends-screen" data-screen="friends" aria-label="My Friends">
+        <div class="friends-scroll">
+          <header class="friends-header">
+            <button class="friends-back" type="button" aria-label="Back to profile">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>My Friends</h1>
+            <button class="add-friend-button" type="button" aria-label="Add friend">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="7" r="4" /><path d="M3 21c1-4 3.3-6 7-6 2.1 0 3.8.7 5 2" /><path d="M19 8v6" /><path d="M16 11h6" /></svg>
+            </button>
+          </header>
+
+          <label class="friends-search">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
+            <input id="friendsSearchInput" type="search" placeholder="Search friends by username" />
+          </label>
+
+          <section class="friends-section">
+            <div class="friends-section-title">
+              <h2>Friend Requests <span id="friendRequestCount">0</span></h2>
+              <button type="button">View all <b>›</b></button>
+            </div>
+            <div class="friends-list request-list" id="friendRequestsList"></div>
+            <p class="friends-empty" id="requestsEmpty">目前没有request</p>
+          </section>
+
+          <section class="friends-section">
+            <div class="friends-section-title">
+              <h2 id="allFriendsTitle">All Friends (0)</h2>
+              <button class="sort-button" type="button">Sort: A-Z <b>⌄</b></button>
+            </div>
+            <div class="friends-list all-friends-list" id="allFriendsList"></div>
+            <p class="friends-empty" id="friendsEmpty">目前没有好友</p>
+          </section>
+        </div>
+
+        <nav class="bottom-nav profile-bottom-nav" aria-label="Primary">
+          <a href="#" class="nav-item home-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></svg>
+            <span>Home</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7z" /><path d="M9.5 8h5M9.5 12h5M9.5 16h3" /></svg>
+            <span>Orders</span>
+          </a>
+          <a href="#" class="nav-item group">
+            <span class="group-bubble"><img src="assets/order.png" alt="" /></span>
+            <span>Group</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
+            <span>Promo</span>
+          </a>
+          <a href="#" class="nav-item active profile-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" /></svg>
+            <span>Profile</span>
+          </a>
+        </nav>
+      </section>
+
       <section class="detail-screen" data-screen="detail" aria-label="Mori Cafe detail page">
         <div class="detail-scroll">
           <header class="hero">
