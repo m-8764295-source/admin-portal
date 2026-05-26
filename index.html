@@ -352,22 +352,22 @@
             <input id="friendsSearchInput" type="search" placeholder="Search friends by username" />
           </label>
 
-          <section class="friends-section">
+          <p class="friends-page-empty" id="friendsPageEmpty">No friends or friend requests yet</p>
+
+          <section class="friends-section" id="friendRequestsSection">
             <div class="friends-section-title">
               <h2>Friend Requests <span id="friendRequestCount">0</span></h2>
               <button type="button">View all <b>›</b></button>
             </div>
             <div class="friends-list request-list" id="friendRequestsList"></div>
-            <p class="friends-empty" id="requestsEmpty">目前没有request</p>
           </section>
 
-          <section class="friends-section">
+          <section class="friends-section" id="allFriendsSection">
             <div class="friends-section-title">
               <h2 id="allFriendsTitle">All Friends (0)</h2>
               <button class="sort-button" type="button">Sort: A-Z <b>⌄</b></button>
             </div>
             <div class="friends-list all-friends-list" id="allFriendsList"></div>
-            <p class="friends-empty" id="friendsEmpty">目前没有好友</p>
           </section>
         </div>
 

@@ -33,6 +33,9 @@ const friendRequestsList = document.querySelector("#friendRequestsList");
 const allFriendsList = document.querySelector("#allFriendsList");
 const friendRequestCount = document.querySelector("#friendRequestCount");
 const allFriendsTitle = document.querySelector("#allFriendsTitle");
+const friendRequestsSection = document.querySelector("#friendRequestsSection");
+const allFriendsSection = document.querySelector("#allFriendsSection");
+const friendsPageEmpty = document.querySelector("#friendsPageEmpty");
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -380,6 +383,9 @@ function renderFriends() {
 
   friendRequestCount.textContent = requests.length;
   allFriendsTitle.textContent = `All Friends (${friends.length})`;
+  friendRequestsSection.hidden = requests.length === 0;
+  allFriendsSection.hidden = friends.length === 0;
+  friendsPageEmpty.hidden = requests.length > 0 || friends.length > 0;
 
   friendRequestsList.innerHTML = requests
     .map(
