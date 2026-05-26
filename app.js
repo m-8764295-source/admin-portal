@@ -290,9 +290,16 @@ function setAuthLoading(isLoading) {
   authScreen.classList.toggle("is-loading", isLoading);
 }
 
+function setAuthRoutingView(isRouting) {
+  authScreen.classList.toggle("is-routing", isRouting);
+  setAuthLoading(isRouting);
+}
+
 function continueToHome() {
   localStorage.setItem("novaLoggedIn", "1");
   authScreen.classList.remove("onboarding-mode");
+  authScreen.classList.remove("is-routing");
+  authScreen.classList.remove("is-loading");
   setScreen("home");
 }
 
@@ -367,6 +374,7 @@ async function getUserProfile(user) {
 async function routeAfterAuth(user) {
   if (authRouting) return;
   authRouting = true;
+  setAuthRoutingView(true);
   isGuestUser = false;
   authScreen.classList.remove("onboarding-mode");
 
@@ -381,6 +389,9 @@ async function routeAfterAuth(user) {
     showOnboarding(user);
   } finally {
     authRouting = false;
+    if (authScreen.classList.contains("onboarding-mode")) {
+      setAuthRoutingView(false);
+    }
   }
 }
 
@@ -540,7 +551,7 @@ authForm.addEventListener("submit", async (event) => {
 
   authSubmit.disabled = true;
   authSubmit.textContent = isSignupMode ? "Signing up..." : "Logging in...";
-  setAuthLoading(true);
+  setAuthRoutingView(true);
   suppressAuthRedirect = true;
 
   try {
@@ -561,6 +572,7 @@ authForm.addEventListener("submit", async (event) => {
       }
       await new Promise((resolve) => setTimeout(resolve, 600));
       showOnboarding(credential.user);
+      setAuthRoutingView(false);
     } else {
       const credential = await auth.signInWithEmailAndPassword(email, password);
       await new Promise((resolve) => setTimeout(resolve, 450));
@@ -568,9 +580,12 @@ authForm.addEventListener("submit", async (event) => {
     }
   } catch (error) {
     showAuthMessage(authErrorMessage(error));
+    setAuthRoutingView(false);
   } finally {
     suppressAuthRedirect = false;
-    setAuthLoading(false);
+    if (!authScreen.classList.contains("onboarding-mode") && phone.classList.contains("auth-view")) {
+      setAuthRoutingView(false);
+    }
     authSubmit.disabled = false;
     authSubmit.textContent = isSignupMode ? "Sign up" : "Login";
   }
@@ -591,7 +606,7 @@ usernameForm.addEventListener("submit", async (event) => {
     return;
   }
 
-  setAuthLoading(true);
+  setAuthRoutingView(true);
   try {
     if (db) {
       await db.collection("users").doc(onboardingUser.uid).set(
@@ -663,8 +678,11 @@ googleLogin.addEventListener("click", async () => {
     }
     googleLogin.disabled = false;
     googleLogin.querySelector("strong").textContent = "Continue with Google";
+    setAuthRoutingView(false);
   } finally {
-    setAuthLoading(false);
+    if (phone.classList.contains("auth-view") && !authScreen.classList.contains("onboarding-mode")) {
+      setAuthRoutingView(false);
+    }
   }
 });
 
@@ -699,8 +717,7 @@ if (auth) {
 
   auth.onAuthStateChanged((user) => {
     if (user && phone.classList.contains("auth-view") && !suppressAuthRedirect && !authScreen.classList.contains("onboarding-mode") && !authRouting) {
-      setAuthLoading(true);
-      routeAfterAuth(user).finally(() => setAuthLoading(false));
+      routeAfterAuth(user);
     }
   });
 }
