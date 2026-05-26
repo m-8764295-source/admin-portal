@@ -194,7 +194,7 @@
         </section>
 
         <nav class="bottom-nav" aria-label="Primary">
-          <a href="#" class="nav-item active">
+          <a href="#" class="nav-item active home-nav">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></svg>
             <span>Home</span>
           </a>
@@ -212,7 +212,117 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
             <span>Promo</span>
           </a>
+          <a href="#" class="nav-item profile-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" /></svg>
+            <span>Profile</span>
+          </a>
+        </nav>
+      </section>
+
+      <section class="profile-screen" data-screen="profile" aria-label="Profile">
+        <div class="profile-scroll">
+          <header class="profile-topbar">
+            <img class="profile-logo" src="assets/logo.png" alt="nova" />
+            <div class="profile-actions">
+              <button class="icon-button bell" aria-label="Notifications">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+                  <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                </svg>
+                <span></span>
+              </button>
+              <button class="profile-gear" aria-label="Settings">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" /><path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.05.05a2.1 2.1 0 0 1-3 3l-.05-.05a1.8 1.8 0 0 0-2-.36 1.8 1.8 0 0 0-1.1 1.65V21a2.1 2.1 0 0 1-4.2 0v-.08A1.8 1.8 0 0 0 8.4 19.3a1.8 1.8 0 0 0-2 .36l-.05.05a2.1 2.1 0 1 1-3-3l.05-.05a1.8 1.8 0 0 0 .36-2 1.8 1.8 0 0 0-1.65-1.1H2a2.1 2.1 0 0 1 0-4.2h.08A1.8 1.8 0 0 0 3.7 8.4a1.8 1.8 0 0 0-.36-2l-.05-.05a2.1 2.1 0 1 1 3-3l.05.05a1.8 1.8 0 0 0 2 .36H8.4A1.8 1.8 0 0 0 9.5 2.1V2a2.1 2.1 0 0 1 4.2 0v.08a1.8 1.8 0 0 0 1.1 1.65 1.8 1.8 0 0 0 2-.36l.05-.05a2.1 2.1 0 1 1 3 3l-.05.05a1.8 1.8 0 0 0-.36 2v.05a1.8 1.8 0 0 0 1.65 1.1H22a2.1 2.1 0 0 1 0 4.2h-.08A1.8 1.8 0 0 0 19.4 15Z" /></svg>
+              </button>
+            </div>
+          </header>
+
+          <section class="profile-hero">
+            <div class="profile-avatar-wrap">
+              <div class="profile-avatar" id="profileAvatar">G</div>
+              <label class="avatar-camera">
+                <input id="avatarInput" type="file" accept="image/*" />
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h3l1.5-2h5L16 8h3v11H5z" /><circle cx="12" cy="13.5" r="3.5" /></svg>
+              </label>
+            </div>
+            <div class="profile-name-block">
+              <h1 id="profileGreeting">Hey, Guest!</h1>
+              <p id="profileUsername">@guest</p>
+              <span id="profileEmail"></span>
+            </div>
+          </section>
+
+          <section class="guest-profile-message">
+            <h2>Sign up to unlock your profile</h2>
+            <p>My Orders, Group Orders, and Friends will appear after you create an account.</p>
+            <button type="button" id="guestSignupButton">Sign up</button>
+          </section>
+
+          <section class="profile-cards">
+            <article class="profile-card">
+              <div class="profile-card-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v3H8z" /><path d="M6 6h12v15H6z" /><path d="M9 12h6M9 16h4" /></svg>
+              </div>
+              <div>
+                <h2>My Orders</h2>
+                <p>View your orders and history</p>
+              </div>
+              <b>›</b>
+            </article>
+
+            <article class="profile-card profile-card-visual">
+              <div class="profile-card-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
+              </div>
+              <div>
+                <h2>My Group Orders</h2>
+                <p>View your ongoing and past group orders</p>
+              </div>
+              <img src="assets/bag.png" alt="" />
+              <b>›</b>
+            </article>
+
+            <article class="profile-card profile-card-visual">
+              <div class="profile-card-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
+              </div>
+              <div>
+                <h2>My Friends</h2>
+                <p>See your friends and manage connections</p>
+              </div>
+              <img src="assets/friends.png" alt="" />
+              <b>›</b>
+            </article>
+          </section>
+
+          <section class="create-group-profile">
+            <div class="create-plus">+</div>
+            <div>
+              <h2>Create Group Order</h2>
+              <p>Order together, save delivery.</p>
+            </div>
+            <b>›</b>
+          </section>
+        </div>
+
+        <nav class="bottom-nav profile-bottom-nav" aria-label="Primary">
+          <a href="#" class="nav-item home-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></svg>
+            <span>Home</span>
+          </a>
           <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7z" /><path d="M9.5 8h5M9.5 12h5M9.5 16h3" /></svg>
+            <span>Orders</span>
+          </a>
+          <a href="#" class="nav-item group">
+            <span class="group-bubble"><img src="assets/order.png" alt="" /></span>
+            <span>Group</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
+            <span>Promo</span>
+          </a>
+          <a href="#" class="nav-item active profile-nav">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" /></svg>
             <span>Profile</span>
           </a>

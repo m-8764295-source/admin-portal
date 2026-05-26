@@ -21,6 +21,12 @@ const passwordToggle = document.querySelector(".password-toggle");
 const usernameForm = document.querySelector(".username-form");
 const usernameInput = document.querySelector("#usernameInput");
 const usernameMessage = document.querySelector(".username-message");
+const profileAvatar = document.querySelector("#profileAvatar");
+const avatarInput = document.querySelector("#avatarInput");
+const profileGreeting = document.querySelector("#profileGreeting");
+const profileUsername = document.querySelector("#profileUsername");
+const profileEmail = document.querySelector("#profileEmail");
+const guestSignupButton = document.querySelector("#guestSignupButton");
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -93,6 +99,9 @@ let googleProvider = null;
 let isSignupMode = false;
 let onboardingUser = null;
 let suppressAuthRedirect = false;
+let authRouting = false;
+let isGuestUser = false;
+let currentProfile = null;
 
 function initFirebase() {
   if (!window.firebase) return false;
@@ -269,7 +278,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -287,19 +296,92 @@ function continueToHome() {
   setScreen("home");
 }
 
+function firstLetter(value) {
+  return (value || "Guest").trim().charAt(0).toUpperCase() || "G";
+}
+
+function setAvatarContent(letter, imageUrl = "") {
+  profileAvatar.innerHTML = imageUrl
+    ? `<img src="${imageUrl}" alt="" />`
+    : `<span>${letter}</span>`;
+}
+
+function updateProfileView() {
+  const user = auth?.currentUser || null;
+  const profile = currentProfile || {};
+  const username = profile.username || localStorage.getItem(`novaUsername:${user?.uid}`) || "";
+  const email = user?.email || profile.email || "";
+  const displayName = username || user?.displayName || "Guest";
+  const avatarKey = user?.uid ? `novaAvatar:${user.uid}` : "";
+  const savedAvatar = avatarKey ? localStorage.getItem(avatarKey) : "";
+  const guest = isGuestUser || !user;
+
+  phone.classList.toggle("guest-profile", guest);
+  profileGreeting.textContent = guest ? "Hey, Guest!" : `Hey, ${displayName}!`;
+  profileUsername.textContent = guest ? "@guest" : `@${username || displayName}`;
+  profileEmail.textContent = guest ? "" : email;
+  if (guest) {
+    profileAvatar.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" />
+      </svg>
+    `;
+  } else {
+    setAvatarContent(firstLetter(displayName), savedAvatar);
+  }
+}
+
+async function openProfile() {
+  if (!isGuestUser && auth?.currentUser) {
+    try {
+      currentProfile = await getUserProfile(auth.currentUser);
+    } catch {
+      currentProfile = currentProfile || {};
+    }
+  }
+  updateProfileView();
+  setScreen("profile");
+}
+
 async function getUserProfile(user) {
-  if (!db || !user) return null;
+  if (!user) return null;
+
+  const cachedUsername = localStorage.getItem(`novaUsername:${user.uid}`);
+  if (cachedUsername) {
+    return { username: cachedUsername };
+  }
+
+  initFirebase();
+  if (!db) return null;
+
   const snapshot = await db.collection("users").doc(user.uid).get();
-  return snapshot.exists ? snapshot.data() : null;
+  const profile = snapshot.exists ? snapshot.data() : null;
+  if (profile?.username) {
+    localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
+  }
+  currentProfile = profile;
+  return profile;
 }
 
 async function routeAfterAuth(user) {
-  const profile = await getUserProfile(user);
-  if (profile?.username) {
-    continueToHome();
-    return;
+  if (authRouting) return;
+  authRouting = true;
+  isGuestUser = false;
+  authScreen.classList.remove("onboarding-mode");
+
+  try {
+    const profile = await getUserProfile(user);
+    if (profile?.username) {
+      currentProfile = profile;
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      continueToHome();
+      return;
+    }
+    showOnboarding(user);
+  } finally {
+    authRouting = false;
   }
-  showOnboarding(user);
 }
 
 function showOnboarding(user) {
@@ -308,7 +390,11 @@ function showOnboarding(user) {
   usernameMessage.textContent = "";
   authScreen.classList.add("onboarding-mode");
   setScreen("auth");
-  requestAnimationFrame(() => usernameInput.focus());
+  requestAnimationFrame(() => {
+    if (!authScreen.classList.contains("is-loading")) {
+      usernameInput.focus();
+    }
+  });
 }
 
 function cleanUsername(value) {
@@ -350,6 +436,40 @@ tabs.forEach((tab) => {
   });
 });
 
+document.querySelectorAll(".home-nav").forEach((item) => {
+  item.addEventListener("click", (event) => {
+    event.preventDefault();
+    setScreen("home");
+  });
+});
+
+document.querySelectorAll(".profile-nav").forEach((item) => {
+  item.addEventListener("click", (event) => {
+    event.preventDefault();
+    openProfile();
+  });
+});
+
+guestSignupButton.addEventListener("click", () => {
+  isGuestUser = false;
+  setAuthMode(true);
+  setScreen("auth");
+});
+
+avatarInput.addEventListener("change", () => {
+  const file = avatarInput.files?.[0];
+  const user = auth?.currentUser;
+  if (!file || !user || isGuestUser) return;
+
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    const dataUrl = String(reader.result || "");
+    localStorage.setItem(`novaAvatar:${user.uid}`, dataUrl);
+    setAvatarContent(firstLetter(currentProfile?.username || user.displayName || "User"), dataUrl);
+  });
+  reader.readAsDataURL(file);
+});
+
 heart.addEventListener("click", (event) => {
   event.stopPropagation();
   heart.classList.toggle("is-liked");
@@ -385,6 +505,8 @@ authSwitchButton.addEventListener("click", () => setAuthMode(!isSignupMode));
 authBack.addEventListener("click", () => setAuthMode(false));
 authClose?.addEventListener("click", () => setScreen("home"));
 guestLogin.addEventListener("click", () => {
+  isGuestUser = true;
+  currentProfile = null;
   setScreen("home");
 });
 
@@ -483,6 +605,15 @@ usernameForm.addEventListener("submit", async (event) => {
         { merge: true }
       );
     }
+    localStorage.setItem(`novaUsername:${onboardingUser.uid}`, username);
+    currentProfile = {
+      ...(currentProfile || {}),
+      username,
+      usernameLower: username.toLowerCase(),
+      email: onboardingUser.email || "",
+      name: onboardingUser.displayName || authName.value.trim() || username,
+    };
+    isGuestUser = false;
     await new Promise((resolve) => setTimeout(resolve, 450));
     continueToHome();
   } catch (error) {
@@ -567,7 +698,7 @@ if (auth) {
     });
 
   auth.onAuthStateChanged((user) => {
-    if (user && phone.classList.contains("auth-view") && !suppressAuthRedirect && !authScreen.classList.contains("onboarding-mode")) {
+    if (user && phone.classList.contains("auth-view") && !suppressAuthRedirect && !authScreen.classList.contains("onboarding-mode") && !authRouting) {
       setAuthLoading(true);
       routeAfterAuth(user).finally(() => setAuthLoading(false));
     }

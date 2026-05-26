@@ -1545,8 +1545,13 @@ svg {
   display: none;
 }
 
+.profile-screen {
+  display: none;
+}
+
 .cart-view,
-.checkout-view {
+.checkout-view,
+.profile-view {
   padding: 0;
   background: #fff;
 }
@@ -1555,10 +1560,17 @@ svg {
 .cart-view .auth-screen,
 .cart-view .detail-screen,
 .cart-view .checkout-screen,
+.cart-view .profile-screen,
 .checkout-view .auth-screen,
 .checkout-view .home-screen,
 .checkout-view .detail-screen,
-.checkout-view .cart-screen {
+.checkout-view .cart-screen,
+.checkout-view .profile-screen,
+.profile-view .auth-screen,
+.profile-view .home-screen,
+.profile-view .detail-screen,
+.profile-view .cart-screen,
+.profile-view .checkout-screen {
   display: none;
 }
 
@@ -1576,6 +1588,14 @@ svg {
   display: block;
   overflow: hidden;
   background: var(--nova-bg);
+}
+
+.profile-view .profile-screen {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: #fff;
 }
 
 .cart-page-scroll {
@@ -2858,25 +2878,25 @@ svg {
 
 .cart-view .cart-page-scroll {
   height: 100%;
-  padding: 24px 16px 126px;
+  padding: 8px 16px 126px;
   overflow-y: auto;
 }
 
 .cart-view .cart-header {
-  margin-bottom: 14px;
+  margin-bottom: 5px;
 }
 
 .cart-brand-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 54px;
-  margin-bottom: 24px;
+  height: 34px;
+  margin-bottom: 0;
 }
 
 .cart-brand-logo {
-  width: 126px;
-  height: 50px;
+  width: 92px;
+  height: 34px;
   object-fit: cover;
   object-position: center;
   border-radius: 8px;
@@ -2884,19 +2904,20 @@ svg {
 }
 
 .cart-brand-row .bell {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
 }
 
 .cart-view .cart-title-row {
-  height: 44px;
-  grid-template-columns: 36px 1fr auto;
-  gap: 12px;
+  height: 28px;
+  grid-template-columns: 22px 1fr auto;
+  gap: 7px;
+  margin-top: 1px;
 }
 
 .cart-view .cart-title-row .round-action {
-  width: 34px;
-  height: 34px;
+  width: 22px;
+  height: 22px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -2905,14 +2926,14 @@ svg {
 }
 
 .cart-view .cart-title-row .round-action svg {
-  width: 28px;
-  height: 28px;
-  stroke-width: 2.35;
+  width: 19px;
+  height: 19px;
+  stroke-width: 2.25;
 }
 
 .cart-view .cart-title-row h1 {
   color: #111;
-  font-size: 28px;
+  font-size: 19px;
   line-height: 1;
   font-weight: 850;
 }
@@ -2932,8 +2953,8 @@ svg {
 }
 
 .cart-shop-card {
-  padding: 12px 13px 0;
-  margin-bottom: 12px;
+  padding: 10px 12px 0;
+  margin-bottom: 8px;
 }
 
 .cart-shop-main {
@@ -3317,4 +3338,312 @@ svg {
   color: #111;
   font-size: 17px;
   font-weight: 850;
+}
+
+/* Profile page */
+.profile-scroll {
+  height: 100%;
+  overflow-y: auto;
+  padding: 22px 17px calc(104px + env(safe-area-inset-bottom, 0px));
+}
+
+.profile-scroll::-webkit-scrollbar {
+  width: 0;
+}
+
+.profile-topbar {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-logo {
+  width: 118px;
+  height: 48px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 8px;
+  mix-blend-mode: multiply;
+}
+
+.profile-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.profile-actions .bell {
+  width: 35px;
+  height: 35px;
+}
+
+.profile-gear {
+  display: none;
+}
+
+.profile-gear svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 2.2;
+}
+
+.profile-hero {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  margin-bottom: 24px;
+}
+
+.profile-avatar-wrap {
+  position: relative;
+  width: 82px;
+  height: 82px;
+}
+
+.profile-avatar {
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #fff5d6, #ffe5a4);
+  color: #d88600;
+  font-size: 42px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-avatar > span {
+  line-height: 1;
+}
+
+.profile-avatar > svg {
+  width: 40px;
+  height: 40px;
+  stroke-width: 1.8;
+}
+
+.avatar-camera {
+  position: absolute;
+  right: -4px;
+  bottom: -7px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 8px 20px rgba(17, 17, 17, 0.14);
+  cursor: pointer;
+}
+
+.avatar-camera input {
+  display: none;
+}
+
+.avatar-camera svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 2.3;
+}
+
+.profile-name-block h1 {
+  margin: 0 0 7px;
+  color: #111;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 850;
+}
+
+.profile-name-block p {
+  margin: 0 0 4px;
+  color: #757985;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 720;
+}
+
+.profile-name-block span {
+  display: block;
+  color: #8a8d96;
+  font-size: 10.5px;
+  font-weight: 550;
+}
+
+.profile-card,
+.create-group-profile,
+.guest-profile-message {
+  border: 1px solid rgba(17, 17, 17, 0.07);
+  border-radius: 21px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(17, 17, 17, 0.045);
+}
+
+.profile-cards {
+  display: grid;
+  gap: 18px;
+}
+
+.profile-card {
+  min-height: 115px;
+  display: grid;
+  grid-template-columns: 78px 1fr auto;
+  align-items: center;
+  gap: 13px;
+  padding: 18px 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.profile-card-icon {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff6e8;
+  color: #f3a400;
+}
+
+.profile-card-icon svg {
+  width: 34px;
+  height: 34px;
+  stroke-width: 1.9;
+}
+
+.profile-card h2,
+.create-group-profile h2,
+.guest-profile-message h2 {
+  margin: 0 0 9px;
+  color: #111;
+  font-size: 18px;
+  line-height: 1;
+  font-weight: 850;
+}
+
+.profile-card p,
+.create-group-profile p,
+.guest-profile-message p {
+  margin: 0;
+  color: #626571;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
+}
+
+.profile-card > b,
+.create-group-profile > b {
+  color: #111;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 350;
+}
+
+.profile-card-visual {
+  grid-template-columns: 78px 1fr 118px auto;
+}
+
+.profile-card-visual img {
+  width: 116px;
+  height: 82px;
+  object-fit: cover;
+  object-position: center;
+  mix-blend-mode: multiply;
+}
+
+.create-group-profile {
+  min-height: 96px;
+  display: grid;
+  grid-template-columns: 64px 1fr auto;
+  align-items: center;
+  gap: 15px;
+  margin-top: 18px;
+  padding: 16px 20px;
+  background: linear-gradient(90deg, #fff7e7, #fff4dd);
+}
+
+.create-plus {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1.5px dashed #f3a400;
+  border-radius: 13px;
+  color: #f3a400;
+  font-size: 43px;
+  line-height: 1;
+  font-weight: 250;
+}
+
+.guest-profile-message {
+  display: none;
+  padding: 22px 20px;
+  text-align: center;
+}
+
+.guest-profile-message button {
+  height: 42px;
+  margin-top: 16px;
+  padding: 0 28px;
+  border: 0;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffc83d, #ffad00);
+  color: #111;
+  font-size: 14px;
+  font-weight: 820;
+}
+
+.profile-view.guest-profile .profile-avatar {
+  background: #eeeeef;
+  color: #9a9da6;
+}
+
+.profile-view.guest-profile .avatar-camera,
+.profile-view.guest-profile .profile-cards,
+.profile-view.guest-profile .create-group-profile {
+  display: none;
+}
+
+.profile-view.guest-profile .guest-profile-message {
+  display: block;
+}
+
+.profile-bottom-nav .nav-item.active {
+  color: #f5a900;
+}
+
+.profile-bottom-nav .nav-item.group {
+  transform: none;
+}
+
+.profile-bottom-nav .group-bubble {
+  width: auto;
+  height: auto;
+  background: transparent;
+  box-shadow: none;
+}
+
+.profile-bottom-nav .group-bubble img {
+  display: none;
+}
+
+.profile-bottom-nav .group-bubble::before {
+  content: "";
+  width: 21px;
+  height: 21px;
+  display: block;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='3'/%3E%3Ccircle cx='17' cy='9' r='3'/%3E%3Cpath d='M2.5 20c.8-4 3-6 6-6s5.2 2 6 6'/%3E%3Cpath d='M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='8' cy='8' r='3'/%3E%3Ccircle cx='17' cy='9' r='3'/%3E%3Cpath d='M2.5 20c.8-4 3-6 6-6s5.2 2 6 6'/%3E%3Cpath d='M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3'/%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
 }
