@@ -100,6 +100,7 @@ let isSignupMode = false;
 let onboardingUser = null;
 let suppressAuthRedirect = false;
 let authRouting = false;
+let authStateReady = false;
 let isGuestUser = false;
 let currentProfile = null;
 
@@ -705,6 +706,8 @@ setAuthMode(false);
 initFirebase();
 
 if (auth) {
+  setAuthRoutingView(true);
+
   auth
     .getRedirectResult()
     .then(async (credential) => {
@@ -727,13 +730,23 @@ if (auth) {
       showAuthMessage(authErrorMessage(error));
       googleLogin.disabled = false;
       googleLogin.querySelector("strong").textContent = "Continue with Google";
+      setAuthRoutingView(false);
     });
 
   auth.onAuthStateChanged((user) => {
+    authStateReady = true;
+
     if (user && phone.classList.contains("auth-view") && !suppressAuthRedirect && !authScreen.classList.contains("onboarding-mode") && !authRouting) {
       routeAfterAuth(user);
+      return;
+    }
+
+    if (!user && phone.classList.contains("auth-view") && !suppressAuthRedirect) {
+      setAuthRoutingView(false);
     }
   });
+} else {
+  authStateReady = true;
 }
 
 function renderMenus() {
