@@ -3509,9 +3509,9 @@ svg {
 .profile-card {
   min-height: 115px;
   display: grid;
-  grid-template-columns: 78px 1fr auto;
+  grid-template-columns: 62px 1fr auto;
   align-items: center;
-  gap: 13px;
+  gap: 8px;
   padding: 18px 18px;
   position: relative;
   overflow: hidden;
@@ -3531,6 +3531,11 @@ svg {
   width: 27px;
   height: 27px;
   stroke-width: 1.9;
+}
+
+.group-order-icon svg {
+  width: 31px;
+  height: 31px;
 }
 
 .profile-card h2,
@@ -3562,12 +3567,12 @@ svg {
 }
 
 .profile-card-visual {
-  grid-template-columns: 78px 1fr 118px auto;
+  grid-template-columns: 62px 1fr 148px auto;
 }
 
 .profile-card-visual img {
-  width: 136px;
-  height: 96px;
+  width: 150px;
+  height: 106px;
   object-fit: cover;
   object-position: center;
   mix-blend-mode: multiply;
