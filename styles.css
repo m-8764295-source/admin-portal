@@ -4197,6 +4197,11 @@ svg {
   font-weight: 850;
 }
 
+.suggested-user-row button:disabled {
+  border-color: #e7e7ec;
+  color: #777b86;
+}
+
 .suggested-empty {
   margin: 8px 0 18px;
   color: #777b86;

@@ -39,6 +39,7 @@ const friendsPageEmpty = document.querySelector("#friendsPageEmpty");
 const addFriendButton = document.querySelector(".add-friend-button");
 const addFriendsBack = document.querySelector(".add-friends-back");
 const addFriendSearchInput = document.querySelector("#addFriendSearchInput");
+const addFriendsSectionTitle = document.querySelector("#addFriendsSectionTitle");
 const suggestedUsersList = document.querySelector("#suggestedUsersList");
 const suggestedEmpty = document.querySelector("#suggestedEmpty");
 const shareUsernameText = document.querySelector("#shareUsernameText");
@@ -132,6 +133,10 @@ let authRouting = false;
 let authStateReady = false;
 let isGuestUser = false;
 let currentProfile = null;
+let firebaseFriendRequests = [];
+let firebaseFriendRequestsLoaded = false;
+let addFriendSearchTimer = null;
+let addFriendSearchToken = 0;
 
 function initFirebase() {
   if (!window.firebase) return false;
@@ -395,7 +400,7 @@ function friendAvatar(name) {
 
 function renderFriends() {
   const query = friendsSearchInput.value.trim().toLowerCase();
-  const requests = readFriendData("novaFriendRequests");
+  const requests = firebaseFriendRequestsLoaded ? firebaseFriendRequests : readFriendData("novaFriendRequests");
   const friends = readFriendData("novaFriends").filter((friend) => {
     const username = (friend.username || "").toLowerCase();
     return !query || username.includes(query);
@@ -445,8 +450,39 @@ function renderFriends() {
     .join("");
 }
 
-function openFriends() {
+async function loadFirebaseFriendRequests() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    firebaseFriendRequests = [];
+    firebaseFriendRequestsLoaded = false;
+    return;
+  }
+
+  const snapshot = await db
+    .collection("friendRequests")
+    .where("toUid", "==", user.uid)
+    .get();
+
+  firebaseFriendRequests = snapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((data) => data.status === "pending")
+    .map((data) => ({
+      id: data.id,
+      name: data.fromName || data.fromUsername || "Friend",
+      username: data.fromUsername || "",
+      uid: data.fromUid || "",
+    }));
+  firebaseFriendRequestsLoaded = true;
+}
+
+async function openFriends() {
   friendsSearchInput.value = "";
+  try {
+    await loadFirebaseFriendRequests();
+  } catch (error) {
+    console.error(error);
+  }
   renderFriends();
   setScreen("friends");
 }
@@ -456,28 +492,123 @@ function getOwnUsername() {
   return currentProfile?.username || localStorage.getItem(`novaUsername:${user?.uid}`) || "";
 }
 
+function normalizeUsernameSearch(value) {
+  return value.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase();
+}
+
+function addFriendRow(user, buttonText = "Add", disabled = false) {
+  return `
+    <article class="suggested-user-row">
+      <div class="suggested-avatar">${friendAvatar(user.name || user.username)}</div>
+      <span>
+        <strong>${user.name || user.username}</strong>
+        <em>@${user.username || ""}</em>
+        <small>${user.mutualFriends ? `${user.mutualFriends} mutual friend${Number(user.mutualFriends) === 1 ? "" : "s"}` : "Nova user"}</small>
+      </span>
+      <button type="button" data-add-uid="${user.uid || ""}" data-add-username="${user.username || ""}" data-add-name="${user.name || user.username || ""}" ${disabled ? "disabled" : ""}>${buttonText}</button>
+    </article>
+  `;
+}
+
+async function getRelationshipStatus(otherUid) {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || !otherUid) return { label: "Add", disabled: false };
+
+  const friendDoc = await db.collection("users").doc(user.uid).collection("friends").doc(otherUid).get();
+  if (friendDoc.exists) {
+    return { label: "Friends", disabled: true };
+  }
+
+  const requestId = `${otherUid}_${user.uid}`;
+  const requestDoc = await db.collection("friendRequests").doc(requestId).get();
+  if (!requestDoc.exists) {
+    return { label: "Add", disabled: false };
+  }
+
+  const status = requestDoc.data()?.status;
+  if (status === "pending") return { label: "Sent", disabled: true };
+  if (status === "accepted") return { label: "Friends", disabled: true };
+  return { label: "Add", disabled: false };
+}
+
 function renderSuggestedUsers() {
-  const query = addFriendSearchInput.value.trim().toLowerCase();
+  const query = normalizeUsernameSearch(addFriendSearchInput.value);
   const suggested = readFriendData("novaSuggestedUsers").filter((user) => {
     const username = (user.username || "").toLowerCase();
     return Number(user.mutualFriends || 0) >= 1 && (!query || username.includes(query));
   });
+  addFriendsSectionTitle.textContent = "Suggested users";
   suggestedUsersList.innerHTML = suggested
-    .map(
-      (user) => `
-        <article class="suggested-user-row">
-          <div class="suggested-avatar">${friendAvatar(user.name || user.username)}</div>
-          <span>
-            <strong>${user.name || user.username}</strong>
-            <em>@${user.username || ""}</em>
-            <small>${user.mutualFriends} mutual friend${Number(user.mutualFriends) === 1 ? "" : "s"}</small>
-          </span>
-          <button type="button">Add</button>
-        </article>
-      `
-    )
+    .map((user) => addFriendRow(user))
     .join("");
   suggestedEmpty.hidden = suggested.length > 0;
+  suggestedEmpty.textContent = "No suggested users yet";
+}
+
+function renderAddFriendMessage(message) {
+  suggestedUsersList.innerHTML = "";
+  suggestedEmpty.hidden = false;
+  suggestedEmpty.textContent = message;
+}
+
+async function searchFirebaseUserByUsername() {
+  const token = ++addFriendSearchToken;
+  const usernameLower = normalizeUsernameSearch(addFriendSearchInput.value);
+
+  if (!usernameLower) {
+    renderSuggestedUsers();
+    return;
+  }
+
+  addFriendsSectionTitle.textContent = "Search result";
+  renderAddFriendMessage("Searching...");
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    renderAddFriendMessage("Please login to add friends");
+    return;
+  }
+
+  try {
+    const snapshot = await db
+      .collection("users")
+      .where("usernameLower", "==", usernameLower)
+      .limit(1)
+      .get();
+
+    if (token !== addFriendSearchToken) return;
+
+    if (snapshot.empty) {
+      renderAddFriendMessage("No user found");
+      return;
+    }
+
+    const doc = snapshot.docs[0];
+    if (doc.id === user.uid) {
+      renderAddFriendMessage("This is your username");
+      return;
+    }
+
+    const data = doc.data();
+    const relationship = await getRelationshipStatus(doc.id);
+    if (token !== addFriendSearchToken) return;
+
+    suggestedUsersList.innerHTML = addFriendRow({
+      uid: doc.id,
+      username: data.username || "",
+      name: data.name || data.username || "Nova user",
+    }, relationship.label, relationship.disabled);
+    suggestedEmpty.hidden = true;
+  } catch (error) {
+    console.error(error);
+    renderAddFriendMessage("Could not search right now");
+  }
+}
+
+function queueFirebaseUserSearch() {
+  clearTimeout(addFriendSearchTimer);
+  addFriendSearchTimer = setTimeout(searchFirebaseUserByUsername, 500);
 }
 
 function openAddFriends() {
@@ -638,7 +769,48 @@ friendsBack.addEventListener("click", openProfile);
 friendsSearchInput.addEventListener("input", renderFriends);
 addFriendButton.addEventListener("click", openAddFriends);
 addFriendsBack.addEventListener("click", openFriends);
-addFriendSearchInput.addEventListener("input", renderSuggestedUsers);
+addFriendSearchInput.addEventListener("input", queueFirebaseUserSearch);
+suggestedUsersList.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-add-uid]");
+  if (!button || button.disabled) return;
+
+  initFirebase();
+  const user = auth?.currentUser;
+  const toUid = button.dataset.addUid;
+  const toUsername = button.dataset.addUsername;
+  if (!db || !user || !toUid || isGuestUser) return;
+
+  button.disabled = true;
+  button.textContent = "Sending";
+  try {
+    const fromUsername = getOwnUsername();
+    const requestId = `${toUid}_${user.uid}`;
+    const relationship = await getRelationshipStatus(toUid);
+    if (relationship.disabled) {
+      button.textContent = relationship.label;
+      return;
+    }
+
+    await db.collection("friendRequests").doc(requestId).set(
+      {
+        fromUid: user.uid,
+        fromUsername,
+        fromName: currentProfile?.name || user.displayName || fromUsername,
+        fromEmail: user.email || "",
+        toUid,
+        toUsername,
+        status: "pending",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+    button.textContent = "Sent";
+  } catch (error) {
+    console.error(error);
+    button.disabled = false;
+    button.textContent = "Add";
+  }
+});
 copyUsernameButton.addEventListener("click", async () => {
   const username = getOwnUsername();
   if (!username) return;
