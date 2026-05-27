@@ -219,6 +219,207 @@
         </nav>
       </section>
 
+      <section class="add-friends-screen" data-screen="add-friends" aria-label="Add Friends">
+        <div class="add-friends-scroll">
+          <header class="add-friends-header">
+            <button class="add-friends-back" type="button" aria-label="Back to friends">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>Add Friends</h1>
+            <p>Find friends by username and connect! 😊</p>
+          </header>
+
+          <img class="add-friends-art" src="assets/addfriends.png" alt="" />
+
+          <section class="add-friends-card">
+            <label class="add-friends-search">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
+              <input id="addFriendSearchInput" type="search" placeholder="Search by username" />
+            </label>
+            <p class="add-search-hint">Enter a username to find and add your friends.</p>
+
+            <div class="add-section-title">
+              <h2>Suggested users</h2>
+              <button type="button">See all</button>
+            </div>
+            <div class="suggested-users-list" id="suggestedUsersList"></div>
+            <p class="suggested-empty" id="suggestedEmpty">No suggested users yet</p>
+          </section>
+
+          <section class="share-username-card">
+            <h2>Share your username</h2>
+            <p>Let others add you by sharing your username.</p>
+            <div class="share-username-row">
+              <div class="share-user-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" /></svg>
+              </div>
+              <strong id="shareUsernameText">@your.username</strong>
+              <button id="copyUsernameButton" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="2" /><path d="M5 15V7a2 2 0 0 1 2-2h8" /></svg>
+                Copy
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section class="group-order-screen" data-screen="group-order" aria-label="Create Group Order">
+        <div class="group-order-scroll">
+          <header class="group-order-header">
+            <button class="group-order-back" type="button" aria-label="Back to home">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+          </header>
+
+          <section class="group-order-hero">
+            <h1>Create Group Order</h1>
+            <p>Start a group order and invite your friends<br />to order together! 🎉</p>
+            <img src="assets/grouporders.png" alt="" />
+          </section>
+
+          <section class="group-order-card">
+            <div class="group-step-title">
+              <span>1</span>
+              <h2>Choose restaurant</h2>
+            </div>
+            <div class="group-restaurant-box">
+              <label class="group-search-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
+                <input id="groupRestaurantSearch" type="search" placeholder="Search restaurant or cuisine" />
+                <b>›</b>
+              </label>
+              <button class="group-restaurant-row is-selected" type="button" data-restaurant-name="mori cafe">
+                <img src="assets/mori.png" alt="" />
+                <span>
+                  <strong>Mori Cafe</strong>
+                  <small>★ 4.9&nbsp;&nbsp;•&nbsp;&nbsp;15-25 min&nbsp;&nbsp;•&nbsp;&nbsp;0.8 km</small>
+                </span>
+                <b class="restaurant-check">✓</b>
+              </button>
+            </div>
+          </section>
+
+          <section class="group-order-card">
+            <div class="group-step-title">
+              <span>2</span>
+              <h2>Group name <em>(optional)</em></h2>
+            </div>
+            <label class="group-name-field">
+              <input id="groupNameInput" maxlength="30" type="text" placeholder="e.g. Breakfast Buddies" />
+              <small id="groupNameCount">0/30</small>
+            </label>
+          </section>
+
+          <section class="group-order-card">
+            <div class="group-step-title">
+              <span>3</span>
+              <h2>Delivery details</h2>
+            </div>
+            <div class="group-details-list">
+              <label class="group-detail-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+                <span>Delivery to</span>
+                <button class="group-placeholder-button" id="groupLocationButton" type="button">Select location</button>
+                <b>›</b>
+              </label>
+              <label class="group-detail-row">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                <span>Delivery time</span>
+                <button class="group-placeholder-button" id="groupTimeButton" type="button">Select time</button>
+                <b>›</b>
+              </label>
+              <div class="group-time-panel" id="groupTimePanel" hidden>
+                <h3>Choose a delivery time slot</h3>
+                <div class="group-time-options">
+                  <button class="group-time-option" type="button" data-time="2pm">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                    <span>
+                      <strong>2pm</strong>
+                      <small>Delivery in this time slot</small>
+                    </span>
+                  </button>
+                  <button class="group-time-option" type="button" data-time="7pm">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                    <span>
+                      <strong>7pm</strong>
+                      <small>Delivery in this time slot</small>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <button class="create-group-button" type="button">
+            <span>Create Group</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
+          </button>
+        </div>
+      </section>
+
+      <section class="location-screen" data-screen="location" aria-label="Select location">
+        <div class="location-scroll">
+          <header class="location-header">
+            <button class="location-back" type="button" aria-label="Back to group order">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>Select location</h1>
+            <p>Choose where to deliver your group order.</p>
+          </header>
+
+          <section class="location-list">
+            <button class="location-card" type="button" data-location="Hostel MMU Boys">
+              <img src="assets/hostelboys.png" alt="" />
+              <span>
+                <strong>Hostel MMU Boys</strong>
+                <em>MMU Hostel (Boys)</em>
+                <small>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+                  75450 Ayer Keroh, Melaka
+                </small>
+              </span>
+              <i></i>
+            </button>
+
+            <button class="location-card" type="button" data-location="Hostel MMU Girls">
+              <img src="assets/hostelgirls.png" alt="" />
+              <span>
+                <strong>Hostel MMU Girls</strong>
+                <em>MMU Hostel (Girls)</em>
+                <small>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+                  75450 Ayer Keroh, Melaka
+                </small>
+              </span>
+              <i></i>
+            </button>
+
+            <button class="location-card" type="button" data-location="Ixora Apartment">
+              <img src="assets/ixora.png" alt="" />
+              <span>
+                <strong>Ixora Apartment</strong>
+                <em>Ixora Apartment</em>
+                <small>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+                  75450 Bukit Beruang, Melaka
+                </small>
+              </span>
+              <i></i>
+            </button>
+          </section>
+
+          <section class="location-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+            <div>
+              <h2>All locations are in Melaka.</h2>
+              <p>Make sure the delivery address is correct for everyone.</p>
+            </div>
+          </section>
+
+          <button class="confirm-location-button" type="button" disabled>Confirm location</button>
+        </div>
+      </section>
+
       <section class="profile-screen" data-screen="profile" aria-label="Profile">
         <div class="profile-scroll">
           <header class="profile-topbar">

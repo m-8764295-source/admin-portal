@@ -36,6 +36,26 @@ const allFriendsTitle = document.querySelector("#allFriendsTitle");
 const friendRequestsSection = document.querySelector("#friendRequestsSection");
 const allFriendsSection = document.querySelector("#allFriendsSection");
 const friendsPageEmpty = document.querySelector("#friendsPageEmpty");
+const addFriendButton = document.querySelector(".add-friend-button");
+const addFriendsBack = document.querySelector(".add-friends-back");
+const addFriendSearchInput = document.querySelector("#addFriendSearchInput");
+const suggestedUsersList = document.querySelector("#suggestedUsersList");
+const suggestedEmpty = document.querySelector("#suggestedEmpty");
+const shareUsernameText = document.querySelector("#shareUsernameText");
+const copyUsernameButton = document.querySelector("#copyUsernameButton");
+const groupOrderBack = document.querySelector(".group-order-back");
+const groupNameInput = document.querySelector("#groupNameInput");
+const groupNameCount = document.querySelector("#groupNameCount");
+const groupRestaurantSearch = document.querySelector("#groupRestaurantSearch");
+const groupRestaurantRows = document.querySelectorAll(".group-restaurant-row");
+const groupLocationButton = document.querySelector("#groupLocationButton");
+const groupTimeButton = document.querySelector("#groupTimeButton");
+const groupTimePanel = document.querySelector("#groupTimePanel");
+const groupTimeOptions = document.querySelectorAll(".group-time-option");
+const locationBack = document.querySelector(".location-back");
+const locationCards = document.querySelectorAll(".location-card");
+const confirmLocationButton = document.querySelector(".confirm-location-button");
+let selectedGroupLocation = "";
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -288,7 +308,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "location-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -431,6 +451,51 @@ function openFriends() {
   setScreen("friends");
 }
 
+function getOwnUsername() {
+  const user = auth?.currentUser || null;
+  return currentProfile?.username || localStorage.getItem(`novaUsername:${user?.uid}`) || "";
+}
+
+function renderSuggestedUsers() {
+  const query = addFriendSearchInput.value.trim().toLowerCase();
+  const suggested = readFriendData("novaSuggestedUsers").filter((user) => {
+    const username = (user.username || "").toLowerCase();
+    return Number(user.mutualFriends || 0) >= 1 && (!query || username.includes(query));
+  });
+  suggestedUsersList.innerHTML = suggested
+    .map(
+      (user) => `
+        <article class="suggested-user-row">
+          <div class="suggested-avatar">${friendAvatar(user.name || user.username)}</div>
+          <span>
+            <strong>${user.name || user.username}</strong>
+            <em>@${user.username || ""}</em>
+            <small>${user.mutualFriends} mutual friend${Number(user.mutualFriends) === 1 ? "" : "s"}</small>
+          </span>
+          <button type="button">Add</button>
+        </article>
+      `
+    )
+    .join("");
+  suggestedEmpty.hidden = suggested.length > 0;
+}
+
+function openAddFriends() {
+  addFriendSearchInput.value = "";
+  const username = getOwnUsername();
+  shareUsernameText.textContent = username ? `@${username}` : "@your.username";
+  renderSuggestedUsers();
+  setScreen("add-friends");
+}
+
+function openGroupOrder() {
+  setScreen("group-order");
+}
+
+function openLocationScreen() {
+  setScreen("location");
+}
+
 async function getUserProfile(user) {
   if (!user) return null;
 
@@ -555,6 +620,13 @@ document.querySelectorAll(".profile-nav").forEach((item) => {
   });
 });
 
+document.querySelectorAll(".nav-item.group").forEach((item) => {
+  item.addEventListener("click", (event) => {
+    event.preventDefault();
+    openGroupOrder();
+  });
+});
+
 document.querySelectorAll(".profile-card").forEach((card) => {
   const title = card.querySelector("h2")?.textContent.trim();
   if (title === "My Friends") {
@@ -564,6 +636,61 @@ document.querySelectorAll(".profile-card").forEach((card) => {
 
 friendsBack.addEventListener("click", openProfile);
 friendsSearchInput.addEventListener("input", renderFriends);
+addFriendButton.addEventListener("click", openAddFriends);
+addFriendsBack.addEventListener("click", openFriends);
+addFriendSearchInput.addEventListener("input", renderSuggestedUsers);
+copyUsernameButton.addEventListener("click", async () => {
+  const username = getOwnUsername();
+  if (!username) return;
+  await navigator.clipboard?.writeText(`@${username}`);
+  copyUsernameButton.lastChild.textContent = "Copied";
+  setTimeout(() => {
+    copyUsernameButton.lastChild.textContent = "Copy";
+  }, 1100);
+});
+groupOrderBack.addEventListener("click", () => setScreen("home"));
+groupNameInput.addEventListener("input", () => {
+  groupNameCount.textContent = `${groupNameInput.value.length}/30`;
+});
+groupRestaurantSearch.addEventListener("input", () => {
+  const query = groupRestaurantSearch.value.trim().toLowerCase();
+  groupRestaurantRows.forEach((row) => {
+    row.hidden = query && !row.dataset.restaurantName.includes(query);
+  });
+});
+groupRestaurantRows.forEach((row) => {
+  row.addEventListener("click", () => {
+    const shouldSelect = !row.classList.contains("is-selected");
+    groupRestaurantRows.forEach((item) => item.classList.remove("is-selected"));
+    row.classList.toggle("is-selected", shouldSelect);
+  });
+});
+groupLocationButton.addEventListener("click", openLocationScreen);
+groupTimeButton.addEventListener("click", () => {
+  groupTimePanel.hidden = !groupTimePanel.hidden;
+});
+groupTimeOptions.forEach((option) => {
+  option.addEventListener("click", () => {
+    groupTimeOptions.forEach((item) => item.classList.remove("is-selected"));
+    option.classList.add("is-selected");
+    groupTimeButton.textContent = option.dataset.time;
+    groupTimePanel.hidden = true;
+  });
+});
+locationBack.addEventListener("click", openGroupOrder);
+locationCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    selectedGroupLocation = card.dataset.location;
+    locationCards.forEach((item) => item.classList.remove("is-selected"));
+    card.classList.add("is-selected");
+    confirmLocationButton.disabled = false;
+  });
+});
+confirmLocationButton.addEventListener("click", () => {
+  if (!selectedGroupLocation) return;
+  groupLocationButton.textContent = selectedGroupLocation;
+  openGroupOrder();
+});
 
 guestSignupButton.addEventListener("click", () => {
   isGuestUser = false;
