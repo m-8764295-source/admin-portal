@@ -53,10 +53,49 @@ const groupLocationButton = document.querySelector("#groupLocationButton");
 const groupTimeButton = document.querySelector("#groupTimeButton");
 const groupTimePanel = document.querySelector("#groupTimePanel");
 const groupTimeOptions = document.querySelectorAll(".group-time-option");
+const createGroupButton = document.querySelector(".create-group-button");
+const createdBack = document.querySelector(".created-back");
+const createdGroupName = document.querySelector("#createdGroupName");
+const createdCloseTime = document.querySelector("#createdCloseTime");
+const createdHostAvatar = document.querySelector("#createdHostAvatar");
+const createdHostName = document.querySelector("#createdHostName");
+const createdMembersTitle = document.querySelector(".created-members-section h2");
+const createdMembersRow = document.querySelector(".created-members-row");
+const startGroupOrderButton = document.querySelector(".start-group-order-button");
+const chatBack = document.querySelector(".chat-back");
+const chatGroupName = document.querySelector("#chatGroupName");
+const chatMemberCount = document.querySelector("#chatMemberCount");
+const chatCloseCountdown = document.querySelector("#chatCloseCountdown");
+const chatCreatedTime = document.querySelector("#chatCreatedTime");
+const chatCreatedText = document.querySelector("#chatCreatedText");
+const chatCreatedClose = document.querySelector("#chatCreatedClose");
+const chatAddItemsButton = document.querySelector(".chat-add-items-card button");
+const chatMenuButton = document.querySelector(".chat-menu-button");
+const chatCartButton = document.querySelector(".chat-cart-button");
+const chatInviteButton = document.querySelector(".chat-invite-button");
+const chatMessages = document.querySelector(".chat-messages");
+const chatInput = document.querySelector(".chat-composer input");
+const chatSendButton = document.querySelector(".chat-send-button");
+const inviteFriendsBack = document.querySelector(".invite-friends-back");
+const inviteFriendSearchInput = document.querySelector("#inviteFriendSearchInput");
+const inviteFriendsList = document.querySelector("#inviteFriendsList");
+const inviteFriendsEmpty = document.querySelector("#inviteFriendsEmpty");
 const locationBack = document.querySelector(".location-back");
 const locationCards = document.querySelectorAll(".location-card");
 const confirmLocationButton = document.querySelector(".confirm-location-button");
 let selectedGroupLocation = "";
+let currentGroupName = "Group Order";
+let currentGroupCloseTime = "1:30 PM";
+let currentGroupMemberCount = 1;
+let currentGroupId = "";
+let groupMembers = [];
+let groupInvites = [];
+let inviteReturnScreen = "group-chat";
+let groupInviteUnsubscribe = null;
+let groupMessagesUnsubscribe = null;
+let groupCartUnsubscribe = null;
+let detailReturnScreen = "home";
+let cartReturnScreen = "detail";
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -290,15 +329,22 @@ const menuSections = [
   },
 ];
 
-const cart = new Map();
+const normalCart = new Map();
+const groupCart = new Map();
+let cartMode = "normal";
+let detailCartMode = "normal";
 
 function money(value) {
   return `RM${value.toFixed(2)}`;
 }
 
-function totals() {
-  const subtotal = [...cart.values()].reduce((sum, item) => sum + item.price * item.qty, 0);
-  const qty = [...cart.values()].reduce((sum, item) => sum + item.qty, 0);
+function activeCart() {
+  return cartMode === "group" ? groupCart : normalCart;
+}
+
+function totals(sourceCart = activeCart()) {
+  const subtotal = [...sourceCart.values()].reduce((sum, item) => sum + item.price * item.qty, 0);
+  const qty = [...sourceCart.values()].reduce((sum, item) => sum + item.qty, 0);
   const delivery = subtotal >= FREE_DELIVERY_TARGET || subtotal === 0 ? 0 : DELIVERY_FEE;
   return { subtotal, qty, delivery, total: subtotal + delivery };
 }
@@ -313,7 +359,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "location-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -627,6 +673,459 @@ function openLocationScreen() {
   setScreen("location");
 }
 
+function groupCloseTime(slot) {
+  if (slot === "7pm") return "6:30 PM";
+  return "1:30 PM";
+}
+
+function closeCountdownText(closeTime) {
+  const match = closeTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return "Order closes soon";
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hours !== 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+
+  const now = new Date();
+  const close = new Date(now);
+  close.setHours(hours, minutes, 0, 0);
+  const diff = close - now;
+  if (diff <= 0) return "Order closed";
+  const totalMinutes = Math.ceil(diff / 60000);
+  const diffHours = Math.floor(totalMinutes / 60);
+  const diffMinutes = totalMinutes % 60;
+  if (diffHours <= 0) return `Order closes in ${diffMinutes}m`;
+  return `Order closes in ${diffHours}h ${diffMinutes}m`;
+}
+
+function currentClockTime() {
+  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function groupNowLabel() {
+  return new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+}
+
+function groupFriendKey(friend) {
+  return friend.uid || friend.username || friend.name || "";
+}
+
+function currentHostMember() {
+  const username = getOwnUsername() || auth?.currentUser?.displayName || "You";
+  return {
+    uid: auth?.currentUser?.uid || "host",
+    name: username,
+    username,
+    status: "host",
+  };
+}
+
+function groupInviteStatus(friend) {
+  const key = groupFriendKey(friend);
+  if (groupMembers.some((member) => groupFriendKey(member) === key)) return "joined";
+  const invite = groupInvites.find((item) => groupFriendKey(item) === key);
+  return invite?.status || "invite";
+}
+
+function renderGroupMembers() {
+  if (!createdMembersRow || !createdMembersTitle) return;
+  currentGroupMemberCount = groupMembers.length;
+  createdMembersTitle.textContent = `Members (${currentGroupMemberCount}/5)`;
+
+  const joinedMarkup = groupMembers
+    .map((member) => {
+      const label = member.status === "host" ? "Host" : "Joined";
+      return `
+        <div class="created-member">
+          <div class="created-member-avatar">${firstLetter(member.name || member.username)}</div>
+          <strong><b>${member.name || member.username}</b> <span>${label}</span></strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  const waitingMarkup = groupInvites
+    .filter((invite) => invite.status !== "accepted")
+    .map((invite) => {
+      const label = invite.status === "rejected" ? "Rejected" : "Waiting";
+      return `
+        <div class="created-member ${invite.status === "rejected" ? "rejected" : "waiting"}">
+          <div class="created-member-avatar">${firstLetter(invite.name || invite.username)}</div>
+          <strong><b>${invite.name || invite.username}</b> <span>${label}</span></strong>
+        </div>
+      `;
+    })
+    .join("");
+
+  const filledSlots = groupMembers.length + groupInvites.filter((invite) => invite.status !== "accepted").length;
+  const openSlots = Math.max(0, 5 - filledSlots);
+  const inviteMarkup = Array.from({ length: openSlots }, () => (
+    `<button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>`
+  )).join("");
+
+  createdMembersRow.innerHTML = joinedMarkup + waitingMarkup + inviteMarkup;
+  const startHint = startGroupOrderButton.querySelector("small");
+  if (startHint) {
+    startHint.textContent = currentGroupMemberCount >= 2
+      ? "Start ordering with your group"
+      : "Invite at least 1 friend to start ordering";
+  }
+}
+
+function appendLocalChatSystem(text, small = "") {
+  if (!chatMessages) return;
+  const message = document.createElement("div");
+  message.className = "chat-system-message cart-chat-message";
+  message.innerHTML = `<span>${text}</span>${small ? `<small>${small}</small>` : ""}`;
+  chatMessages.appendChild(message);
+}
+
+async function addGroupMessage(data) {
+  if (!db || !currentGroupId) {
+    appendLocalChatSystem(data.text || "", data.small || "");
+    return;
+  }
+
+  try {
+    await db.collection("groups").doc(currentGroupId).collection("messages").add({
+      ...data,
+      senderUid: auth?.currentUser?.uid || "",
+      senderUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      clientCreatedAt: Date.now(),
+    });
+  } catch (error) {
+    console.warn("Group message could not be saved yet.", error);
+    appendLocalChatSystem(data.text || "", data.small || "");
+  }
+}
+
+function renderGroupMessages(snapshot) {
+  if (!chatMessages) return;
+  chatMessages.innerHTML = "";
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    if (data.type === "created") {
+      const time = document.createElement("time");
+      time.textContent = data.timeLabel || groupNowLabel();
+      chatMessages.appendChild(time);
+    }
+
+    const message = document.createElement("div");
+    if (data.type === "text") {
+      const isMine = data.senderUid && data.senderUid === auth?.currentUser?.uid;
+      message.className = `chat-bubble-row ${isMine ? "mine" : ""}`;
+      message.innerHTML = `
+        <div class="chat-bubble-avatar">${firstLetter(data.senderUsername || "U")}</div>
+        <div>
+          <strong>${data.senderUsername || "User"}</strong>
+          <p>${data.text || ""}</p>
+          <small>${data.timeLabel || ""}</small>
+        </div>
+      `;
+    } else {
+      message.className = "chat-system-message cart-chat-message";
+      message.innerHTML = `<span>${data.text || ""}</span>${data.small ? `<small>${data.small}</small>` : ""}`;
+    }
+    chatMessages.appendChild(message);
+  });
+}
+
+function watchGroupMessages() {
+  if (groupMessagesUnsubscribe) {
+    groupMessagesUnsubscribe();
+    groupMessagesUnsubscribe = null;
+  }
+  if (!db || !currentGroupId) return;
+  groupMessagesUnsubscribe = db
+    .collection("groups")
+    .doc(currentGroupId)
+    .collection("messages")
+    .orderBy("clientCreatedAt", "asc")
+    .onSnapshot(renderGroupMessages, () => {});
+}
+
+function applyGroupInviteSnapshot(snapshot) {
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    const key = data.toUid || data.toUsername || doc.id;
+    const existing = groupInvites.find((invite) => groupFriendKey(invite) === key || invite.uid === data.toUid);
+    if (!existing) return;
+
+    const previousStatus = existing.status;
+    existing.status = data.status || existing.status;
+    if (existing.status === "accepted" && !groupMembers.some((member) => groupFriendKey(member) === groupFriendKey(existing))) {
+      groupMembers.push({ ...existing, status: "joined" });
+      addGroupMessage({
+        type: "event",
+        text: `${existing.name || existing.username || "A friend"} joined the group`,
+        timeLabel: groupNowLabel(),
+      }).catch(() => {});
+    }
+    if (existing.status === "rejected" && previousStatus !== "rejected") {
+      addGroupMessage({
+        type: "event",
+        text: `${existing.name || existing.username || "A friend"} rejected the invite`,
+        small: "You can invite again",
+        timeLabel: groupNowLabel(),
+      }).catch(() => {});
+    }
+  });
+  renderGroupMembers();
+  renderInviteFriends();
+}
+
+function watchGroupInvites() {
+  if (groupInviteUnsubscribe) {
+    groupInviteUnsubscribe();
+    groupInviteUnsubscribe = null;
+  }
+  if (!db || !currentGroupId) return;
+  groupInviteUnsubscribe = db
+    .collection("groups")
+    .doc(currentGroupId)
+    .collection("invites")
+    .onSnapshot(applyGroupInviteSnapshot, () => {});
+}
+
+function groupCartDoc(item) {
+  return {
+    code: item.code,
+    name: item.name,
+    chineseName: item.cn,
+    price: item.price,
+    qty: item.qty,
+    addedByUid: auth?.currentUser?.uid || "",
+    addedByUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  };
+}
+
+function applyGroupCartSnapshot(snapshot) {
+  groupCart.clear();
+  snapshot.forEach((doc) => {
+    const data = doc.data();
+    groupCart.set(doc.id, {
+      code: data.code || doc.id,
+      name: data.name || "",
+      cn: data.chineseName || "",
+      price: Number(data.price) || 0,
+      qty: Number(data.qty) || 0,
+    });
+  });
+  if (cartMode === "group") updateAllCartViews();
+}
+
+function watchGroupCart() {
+  if (groupCartUnsubscribe) {
+    groupCartUnsubscribe();
+    groupCartUnsubscribe = null;
+  }
+  if (!db || !currentGroupId) return;
+  groupCartUnsubscribe = db
+    .collection("groups")
+    .doc(currentGroupId)
+    .collection("cartItems")
+    .onSnapshot(applyGroupCartSnapshot, () => {});
+}
+
+async function saveGroupCartItem(item) {
+  if (!db || !currentGroupId) return;
+  await db.collection("groups").doc(currentGroupId).collection("cartItems").doc(item.code).set(groupCartDoc(item), { merge: true });
+}
+
+async function removeGroupCartItem(code) {
+  if (!db || !currentGroupId) return;
+  await db.collection("groups").doc(currentGroupId).collection("cartItems").doc(code).delete();
+}
+
+async function openGroupCreated() {
+  if (createGroupButton.disabled) return;
+  const name = groupNameInput.value.trim() || "Group Order";
+  const slot = groupTimeButton.textContent.trim();
+  currentGroupName = name;
+  currentGroupCloseTime = groupCloseTime(slot);
+  currentGroupId = `group_${Date.now()}_${auth?.currentUser?.uid || "guest"}`;
+  groupMembers = [currentHostMember()];
+  groupInvites = [];
+  groupCart.clear();
+  createdGroupName.textContent = name;
+  createdCloseTime.textContent = currentGroupCloseTime;
+  createdHostAvatar.textContent = firstLetter(groupMembers[0].name);
+  createdHostName.textContent = groupMembers[0].name;
+  renderGroupMembers();
+  if (db) {
+    try {
+      await db.collection("groups").doc(currentGroupId).set({
+        groupId: currentGroupId,
+        groupName: currentGroupName,
+        restaurant: "Mori Cafe",
+        closeTime: currentGroupCloseTime,
+        hostUid: auth?.currentUser?.uid || "",
+        hostUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+        memberLimit: 5,
+        members: groupMembers.map((member) => ({
+          uid: member.uid || "",
+          username: member.username || member.name || "",
+          status: member.status || "joined",
+        })),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      console.warn("Group could not be saved yet.", error);
+    }
+  }
+  await addGroupMessage({
+    type: "created",
+    text: `You created the group "${currentGroupName}"`,
+    small: `Order closes at ${currentGroupCloseTime}`,
+    timeLabel: groupNowLabel(),
+  });
+  watchGroupInvites();
+  watchGroupMessages();
+  watchGroupCart();
+  setScreen("group-created");
+}
+
+function openGroupChat() {
+  chatGroupName.textContent = currentGroupName;
+  chatMemberCount.textContent = `${currentGroupMemberCount} of 5 members`;
+  chatCloseCountdown.textContent = closeCountdownText(currentGroupCloseTime);
+  if (!db || !currentGroupId) {
+    chatCreatedTime.textContent = currentClockTime();
+    chatCreatedText.textContent = `You created the group "${currentGroupName}"`;
+    chatCreatedClose.textContent = `Order closes at ${currentGroupCloseTime}`;
+  }
+  setScreen("group-chat");
+}
+
+function openSelectedRestaurantMenu() {
+  window.scrollTo(0, 0);
+  detailScroll.scrollTo(0, 0);
+  detailReturnScreen = "group-chat";
+  detailCartMode = "group";
+  cartMode = "group";
+  updateAllCartViews();
+  setScreen("detail");
+}
+
+function openGroupCart() {
+  cartMode = "group";
+  cartReturnScreen = "group-chat";
+  updateAllCartViews();
+  window.scrollTo(0, 0);
+  setScreen("cart");
+  requestAnimationFrame(() => cartPageScroll.scrollTo(0, 0));
+}
+
+function renderInviteFriends() {
+  const query = inviteFriendSearchInput.value.trim().toLowerCase();
+  const friends = readFriendData("novaFriends").filter((friend) => {
+    const username = (friend.username || "").toLowerCase();
+    return !query || username.includes(query);
+  });
+  inviteFriendsList.innerHTML = friends
+    .map((friend) => {
+      const key = groupFriendKey(friend);
+      const status = groupInviteStatus(friend);
+      const labels = {
+        invite: "Invite",
+        pending: "Waiting",
+        rejected: "Invite",
+        joined: "Joined",
+      };
+      const disabled = status === "pending" || status === "joined" ? "disabled" : "";
+      const statusClass = status === "rejected" ? " is-rejected" : "";
+      return `
+        <article class="invite-friend-row">
+          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          <span>
+            <strong>${friend.name || friend.username}</strong>
+            <em>@${friend.username || ""}</em>
+          </span>
+          <button class="${statusClass}" type="button" data-invite-key="${key}" ${disabled}>${labels[status]}</button>
+        </article>
+      `;
+    })
+    .join("");
+  inviteFriendsEmpty.hidden = friends.length > 0;
+}
+
+function openInviteFriends(returnScreen = "group-chat") {
+  inviteReturnScreen = returnScreen;
+  inviteFriendSearchInput.value = "";
+  renderInviteFriends();
+  setScreen("invite-friends");
+}
+
+async function inviteGroupFriend(friend) {
+  const key = groupFriendKey(friend);
+  if (!key) return;
+  const existing = groupInvites.find((invite) => groupFriendKey(invite) === key);
+  if (existing?.status === "pending" || existing?.status === "accepted") return;
+
+  const inviteData = {
+    ...friend,
+    status: "pending",
+    invitedAt: Date.now(),
+  };
+
+  if (existing) {
+    Object.assign(existing, inviteData);
+  } else {
+    groupInvites.push(inviteData);
+  }
+
+  if (db && currentGroupId && friend.uid) {
+    try {
+      const invitePayload = {
+        groupId: currentGroupId,
+        groupName: currentGroupName,
+        closeTime: currentGroupCloseTime,
+        fromUid: auth?.currentUser?.uid || "",
+        fromUsername: getOwnUsername() || "",
+        fromName: currentProfile?.name || getOwnUsername() || "You",
+        toUid: friend.uid,
+        toUsername: friend.username || "",
+        status: "pending",
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+      await db.collection("groups").doc(currentGroupId).collection("invites").doc(friend.uid).set({
+        ...invitePayload,
+      }, { merge: true });
+      await db.collection("groupInvites").doc(`${currentGroupId}_${friend.uid}`).set(invitePayload, { merge: true });
+      await addGroupMessage({
+        type: "event",
+        text: `${getOwnUsername() || "You"} invited ${friend.name || friend.username}`,
+        timeLabel: groupNowLabel(),
+      });
+    } catch (error) {
+      console.warn("Group invite could not be saved yet.", error);
+    }
+  }
+
+  renderGroupMembers();
+  renderInviteFriends();
+}
+
+async function appendCartChatMessage(itemName) {
+  const username = getOwnUsername() || auth?.currentUser?.displayName || "You";
+  await addGroupMessage({
+    type: "cart",
+    text: `${username} added ${itemName}`,
+    timeLabel: groupNowLabel(),
+  });
+}
+
+function updateCreateGroupButton() {
+  const hasRestaurant = Array.from(groupRestaurantRows).some((row) => row.classList.contains("is-selected"));
+  const hasName = groupNameInput.value.trim().length > 0;
+  const hasLocation = Boolean(selectedGroupLocation);
+  const hasTime = groupTimeButton.textContent.trim() === "2pm" || groupTimeButton.textContent.trim() === "7pm";
+  createGroupButton.disabled = !(hasRestaurant && hasName && hasLocation && hasTime);
+}
+
 async function getUserProfile(user) {
   if (!user) return null;
 
@@ -823,6 +1322,7 @@ copyUsernameButton.addEventListener("click", async () => {
 groupOrderBack.addEventListener("click", () => setScreen("home"));
 groupNameInput.addEventListener("input", () => {
   groupNameCount.textContent = `${groupNameInput.value.length}/30`;
+  updateCreateGroupButton();
 });
 groupRestaurantSearch.addEventListener("input", () => {
   const query = groupRestaurantSearch.value.trim().toLowerCase();
@@ -835,6 +1335,7 @@ groupRestaurantRows.forEach((row) => {
     const shouldSelect = !row.classList.contains("is-selected");
     groupRestaurantRows.forEach((item) => item.classList.remove("is-selected"));
     row.classList.toggle("is-selected", shouldSelect);
+    updateCreateGroupButton();
   });
 });
 groupLocationButton.addEventListener("click", openLocationScreen);
@@ -847,7 +1348,50 @@ groupTimeOptions.forEach((option) => {
     option.classList.add("is-selected");
     groupTimeButton.textContent = option.dataset.time;
     groupTimePanel.hidden = true;
+    updateCreateGroupButton();
   });
+});
+createGroupButton.addEventListener("click", openGroupCreated);
+createdBack.addEventListener("click", openGroupOrder);
+startGroupOrderButton.addEventListener("click", openGroupChat);
+chatBack.addEventListener("click", () => setScreen("group-created"));
+chatAddItemsButton.addEventListener("click", openSelectedRestaurantMenu);
+chatMenuButton.addEventListener("click", openSelectedRestaurantMenu);
+chatCartButton.addEventListener("click", openGroupCart);
+chatSendButton.addEventListener("click", async () => {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  chatInput.value = "";
+  await addGroupMessage({
+    type: "text",
+    text,
+    timeLabel: groupNowLabel(),
+  });
+});
+chatInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    chatSendButton.click();
+  }
+});
+chatInviteButton.addEventListener("click", () => openInviteFriends("group-chat"));
+createdMembersRow.addEventListener("click", (event) => {
+  if (event.target.closest(".created-invite-slot")) openInviteFriends("group-created");
+});
+inviteFriendsBack.addEventListener("click", () => {
+  if (inviteReturnScreen === "group-created") {
+    setScreen("group-created");
+    return;
+  }
+  openGroupChat();
+});
+inviteFriendSearchInput.addEventListener("input", renderInviteFriends);
+inviteFriendsList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-invite-key]");
+  if (!button || button.disabled) return;
+  const friends = readFriendData("novaFriends");
+  const friend = friends.find((item) => groupFriendKey(item) === button.dataset.inviteKey);
+  if (friend) inviteGroupFriend(friend);
 });
 locationBack.addEventListener("click", openGroupOrder);
 locationCards.forEach((card) => {
@@ -861,8 +1405,11 @@ locationCards.forEach((card) => {
 confirmLocationButton.addEventListener("click", () => {
   if (!selectedGroupLocation) return;
   groupLocationButton.textContent = selectedGroupLocation;
+  updateCreateGroupButton();
   openGroupOrder();
 });
+
+updateCreateGroupButton();
 
 guestSignupButton.addEventListener("click", () => {
   isGuestUser = false;
@@ -898,6 +1445,10 @@ openButtons.forEach((button) => {
   button.addEventListener("click", () => {
     window.scrollTo(0, 0);
     detailScroll.scrollTo(0, 0);
+    detailReturnScreen = "home";
+    detailCartMode = "normal";
+    cartMode = "normal";
+    updateAllCartViews();
     setScreen("detail");
   });
 });
@@ -907,12 +1458,16 @@ restaurantCard.addEventListener("keydown", (event) => {
     event.preventDefault();
     window.scrollTo(0, 0);
     detailScroll.scrollTo(0, 0);
+    detailReturnScreen = "home";
+    detailCartMode = "normal";
+    cartMode = "normal";
+    updateAllCartViews();
     setScreen("detail");
   }
 });
 
-backButton.addEventListener("click", () => setScreen("home"));
-cartBack.addEventListener("click", () => setScreen("detail"));
+backButton.addEventListener("click", () => setScreen(detailReturnScreen));
+cartBack.addEventListener("click", () => setScreen(cartReturnScreen));
 checkoutBack.addEventListener("click", () => setScreen("cart"));
 
 authSwitchButton.addEventListener("click", () => setAuthMode(!isSignupMode));
@@ -1166,7 +1721,8 @@ function renderMenus() {
 }
 
 function updateAllCartViews() {
-  const current = totals();
+  const sourceCart = activeCart();
+  const current = totals(sourceCart);
   const message = deliveryMessage(current.subtotal);
   const remaining = Math.max(FREE_DELIVERY_TARGET - current.subtotal, 0);
   const progress = Math.min((current.subtotal / FREE_DELIVERY_TARGET) * 100, 100);
@@ -1194,8 +1750,9 @@ function updateAllCartViews() {
   checkoutDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
   checkoutTotal.textContent = money(current.total);
   placeOrderTotal.textContent = money(current.total);
+  phone.classList.toggle("group-cart-mode", cartMode === "group");
 
-  cartItems.innerHTML = [...cart.values()]
+  cartItems.innerHTML = [...sourceCart.values()]
     .map(
       (item) => `
         <article class="cart-item text-only-cart">
@@ -1220,7 +1777,7 @@ function updateAllCartViews() {
     )
     .join("");
 
-  checkoutItems.innerHTML = [...cart.values()]
+  checkoutItems.innerHTML = [...sourceCart.values()]
     .map(
       (item) => `
         <article class="checkout-item">
@@ -1237,8 +1794,10 @@ function updateAllCartViews() {
 }
 
 function addToCart(button) {
+  cartMode = detailCartMode;
+  const sourceCart = activeCart();
   const code = button.dataset.code;
-  const item = cart.get(code) || {
+  const item = sourceCart.get(code) || {
     code,
     name: button.dataset.name,
     cn: button.dataset.cn,
@@ -1246,8 +1805,12 @@ function addToCart(button) {
     qty: 0,
   };
   item.qty += 1;
-  cart.set(code, item);
+  sourceCart.set(code, item);
   updateAllCartViews();
+  if (cartMode === "group") {
+    saveGroupCartItem(item).catch(() => {});
+    appendCartChatMessage(item.name).catch(() => {});
+  }
 }
 
 renderMenus();
@@ -1262,29 +1825,49 @@ cartItems.addEventListener("click", (event) => {
   const remove = event.target.closest(".tiny-trash");
   const qtyButton = event.target.closest(".qty-control button");
   const code = remove?.dataset.code || qtyButton?.dataset.code;
-  if (!code || !cart.has(code)) return;
+  const sourceCart = activeCart();
+  if (!code || !sourceCart.has(code)) return;
 
+  let changedItem = null;
+  let removedCode = "";
   if (remove) {
-    cart.delete(code);
+    removedCode = code;
+    sourceCart.delete(code);
   } else if (qtyButton.dataset.action === "increase") {
-    cart.get(code).qty += 1;
+    sourceCart.get(code).qty += 1;
+    changedItem = sourceCart.get(code);
   } else {
-    const item = cart.get(code);
+    const item = sourceCart.get(code);
     item.qty -= 1;
-    if (item.qty <= 0) cart.delete(code);
+    if (item.qty <= 0) {
+      removedCode = code;
+      sourceCart.delete(code);
+    } else {
+      changedItem = item;
+    }
   }
 
   updateAllCartViews();
+  if (cartMode === "group") {
+    if (removedCode) removeGroupCartItem(removedCode).catch(() => {});
+    if (changedItem) saveGroupCartItem(changedItem).catch(() => {});
+  }
 });
 
 clearCartButton.addEventListener("click", () => {
-  cart.clear();
+  const clearCodes = cartMode === "group" ? [...groupCart.keys()] : [];
+  activeCart().clear();
   updateAllCartViews();
+  if (cartMode === "group") {
+    clearCodes.forEach((code) => removeGroupCartItem(code).catch(() => {}));
+  }
 });
 
 viewCart.addEventListener("click", () => {
   if (viewCart.disabled) return;
   window.scrollTo(0, 0);
+  cartMode = detailCartMode;
+  cartReturnScreen = "detail";
   setScreen("cart");
   requestAnimationFrame(() => {
     window.scrollTo(0, 0);
@@ -1293,19 +1876,28 @@ viewCart.addEventListener("click", () => {
 });
 
 checkoutButton.addEventListener("click", () => {
-  if (cart.size === 0) return;
+  if (cartMode === "group") {
+    alert("Group order checkout is coming soon.");
+    return;
+  }
+  if (activeCart().size === 0) return;
   window.scrollTo(0, 0);
   setScreen("checkout");
 });
 
 summaryCheckoutButton.addEventListener("click", () => {
-  if (cart.size === 0) return;
+  if (cartMode === "group") {
+    alert("Group order checkout is coming soon.");
+    return;
+  }
+  if (activeCart().size === 0) return;
   window.scrollTo(0, 0);
   setScreen("checkout");
 });
 
 placeOrderButton.addEventListener("click", async () => {
-  if (cart.size === 0 || placeOrderButton.disabled) return;
+  const sourceCart = activeCart();
+  if (cartMode === "group" || sourceCart.size === 0 || placeOrderButton.disabled) return;
   if (!db) {
     alert("Firebase is not ready. Please check your connection.");
     return;
@@ -1322,7 +1914,7 @@ placeOrderButton.addEventListener("click", async () => {
       address: activeChoice("addressChoices"),
       slot: activeChoice("slotChoices"),
       paymentMethod: "Touch 'n Go eWallet",
-      items: [...cart.values()].map((item) => ({
+      items: [...sourceCart.values()].map((item) => ({
         code: item.code,
         name: item.name,
         chineseName: item.cn,
@@ -1337,7 +1929,7 @@ placeOrderButton.addEventListener("click", async () => {
     });
 
     alert("Order placed successfully!");
-    cart.clear();
+    sourceCart.clear();
     updateAllCartViews();
     setScreen("home");
   } catch (error) {
