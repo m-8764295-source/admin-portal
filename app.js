@@ -36,6 +36,9 @@ const allFriendsTitle = document.querySelector("#allFriendsTitle");
 const friendRequestsSection = document.querySelector("#friendRequestsSection");
 const allFriendsSection = document.querySelector("#allFriendsSection");
 const friendsPageEmpty = document.querySelector("#friendsPageEmpty");
+const groupInvitesSection = document.querySelector("#groupInvitesSection");
+const groupInvitesList = document.querySelector("#groupInvitesList");
+const groupInviteCount = document.querySelector("#groupInviteCount");
 const addFriendButton = document.querySelector(".add-friend-button");
 const addFriendsBack = document.querySelector(".add-friends-back");
 const addFriendSearchInput = document.querySelector("#addFriendSearchInput");
@@ -83,6 +86,11 @@ const inviteFriendsEmpty = document.querySelector("#inviteFriendsEmpty");
 const locationBack = document.querySelector(".location-back");
 const locationCards = document.querySelectorAll(".location-card");
 const confirmLocationButton = document.querySelector(".confirm-location-button");
+const notificationButtons = document.querySelectorAll(".bell");
+const notificationsBack = document.querySelector(".notifications-back");
+const notificationsTabs = document.querySelectorAll("[data-notification-filter]");
+const notificationsList = document.querySelector("#notificationsList");
+const notificationsEmpty = document.querySelector("#notificationsEmpty");
 let selectedGroupLocation = "";
 let currentGroupName = "Group Order";
 let currentGroupCloseTime = "1:30 PM";
@@ -94,6 +102,11 @@ let inviteReturnScreen = "group-chat";
 let groupInviteUnsubscribe = null;
 let groupMessagesUnsubscribe = null;
 let groupCartUnsubscribe = null;
+let notificationReturnScreen = "home";
+let activeNotificationFilter = "all";
+let firebaseGroupInvites = [];
+let firebaseGroupInvitesLoaded = false;
+let notificationItems = [];
 let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
 
@@ -121,6 +134,7 @@ const menuList = document.querySelector("#menuList");
 const cartQty = document.querySelector("#cartQty");
 const cartTotal = document.querySelector("#cartTotal");
 const detailDeliveryText = document.querySelector("#detailDeliveryText");
+const deliveryPill = document.querySelector(".delivery-pill");
 const viewCart = document.querySelector(".cart-bar .view-cart");
 const detailScroll = document.querySelector(".detail-scroll");
 const cartBack = document.querySelector(".cart-back");
@@ -139,6 +153,10 @@ const cartPageDelivery = document.querySelector("#cartPageDelivery");
 const cartInlineDelivery = document.querySelector("#cartInlineDelivery");
 const cartFreeRow = document.querySelector(".cart-free-row");
 const clearCartButton = document.querySelector(".cart-delete");
+const cartShopNoteButton = document.querySelector(".cart-shop-note");
+const cartNoteEditor = document.querySelector(".cart-note-editor");
+const cartShopNoteInput = document.querySelector("#cartShopNoteInput");
+const cartShopNoteCount = document.querySelector("#cartShopNoteCount");
 const checkoutButton = document.querySelector(".cart-page-bar .cart-active");
 const summaryCheckoutButton = document.querySelector(".cart-summary .checkout-button");
 const checkoutBack = document.querySelector(".checkout-back");
@@ -342,10 +360,11 @@ function activeCart() {
   return cartMode === "group" ? groupCart : normalCart;
 }
 
-function totals(sourceCart = activeCart()) {
+function totals(sourceCart = activeCart(), mode = cartMode) {
   const subtotal = [...sourceCart.values()].reduce((sum, item) => sum + item.price * item.qty, 0);
   const qty = [...sourceCart.values()].reduce((sum, item) => sum + item.qty, 0);
-  const delivery = subtotal >= FREE_DELIVERY_TARGET || subtotal === 0 ? 0 : DELIVERY_FEE;
+  const freeDelivery = mode === "group" && subtotal >= FREE_DELIVERY_TARGET;
+  const delivery = freeDelivery || subtotal === 0 ? 0 : DELIVERY_FEE;
   return { subtotal, qty, delivery, total: subtotal + delivery };
 }
 
@@ -359,7 +378,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -382,6 +401,7 @@ function continueToHome() {
   authScreen.classList.remove("is-routing");
   authScreen.classList.remove("is-loading");
   setScreen("home");
+  seedPromoNotifications().then(loadNotifications).catch(() => {});
 }
 
 function firstLetter(value) {
@@ -440,6 +460,219 @@ function readFriendData(key) {
   }
 }
 
+function relativeTime(timestamp) {
+  const value = timestamp?.toDate ? timestamp.toDate().getTime() : Number(timestamp || Date.now());
+  const diff = Math.max(Date.now() - value, 0);
+  const minutes = Math.floor(diff / 60000);
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return "Yesterday";
+}
+
+function notificationGroup(timestamp) {
+  const value = timestamp?.toDate ? timestamp.toDate() : new Date(Number(timestamp || Date.now()));
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  if (value.toDateString() === today.toDateString()) return "Today";
+  if (value.toDateString() === yesterday.toDateString()) return "Yesterday";
+  return "This Week";
+}
+
+function promoNotifications() {
+  return [
+    ["35", "10% off group delivery fee", "Spend RM35 in a group order to unlock 10% off delivery fee."],
+    ["40", "20% off group delivery fee", "Spend RM40 in a group order to unlock 20% off delivery fee."],
+    ["45", "30% off group delivery fee", "Spend RM45 in a group order to unlock 30% off delivery fee."],
+    ["50", "Free group delivery fee", "Spend RM50 in a group order to unlock free delivery fee."],
+  ].map(([amount, title, body], index) => ({
+    id: `promo-${amount}`,
+    type: "promos",
+    icon: "promo",
+    title,
+    body,
+    read: false,
+    createdAtMs: Date.now() - index * 1000,
+  }));
+}
+
+async function seedPromoNotifications() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) return;
+  const marker = localStorage.getItem(`novaPromosSeeded:${user.uid}`);
+  if (marker) return;
+  try {
+    const batch = db.batch();
+    promoNotifications().forEach((item) => {
+      const ref = db.collection("users").doc(user.uid).collection("notifications").doc(item.id);
+      batch.set(ref, {
+        type: item.type,
+        icon: item.icon,
+        title: item.title,
+        body: item.body,
+        read: false,
+        createdAtMs: item.createdAtMs,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
+    await batch.commit();
+    localStorage.setItem(`novaPromosSeeded:${user.uid}`, "1");
+  } catch (error) {
+    console.warn("Promo notifications could not be seeded yet.", error);
+  }
+}
+
+function friendAvatar(name) {
+  return firstLetter(name || "Friend");
+}
+
+async function loadFirebaseGroupInvites() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    firebaseGroupInvites = [];
+    firebaseGroupInvitesLoaded = false;
+    return;
+  }
+  const snapshot = await db
+    .collection("groupInvites")
+    .where("toUid", "==", user.uid)
+    .get();
+
+  firebaseGroupInvites = snapshot.docs
+    .map((doc) => ({ id: doc.id, ...doc.data() }))
+    .filter((data) => data.status === "pending");
+  firebaseGroupInvitesLoaded = true;
+}
+
+function notificationIcon(type) {
+  if (type === "social") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>`;
+  if (type === "group") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /><circle cx="10" cy="14" r="1.3" /><circle cx="14" cy="14" r="1.3" /></svg>`;
+  if (type === "promos") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /></svg>`;
+}
+
+function renderNotifications() {
+  const items = notificationItems.filter((item) => activeNotificationFilter === "all" || item.type === activeNotificationFilter);
+  notificationsEmpty.hidden = items.length > 0;
+  notificationsList.innerHTML = "";
+  if (items.length === 0) return;
+
+  const groups = ["Today", "Yesterday", "This Week"];
+  notificationsList.innerHTML = groups
+    .map((group) => {
+      const groupItems = items.filter((item) => notificationGroup(item.createdAt || item.createdAtMs) === group);
+      if (groupItems.length === 0) return "";
+      return `
+        <section class="notification-day">
+          <h2>${group}</h2>
+          <div class="notification-card">
+            ${groupItems.map((item) => {
+              const canRespond = !item.read && (item.actionType === "friendRequest" || item.actionType === "groupInvite");
+              return `
+              <article class="notification-row ${item.read ? "is-read" : ""}" data-notification-id="${item.id || ""}" data-type="${item.type}">
+                <div class="notification-icon ${item.type}">${notificationIcon(item.type)}</div>
+                <div>
+                  <h3>${item.title}</h3>
+                  <p>${item.body || relativeTime(item.createdAt || item.createdAtMs)}</p>
+                </div>
+                <i></i>
+                ${canRespond ? `
+                  <div class="notification-actions">
+                    <button class="notification-reject" type="button" data-action-type="${item.actionType}" data-action-id="${item.id}" aria-label="Reject">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                    </button>
+                    <button class="notification-accept" type="button" data-action-type="${item.actionType}" data-action-id="${item.id}" aria-label="Accept">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7" /></svg>
+                    </button>
+                  </div>
+                ` : `<b>›</b>`}
+              </article>
+            `;
+            }).join("")}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
+}
+
+async function loadNotifications() {
+  initFirebase();
+  const user = auth?.currentUser;
+  notificationItems = [];
+
+  if (db && user && !isGuestUser) {
+    await seedPromoNotifications();
+    const [requestSnap, inviteSnap, notificationSnap] = await Promise.all([
+      db.collection("friendRequests").where("toUid", "==", user.uid).get(),
+      db.collection("groupInvites").where("toUid", "==", user.uid).get(),
+      db.collection("users").doc(user.uid).collection("notifications").get(),
+    ]);
+
+    notificationItems.push(...requestSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        type: "social",
+        actionType: data.status === "pending" ? "friendRequest" : "",
+        title: `${data.fromName || data.fromUsername || "Someone"} sent you a friend request`,
+        body: relativeTime(data.createdAt || data.createdAtMs),
+        read: data.status !== "pending",
+        createdAt: data.createdAt,
+        createdAtMs: data.createdAtMs || Date.now(),
+      };
+    }));
+
+    notificationItems.push(...inviteSnap.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        type: "group",
+        actionType: data.status === "pending" ? "groupInvite" : "",
+        title: `${data.fromName || data.fromUsername || "Someone"} invited you to join "${data.groupName || "Group Order"}"`,
+        body: data.status === "pending" ? relativeTime(data.updatedAt || data.createdAtMs) : `Invite ${data.status}`,
+        read: data.status !== "pending",
+        createdAt: data.updatedAt,
+        createdAtMs: data.createdAtMs || Date.now(),
+      };
+    }));
+
+    notificationItems.push(...notificationSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+  } else {
+    notificationItems = promoNotifications();
+  }
+
+  notificationItems.sort((a, b) => {
+    const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : Number(a.createdAtMs || 0);
+    const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : Number(b.createdAtMs || 0);
+    return bTime - aTime;
+  });
+
+  updateNotificationBadges();
+  renderNotifications();
+}
+
+function updateNotificationBadges() {
+  const unread = notificationItems.filter((item) => !item.read).length;
+  notificationButtons.forEach((button) => {
+    button.classList.toggle("has-count", unread > 0);
+    const badge = button.querySelector("span");
+    if (badge) badge.textContent = unread > 9 ? "9+" : unread ? String(unread) : "";
+  });
+}
+
+async function openNotifications(returnScreen = "home") {
+  notificationReturnScreen = returnScreen;
+  activeNotificationFilter = "all";
+  notificationsTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.notificationFilter === "all"));
+  await loadNotifications();
+  setScreen("notifications");
+}
+
 function friendAvatar(name) {
   return firstLetter(name || "Friend");
 }
@@ -447,31 +680,54 @@ function friendAvatar(name) {
 function renderFriends() {
   const query = friendsSearchInput.value.trim().toLowerCase();
   const requests = firebaseFriendRequestsLoaded ? firebaseFriendRequests : readFriendData("novaFriendRequests");
+  const groupInvites = firebaseGroupInvitesLoaded ? firebaseGroupInvites : [];
   const friends = readFriendData("novaFriends").filter((friend) => {
     const username = (friend.username || "").toLowerCase();
     return !query || username.includes(query);
   });
 
   friendRequestCount.textContent = requests.length;
+  groupInviteCount.textContent = groupInvites.length;
   allFriendsTitle.textContent = `All Friends (${friends.length})`;
+  groupInvitesSection.hidden = groupInvites.length === 0;
   friendRequestsSection.hidden = requests.length === 0;
   allFriendsSection.hidden = friends.length === 0;
-  friendsPageEmpty.hidden = requests.length > 0 || friends.length > 0;
+  friendsPageEmpty.hidden = groupInvites.length > 0 || requests.length > 0 || friends.length > 0;
+
+  groupInvitesList.innerHTML = groupInvites
+    .map((invite) => `
+      <article class="friend-row group-invite-row">
+        <div class="friend-avatar">${friendAvatar(invite.fromName || invite.fromUsername)}</div>
+        <div class="friend-info">
+          <h3>${invite.groupName || "Group Order"}</h3>
+          <p>${invite.fromName || invite.fromUsername || "Someone"} invited you</p>
+        </div>
+        <div class="request-actions">
+          <button class="reject-group-invite" type="button" data-invite-id="${invite.id}" aria-label="Reject invite">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+          </button>
+          <button class="accept-request accept-group-invite" type="button" data-invite-id="${invite.id}" aria-label="Accept invite">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7" /></svg>
+          </button>
+        </div>
+      </article>
+    `)
+    .join("");
 
   friendRequestsList.innerHTML = requests
     .map(
       (friend) => `
-        <article class="friend-row">
+        <article class="friend-row" data-request-id="${friend.id || ""}">
           <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
           <div class="friend-info">
             <h3>${friend.name || friend.username}</h3>
             <p>@${friend.username || ""}</p>
           </div>
           <div class="request-actions">
-            <button type="button" aria-label="Decline ${friend.username || "request"}">
+            <button class="reject-friend-request" type="button" aria-label="Decline ${friend.username || "request"}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
             </button>
-            <button class="accept-request" type="button" aria-label="Accept ${friend.username || "request"}">
+            <button class="accept-request accept-friend-request" type="button" aria-label="Accept ${friend.username || "request"}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7" /></svg>
             </button>
           </div>
@@ -525,12 +781,97 @@ async function loadFirebaseFriendRequests() {
 async function openFriends() {
   friendsSearchInput.value = "";
   try {
-    await loadFirebaseFriendRequests();
+    await Promise.all([loadFirebaseFriendRequests(), loadFirebaseGroupInvites()]);
   } catch (error) {
     console.error(error);
   }
   renderFriends();
   setScreen("friends");
+}
+
+async function updateGroupInviteStatus(inviteId, status) {
+  initFirebase();
+  const invite = firebaseGroupInvites.find((item) => item.id === inviteId);
+  const user = auth?.currentUser;
+  if (!db || !user || !invite) return;
+
+  await db.collection("groupInvites").doc(inviteId).set({
+    status,
+    respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  if (invite.groupId) {
+    await db.collection("groups").doc(invite.groupId).collection("invites").doc(user.uid).set({
+      status,
+      respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    if (status === "accepted") {
+      await db.collection("groups").doc(invite.groupId).collection("messages").add({
+        type: "event",
+        text: `${getOwnUsername() || user.displayName || "Someone"} joined the group`,
+        senderUid: user.uid,
+        senderUsername: getOwnUsername() || user.displayName || "User",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        clientCreatedAt: Date.now(),
+      });
+    } else {
+      await db.collection("groups").doc(invite.groupId).collection("messages").add({
+        type: "event",
+        text: `${getOwnUsername() || user.displayName || "Someone"} rejected the invite`,
+        small: "You can invite again",
+        senderUid: user.uid,
+        senderUsername: getOwnUsername() || user.displayName || "User",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        clientCreatedAt: Date.now(),
+      });
+    }
+  }
+
+  await loadFirebaseGroupInvites();
+  renderFriends();
+  await loadNotifications();
+}
+
+async function updateFriendRequestStatus(requestId, status) {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || !requestId) return;
+  const requestRef = db.collection("friendRequests").doc(requestId);
+  const requestDoc = await requestRef.get();
+  if (!requestDoc.exists) return;
+  const request = requestDoc.data();
+
+  await requestRef.set({
+    status,
+    respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  if (status === "accepted") {
+    const myUsername = getOwnUsername() || user.displayName || "User";
+    await Promise.all([
+      db.collection("users").doc(user.uid).collection("friends").doc(request.fromUid).set({
+        uid: request.fromUid,
+        username: request.fromUsername || "",
+        name: request.fromName || request.fromUsername || "Friend",
+        email: request.fromEmail || "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }),
+      db.collection("users").doc(request.fromUid).collection("friends").doc(user.uid).set({
+        uid: user.uid,
+        username: myUsername,
+        name: currentProfile?.name || myUsername,
+        email: user.email || "",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }),
+    ]);
+  }
+
+  await loadFirebaseFriendRequests();
+  renderFriends();
+  await loadNotifications();
 }
 
 function getOwnUsername() {
@@ -1250,6 +1591,39 @@ document.querySelectorAll(".profile-nav").forEach((item) => {
   });
 });
 
+notificationButtons.forEach((button) => {
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    const currentScreen = phone.classList.contains("profile-view") ? "profile" : phone.classList.contains("cart-view") ? "cart" : "home";
+    openNotifications(currentScreen);
+  });
+});
+
+notificationsBack.addEventListener("click", () => setScreen(notificationReturnScreen));
+notificationsTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    activeNotificationFilter = tab.dataset.notificationFilter;
+    notificationsTabs.forEach((item) => item.classList.toggle("active", item === tab));
+    renderNotifications();
+  });
+});
+notificationsList.addEventListener("click", async (event) => {
+  const accept = event.target.closest(".notification-accept");
+  const reject = event.target.closest(".notification-reject");
+  const button = accept || reject;
+  if (!button) return;
+  const status = accept ? "accepted" : "rejected";
+  button.closest(".notification-actions")?.querySelectorAll("button").forEach((item) => {
+    item.disabled = true;
+  });
+  if (button.dataset.actionType === "groupInvite") {
+    await updateGroupInviteStatus(button.dataset.actionId, status);
+  }
+  if (button.dataset.actionType === "friendRequest") {
+    await updateFriendRequestStatus(button.dataset.actionId, status);
+  }
+});
+
 document.querySelectorAll(".nav-item.group").forEach((item) => {
   item.addEventListener("click", (event) => {
     event.preventDefault();
@@ -1393,6 +1767,21 @@ inviteFriendsList.addEventListener("click", (event) => {
   const friend = friends.find((item) => groupFriendKey(item) === button.dataset.inviteKey);
   if (friend) inviteGroupFriend(friend);
 });
+groupInvitesList.addEventListener("click", async (event) => {
+  const accept = event.target.closest(".accept-group-invite");
+  const reject = event.target.closest(".reject-group-invite");
+  const inviteId = accept?.dataset.inviteId || reject?.dataset.inviteId;
+  if (!inviteId) return;
+  await updateGroupInviteStatus(inviteId, accept ? "accepted" : "rejected");
+});
+friendRequestsList.addEventListener("click", async (event) => {
+  const row = event.target.closest("[data-request-id]");
+  if (!row) return;
+  const accept = event.target.closest(".accept-friend-request");
+  const reject = event.target.closest(".reject-friend-request");
+  if (!accept && !reject) return;
+  await updateFriendRequestStatus(row.dataset.requestId, accept ? "accepted" : "rejected");
+});
 locationBack.addEventListener("click", openGroupOrder);
 locationCards.forEach((card) => {
   card.addEventListener("click", () => {
@@ -1477,6 +1866,7 @@ guestLogin.addEventListener("click", () => {
   isGuestUser = true;
   currentProfile = null;
   setScreen("home");
+  loadNotifications().catch(() => {});
 });
 
 passwordToggle.addEventListener("click", () => {
@@ -1722,14 +2112,17 @@ function renderMenus() {
 
 function updateAllCartViews() {
   const sourceCart = activeCart();
-  const current = totals(sourceCart);
+  const current = totals(sourceCart, cartMode);
+  const isGroupCart = cartMode === "group";
   const message = deliveryMessage(current.subtotal);
   const remaining = Math.max(FREE_DELIVERY_TARGET - current.subtotal, 0);
   const progress = Math.min((current.subtotal / FREE_DELIVERY_TARGET) * 100, 100);
+  const normalDeliveryText = current.qty > 0 ? `${money(DELIVERY_FEE)} delivery fee` : "Delivery fee RM3.00";
 
   cartQty.textContent = current.qty;
   cartTotal.textContent = money(current.subtotal);
-  detailDeliveryText.textContent = message;
+  detailDeliveryText.textContent = isGroupCart ? message : normalDeliveryText;
+  deliveryPill.textContent = isGroupCart ? "Free delivery over RM50" : "Delivery fee RM3.00";
   viewCart.disabled = current.qty === 0;
   phone.classList.toggle("has-cart", current.qty > 0);
 
@@ -1742,15 +2135,15 @@ function updateAllCartViews() {
   summaryTotal.textContent = money(current.total);
   cartPageQty.textContent = current.qty;
   cartPageSubtotal.textContent = money(current.total);
-  cartPageDelivery.textContent = message;
-  cartInlineDelivery.textContent = message;
+  cartPageDelivery.textContent = isGroupCart ? message : "";
+  cartInlineDelivery.textContent = isGroupCart ? message : "";
   cartFreeRow.style.setProperty("--free-progress", `${progress}%`);
   checkoutItemsTitle.textContent = `Order Items (${current.qty})`;
   checkoutSubtotal.textContent = money(current.subtotal);
   checkoutDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
   checkoutTotal.textContent = money(current.total);
   placeOrderTotal.textContent = money(current.total);
-  phone.classList.toggle("group-cart-mode", cartMode === "group");
+  phone.classList.toggle("group-cart-mode", isGroupCart);
 
   cartItems.innerHTML = [...sourceCart.values()]
     .map(
@@ -1861,6 +2254,15 @@ clearCartButton.addEventListener("click", () => {
   if (cartMode === "group") {
     clearCodes.forEach((code) => removeGroupCartItem(code).catch(() => {}));
   }
+});
+
+cartShopNoteButton.addEventListener("click", () => {
+  cartNoteEditor.hidden = !cartNoteEditor.hidden;
+  if (!cartNoteEditor.hidden) cartShopNoteInput.focus();
+});
+
+cartShopNoteInput.addEventListener("input", () => {
+  cartShopNoteCount.textContent = cartShopNoteInput.value.length;
 });
 
 viewCart.addEventListener("click", () => {

@@ -579,6 +579,31 @@
         </div>
       </section>
 
+      <section class="notifications-screen" data-screen="notifications" aria-label="Notifications">
+        <div class="notifications-scroll">
+          <header class="notifications-header">
+            <button class="notifications-back" type="button" aria-label="Back">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>Notifications</h1>
+            <button class="notifications-settings" type="button" aria-label="Settings">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" /><path d="M19.4 15a1.8 1.8 0 0 0 .36 2l.05.05a2.1 2.1 0 0 1-3 3l-.05-.05a1.8 1.8 0 0 0-2-.36 1.8 1.8 0 0 0-1.1 1.65V21a2.1 2.1 0 0 1-4.2 0v-.08A1.8 1.8 0 0 0 8.4 19.3a1.8 1.8 0 0 0-2 .36l-.05.05a2.1 2.1 0 1 1-3-3l.05-.05a1.8 1.8 0 0 0 .36-2 1.8 1.8 0 0 0-1.65-1.1H2a2.1 2.1 0 0 1 0-4.2h.08A1.8 1.8 0 0 0 3.7 8.4a1.8 1.8 0 0 0-.36-2l-.05-.05a2.1 2.1 0 1 1 3-3l.05.05a1.8 1.8 0 0 0 2 .36H8.4A1.8 1.8 0 0 0 9.5 2.1V2a2.1 2.1 0 0 1 4.2 0v.08a1.8 1.8 0 0 0 1.1 1.65 1.8 1.8 0 0 0 2-.36l.05-.05a2.1 2.1 0 1 1 3 3l-.05.05a1.8 1.8 0 0 0-.36 2v.05a1.8 1.8 0 0 0 1.65 1.1H22a2.1 2.1 0 0 1 0 4.2h-.08A1.8 1.8 0 0 0 19.4 15Z" /></svg>
+            </button>
+          </header>
+
+          <nav class="notifications-tabs" aria-label="Notification categories">
+            <button class="active" type="button" data-notification-filter="all">All</button>
+            <button type="button" data-notification-filter="orders">Orders</button>
+            <button type="button" data-notification-filter="group">Group Orders</button>
+            <button type="button" data-notification-filter="promos">Promos</button>
+            <button type="button" data-notification-filter="social">Social</button>
+          </nav>
+
+          <div class="notifications-list" id="notificationsList"></div>
+          <p class="notifications-empty" id="notificationsEmpty">No notifications yet</p>
+        </div>
+      </section>
+
       <section class="profile-screen" data-screen="profile" aria-label="Profile">
         <div class="profile-scroll">
           <header class="profile-topbar">
@@ -713,6 +738,14 @@
           </label>
 
           <p class="friends-page-empty" id="friendsPageEmpty">No friends or friend requests yet</p>
+
+          <section class="friends-section" id="groupInvitesSection">
+            <div class="friends-section-title">
+              <h2>Group Order Invites <span id="groupInviteCount">0</span></h2>
+              <button type="button">View all <b>›</b></button>
+            </div>
+            <div class="friends-list request-list" id="groupInvitesList"></div>
+          </section>
 
           <section class="friends-section" id="friendRequestsSection">
             <div class="friends-section-title">
@@ -852,6 +885,10 @@
               <span>Add a note for Mori Cafe</span>
               <b>›</b>
             </button>
+            <label class="cart-note-editor" hidden>
+              <textarea id="cartShopNoteInput" maxlength="150" placeholder="Write a note for Mori Cafe"></textarea>
+              <small><span id="cartShopNoteCount">0</span>/150</small>
+            </label>
           </section>
 
           <section class="delivery-progress" aria-label="Free delivery progress">
@@ -1002,7 +1039,6 @@
             <span>Place Order</span>
             <b>·</b>
             <strong id="placeOrderTotal">RM0.00</strong>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
           </button>
         </footer>
       </section>
