@@ -167,6 +167,12 @@ const checkoutDelivery = document.querySelector("#checkoutDelivery");
 const checkoutTotal = document.querySelector("#checkoutTotal");
 const placeOrderTotal = document.querySelector("#placeOrderTotal");
 const placeOrderButton = document.querySelector(".place-order-bar button");
+const paymentBack = document.querySelector(".payment-back");
+const paymentAmount = document.querySelector("#paymentAmount");
+const paymentScreenshotInput = document.querySelector("#paymentScreenshotInput");
+const paymentUploadTitle = document.querySelector("#paymentUploadTitle");
+const paymentUploadHint = document.querySelector("#paymentUploadHint");
+const submitPaymentButton = document.querySelector(".submit-payment-bar button");
 
 const FREE_DELIVERY_TARGET = 50;
 const DELIVERY_FEE = 3;
@@ -182,6 +188,7 @@ const firebaseConfig = {
 
 let db = null;
 let auth = null;
+let storage = null;
 let googleProvider = null;
 let isSignupMode = false;
 let onboardingUser = null;
@@ -192,8 +199,14 @@ let isGuestUser = false;
 let currentProfile = null;
 let firebaseFriendRequests = [];
 let firebaseFriendRequestsLoaded = false;
+let firebaseFriends = [];
+let firebaseFriendsLoaded = false;
 let addFriendSearchTimer = null;
 let addFriendSearchToken = 0;
+let compressedPaymentScreenshot = null;
+let compressedPaymentScreenshotName = "";
+
+const PAYMENT_SCREENSHOT_MAX_SIZE = 2 * 1024 * 1024;
 
 function initFirebase() {
   if (!window.firebase) return false;
@@ -204,6 +217,10 @@ function initFirebase() {
 
   if (!db && firebase.firestore) {
     db = firebase.firestore();
+  }
+
+  if (!storage && firebase.storage) {
+    storage = firebase.storage();
   }
 
   if (!auth && firebase.auth) {
@@ -356,6 +373,42 @@ function money(value) {
   return `RM${value.toFixed(2)}`;
 }
 
+function blobFromCanvas(canvas, type, quality) {
+  return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+}
+
+async function compressPaymentScreenshot(file) {
+  const imageUrl = URL.createObjectURL(file);
+  try {
+    const image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = imageUrl;
+    });
+
+    const maxSide = 1400;
+    const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext("2d");
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const outputType = file.type === "image/png" ? "image/png" : "image/jpeg";
+    let blob = await blobFromCanvas(canvas, outputType, 0.82);
+    if (!blob || blob.size > PAYMENT_SCREENSHOT_MAX_SIZE) {
+      blob = await blobFromCanvas(canvas, "image/jpeg", 0.72);
+    }
+    if (!blob || blob.size > PAYMENT_SCREENSHOT_MAX_SIZE) {
+      throw new Error("Compressed screenshot is still larger than 2MB.");
+    }
+    return blob;
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
 function activeCart() {
   return cartMode === "group" ? groupCart : normalCart;
 }
@@ -378,7 +431,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -529,6 +582,10 @@ function friendAvatar(name) {
   return firstLetter(name || "Friend");
 }
 
+function currentFriendsList() {
+  return firebaseFriendsLoaded ? firebaseFriends : readFriendData("novaFriends");
+}
+
 async function loadFirebaseGroupInvites() {
   initFirebase();
   const user = auth?.currentUser;
@@ -607,8 +664,9 @@ async function loadNotifications() {
 
   if (db && user && !isGuestUser) {
     await seedPromoNotifications();
-    const [requestSnap, inviteSnap, notificationSnap] = await Promise.all([
+    const [requestSnap, sentRequestSnap, inviteSnap, notificationSnap] = await Promise.all([
       db.collection("friendRequests").where("toUid", "==", user.uid).get(),
+      db.collection("friendRequests").where("fromUid", "==", user.uid).get(),
       db.collection("groupInvites").where("toUid", "==", user.uid).get(),
       db.collection("users").doc(user.uid).collection("notifications").get(),
     ]);
@@ -626,6 +684,20 @@ async function loadNotifications() {
         createdAtMs: data.createdAtMs || Date.now(),
       };
     }));
+
+    notificationItems.push(...sentRequestSnap.docs
+      .map((doc) => ({ id: doc.id, ...doc.data() }))
+      .filter((data) => data.status === "accepted" || data.status === "rejected")
+      .map((data) => ({
+        id: `sent-${data.id}`,
+        type: "social",
+        actionType: "",
+        title: `${data.toUsername || "Your friend"} ${data.status === "accepted" ? "accepted" : "rejected"} your friend request`,
+        body: relativeTime(data.respondedAt || data.createdAtMs),
+        read: false,
+        createdAt: data.respondedAt,
+        createdAtMs: data.createdAtMs || Date.now(),
+      })));
 
     notificationItems.push(...inviteSnap.docs.map((doc) => {
       const data = doc.data();
@@ -681,9 +753,11 @@ function renderFriends() {
   const query = friendsSearchInput.value.trim().toLowerCase();
   const requests = firebaseFriendRequestsLoaded ? firebaseFriendRequests : readFriendData("novaFriendRequests");
   const groupInvites = firebaseGroupInvitesLoaded ? firebaseGroupInvites : [];
-  const friends = readFriendData("novaFriends").filter((friend) => {
+  const friends = currentFriendsList().filter((friend) => {
     const username = (friend.username || "").toLowerCase();
-    return !query || username.includes(query);
+    const name = (friend.name || "").toLowerCase();
+    const email = (friend.email || "").toLowerCase();
+    return !query || username.includes(query) || name.includes(query) || email.includes(query);
   });
 
   friendRequestCount.textContent = requests.length;
@@ -778,10 +852,35 @@ async function loadFirebaseFriendRequests() {
   firebaseFriendRequestsLoaded = true;
 }
 
+async function loadFirebaseFriends() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    firebaseFriends = [];
+    firebaseFriendsLoaded = false;
+    return;
+  }
+
+  const snapshot = await db.collection("users").doc(user.uid).collection("friends").get();
+  firebaseFriends = snapshot.docs
+    .map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        uid: data.uid || doc.id,
+        name: data.name || data.username || "Friend",
+        username: data.username || "",
+        email: data.email || "",
+      };
+    })
+    .sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name));
+  firebaseFriendsLoaded = true;
+}
+
 async function openFriends() {
   friendsSearchInput.value = "";
   try {
-    await Promise.all([loadFirebaseFriendRequests(), loadFirebaseGroupInvites()]);
+    await Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadFirebaseGroupInvites()]);
   } catch (error) {
     console.error(error);
   }
@@ -869,7 +968,7 @@ async function updateFriendRequestStatus(requestId, status) {
     ]);
   }
 
-  await loadFirebaseFriendRequests();
+  await Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests()]);
   renderFriends();
   await loadNotifications();
 }
@@ -1362,9 +1461,10 @@ function openGroupCart() {
 
 function renderInviteFriends() {
   const query = inviteFriendSearchInput.value.trim().toLowerCase();
-  const friends = readFriendData("novaFriends").filter((friend) => {
+  const friends = currentFriendsList().filter((friend) => {
     const username = (friend.username || "").toLowerCase();
-    return !query || username.includes(query);
+    const name = (friend.name || "").toLowerCase();
+    return !query || username.includes(query) || name.includes(query);
   });
   inviteFriendsList.innerHTML = friends
     .map((friend) => {
@@ -1393,9 +1493,14 @@ function renderInviteFriends() {
   inviteFriendsEmpty.hidden = friends.length > 0;
 }
 
-function openInviteFriends(returnScreen = "group-chat") {
+async function openInviteFriends(returnScreen = "group-chat") {
   inviteReturnScreen = returnScreen;
   inviteFriendSearchInput.value = "";
+  try {
+    await loadFirebaseFriends();
+  } catch (error) {
+    console.error(error);
+  }
   renderInviteFriends();
   setScreen("invite-friends");
 }
@@ -1763,7 +1868,7 @@ inviteFriendSearchInput.addEventListener("input", renderInviteFriends);
 inviteFriendsList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-invite-key]");
   if (!button || button.disabled) return;
-  const friends = readFriendData("novaFriends");
+  const friends = currentFriendsList();
   const friend = friends.find((item) => groupFriendKey(item) === button.dataset.inviteKey);
   if (friend) inviteGroupFriend(friend);
 });
@@ -2297,20 +2402,84 @@ summaryCheckoutButton.addEventListener("click", () => {
   setScreen("checkout");
 });
 
-placeOrderButton.addEventListener("click", async () => {
+placeOrderButton.addEventListener("click", () => {
   const sourceCart = activeCart();
-  if (cartMode === "group" || sourceCart.size === 0 || placeOrderButton.disabled) return;
+  if (cartMode === "group" || sourceCart.size === 0) return;
+  paymentAmount.textContent = money(totals(sourceCart, cartMode).total);
+  window.scrollTo(0, 0);
+  setScreen("payment");
+});
+
+paymentBack.addEventListener("click", () => setScreen("checkout"));
+
+paymentScreenshotInput.addEventListener("change", async () => {
+  const file = paymentScreenshotInput.files?.[0];
+  if (!file) return;
+  compressedPaymentScreenshot = null;
+  compressedPaymentScreenshotName = "";
+
+  if (!["image/jpeg", "image/png"].includes(file.type)) {
+    paymentScreenshotInput.value = "";
+    paymentUploadTitle.textContent = "Tap to upload screenshot";
+    paymentUploadHint.textContent = "Only JPG and PNG are supported";
+    alert("Only JPG and PNG screenshots are supported.");
+    return;
+  }
+
+  if (file.size > PAYMENT_SCREENSHOT_MAX_SIZE) {
+    paymentScreenshotInput.value = "";
+    paymentUploadTitle.textContent = "Tap to upload screenshot";
+    paymentUploadHint.textContent = "File must be 2MB or smaller";
+    alert("Screenshot must be 2MB or smaller.");
+    return;
+  }
+
+  paymentUploadTitle.textContent = "Compressing screenshot...";
+  paymentUploadHint.textContent = "Please wait";
+  try {
+    compressedPaymentScreenshot = await compressPaymentScreenshot(file);
+    compressedPaymentScreenshotName = file.name.replace(/\.(png|jpe?g)$/i, compressedPaymentScreenshot.type === "image/png" ? ".png" : ".jpg");
+    paymentUploadTitle.textContent = compressedPaymentScreenshotName;
+    paymentUploadHint.textContent = `Compressed to ${(compressedPaymentScreenshot.size / (1024 * 1024)).toFixed(2)} MB`;
+  } catch (error) {
+    console.error(error);
+    paymentScreenshotInput.value = "";
+    paymentUploadTitle.textContent = "Tap to upload screenshot";
+    paymentUploadHint.textContent = "Could not compress this screenshot";
+    alert("Could not compress this screenshot. Please choose another JPG or PNG under 2MB.");
+  }
+});
+
+submitPaymentButton.addEventListener("click", async () => {
+  const sourceCart = activeCart();
+  if (cartMode === "group" || sourceCart.size === 0 || submitPaymentButton.disabled) return;
   if (!db) {
     alert("Firebase is not ready. Please check your connection.");
     return;
   }
+  if (!compressedPaymentScreenshot) {
+    alert("Please upload a JPG or PNG payment screenshot under 2MB.");
+    return;
+  }
 
   const current = totals();
-  const originalText = placeOrderButton.innerHTML;
-  placeOrderButton.disabled = true;
-  placeOrderButton.innerHTML = "<span>Placing Order...</span>";
+  const originalText = submitPaymentButton.textContent;
+  submitPaymentButton.disabled = true;
+  submitPaymentButton.textContent = "Submitting Payment...";
 
   try {
+    let screenshotPath = "";
+    let screenshotUrl = "";
+    if (storage) {
+      const extension = compressedPaymentScreenshot.type === "image/png" ? "png" : "jpg";
+      const userId = auth?.currentUser?.uid || "guest";
+      screenshotPath = `paymentScreenshots/${userId}/${Date.now()}.${extension}`;
+      const snapshot = await storage.ref(screenshotPath).put(compressedPaymentScreenshot, {
+        contentType: compressedPaymentScreenshot.type,
+      });
+      screenshotUrl = await snapshot.ref.getDownloadURL();
+    }
+
     await db.collection("orders").add({
       restaurant: "Mori Cafe Bukit Beruang",
       address: activeChoice("addressChoices"),
@@ -2327,19 +2496,28 @@ placeOrderButton.addEventListener("click", async () => {
       subtotal: Number(current.subtotal.toFixed(2)),
       deliveryFee: Number(current.delivery.toFixed(2)),
       total: Number(current.total.toFixed(2)),
+      paymentStatus: "pending_verification",
+      paymentScreenshotName: compressedPaymentScreenshotName,
+      paymentScreenshotPath: screenshotPath,
+      paymentScreenshotUrl: screenshotUrl,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    alert("Order placed successfully!");
+    alert("Payment submitted successfully!");
     sourceCart.clear();
+    paymentScreenshotInput.value = "";
+    compressedPaymentScreenshot = null;
+    compressedPaymentScreenshotName = "";
+    paymentUploadTitle.textContent = "Tap to upload screenshot";
+    paymentUploadHint.textContent = "Supports JPG, PNG (Max 2MB)";
     updateAllCartViews();
     setScreen("home");
   } catch (error) {
     console.error(error);
-    alert("Order failed. Please try again.");
+    alert("Payment submission failed. Please try again.");
   } finally {
-    placeOrderButton.disabled = false;
-    placeOrderButton.innerHTML = originalText;
+    submitPaymentButton.disabled = false;
+    submitPaymentButton.textContent = originalText;
   }
 });
 

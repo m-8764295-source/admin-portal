@@ -1042,11 +1042,63 @@
           </button>
         </footer>
       </section>
+
+      <section class="payment-screen" data-screen="payment" aria-label="TNG QR Payment">
+        <div class="payment-scroll">
+          <header class="payment-header">
+            <button class="payment-back" type="button" aria-label="Back to checkout">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>TNG QR Payment</h1>
+          </header>
+
+          <section class="payment-qr-card">
+            <div class="payment-copy">
+              <h2>Scan &amp; Pay Merchant</h2>
+              <p>Scan the TNG QR code below<br />to make payment.</p>
+              <div class="secure-row">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.9 8.8 7 10 4.1-1.2 7-5.4 7-10V6l-7-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></svg></span>
+                <p>Secure payments with<br /><b>Touch 'n Go eWallet</b></p>
+              </div>
+            </div>
+            <div class="qr-side">
+              <strong>Merchant QR Code</strong>
+              <div class="qr-placeholder"><span>QR Code</span></div>
+              <div class="merchant-name"><span>Merchant Name</span><b>Mori Cafe</b></div>
+            </div>
+            <div class="payment-amount-row">
+              <div><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h13a2 2 0 0 1 2 2v8H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2Z" /><path d="M16 12h4" /><path d="M7 7V5h9v2" /></svg></div>
+              <span>Payment Amount</span>
+              <strong id="paymentAmount">RM0.00</strong>
+            </div>
+          </section>
+
+          <section class="upload-payment-card">
+            <h2>Upload Payment Screenshot</h2>
+            <p>Make sure the screenshot shows the amount,<br />transaction status and date.</p>
+            <label class="payment-upload-box">
+              <input id="paymentScreenshotInput" type="file" accept="image/png,image/jpeg" />
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" /><path d="m8 14 2.5-2.5L14 15l2-2 3 3" /><circle cx="9" cy="9" r="1" /></svg></span>
+              <b id="paymentUploadTitle">Tap to upload screenshot</b>
+              <small id="paymentUploadHint">Supports JPG, PNG (Max 2MB)</small>
+            </label>
+            <div class="payment-tip">
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6" /><path d="M10 22h4" /><path d="M8.5 14.5A6 6 0 1 1 15.5 14c-.8.7-1.2 1.5-1.2 2H9.7c0-.7-.4-1.4-1.2-1.5Z" /></svg></span>
+              <p>Tip: Make sure the screenshot is clear<br />and all details are visible.</p>
+            </div>
+          </section>
+        </div>
+
+        <footer class="submit-payment-bar">
+          <button type="button">Submit Payment</button>
+        </footer>
+      </section>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
