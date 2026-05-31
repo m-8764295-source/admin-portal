@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -167,7 +167,7 @@
         <section class="restaurant-section">
           <div class="section-title">
             <h2>Popular near you</h2>
-            <a href="#" aria-label="See all restaurants">See all <span>›</span></a>
+            <a href="#" aria-label="See all restaurants">See all <span>&rsaquo;</span></a>
           </div>
 
           <article class="restaurant-card" role="button" tabindex="0" aria-label="Open Mori Cafe">
@@ -226,7 +226,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
             <h1>Add Friends</h1>
-            <p>Find friends by username and connect! 😊</p>
+            <p>Find friends by username and connect!</p>
           </header>
 
           <img class="add-friends-art" src="assets/addfriends.png" alt="" />
@@ -273,7 +273,7 @@
 
           <section class="group-order-hero">
             <h1>Create Group Order</h1>
-            <p>Start a group order and invite your friends<br />to order together! 🎉</p>
+            <p>Start a group order and invite your friends<br />to order together!</p>
             <img src="assets/grouporders.png" alt="" />
           </section>
 
@@ -286,7 +286,7 @@
               <label class="group-search-row">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
                 <input id="groupRestaurantSearch" type="search" placeholder="Search restaurant or cuisine" />
-                <b>›</b>
+                <b>&rsaquo;</b>
               </label>
               <button class="group-restaurant-row is-selected" type="button" data-restaurant-name="mori cafe">
                 <img src="assets/mori.png" alt="" />
@@ -320,13 +320,13 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
                 <span>Delivery to</span>
                 <button class="group-placeholder-button" id="groupLocationButton" type="button">Select location</button>
-                <b>›</b>
+                <b>&rsaquo;</b>
               </label>
               <label class="group-detail-row">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
                 <span>Delivery time</span>
                 <button class="group-placeholder-button" id="groupTimeButton" type="button">Select time</button>
-                <b>›</b>
+                <b>&rsaquo;</b>
               </label>
               <div class="group-time-panel" id="groupTimePanel" hidden>
                 <h3>Choose a delivery time slot</h3>
@@ -365,135 +365,189 @@
             </button>
             <div>
               <h1 id="createdGroupName">Group Order</h1>
+              <p>Mori Cafe</p>
             </div>
+            <button class="created-more" type="button" aria-label="More">...</button>
           </header>
 
-          <section class="created-hero-card">
-            <div class="created-hero-copy">
-              <h2><span>✓</span> Group created!</h2>
-              <p>Invite your friends to<br />order together.</p>
-              <div class="created-hero-info">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
-                <span><strong>2 - 5 people</strong><small>members</small></span>
-              </div>
-              <div class="created-hero-info">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
-                <span><small>Order closes at</small><strong id="createdCloseTime">1:30 PM</strong></span>
-              </div>
-            </div>
-            <img src="assets/groupcreated.png" alt="" />
-          </section>
+          <img class="created-lobby-image" src="assets/groupcreated.png" alt="" />
 
-          <section class="created-discount-card">
-            <div class="created-discount-head">
-              <div class="created-truck">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></svg>
-              </div>
-              <div>
-                <h2>Unlock delivery discounts together</h2>
-                <p>The <b>more you spend</b> as a group, the <b>more you save</b> on delivery!</p>
-              </div>
-            </div>
-            <div class="discount-timeline">
-              <span></span>
-              <div><strong>$35</strong><i class="green">10%</i><b>OFF</b><small>delivery fee</small></div>
-              <div><strong>$40</strong><i class="blue">20%</i><b>OFF</b><small>delivery fee</small></div>
-              <div><strong>$45</strong><i class="purple">30%</i><b>OFF</b><small>delivery fee</small></div>
-              <div><strong>$50</strong><i class="orange"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></svg></i><b>FREE</b><small>delivery</small></div>
-            </div>
-          </section>
-
-          <section class="created-stats-card">
-            <div class="stat-min"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg></span><small>Min. members</small><strong>2 people</strong></div>
-            <div class="stat-max"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg></span><small>Max. members</small><strong>5 people</strong></div>
-            <div class="stat-spend"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /><path d="M16 13h3" /></svg></span><small>Min. spend</small><strong>$35</strong></div>
-            <div class="stat-discount"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12.5 12.5 20 4 11.5V4h7.5L20 12.5Z" /><circle cx="8.5" cy="8.5" r="1.2" /></svg></span><small>Group discount</small><strong>10% OFF</strong></div>
+          <section class="created-lobby-copy">
+            <h2>Let's eat together!</h2>
+            <p>Invite friends and start your group order.</p>
           </section>
 
           <section class="created-members-section">
-            <h2>Members (1/5)</h2>
+            <h2>Participants</h2>
+            <strong class="created-joined-count">1 / 2 joined</strong>
             <div class="created-members-row">
               <div class="created-member">
                 <div class="created-member-avatar" id="createdHostAvatar">U</div>
                 <strong><b id="createdHostName">You</b> <span>Host</span></strong>
               </div>
-              <button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>
-              <button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>
-              <button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>
-              <button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>
+              <button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i></button>
             </div>
+            <p>Minimum 2 people - Maximum 5 people</p>
           </section>
 
+          <section class="created-action-grid">
+            <button class="created-invite-action" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.7-4.1 2.8-6.2 5.5-6.2s4.8 2.1 5.5 6.2" /><path d="M17 11v6" /><path d="M14 14h6" /></svg>
+              <strong>Invite Friends</strong>
+              <span>Invite friends<br />to join the group</span>
+            </button>
+            <button class="created-share-action" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1" /><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2a5 5 0 0 0 7.1 7.1l1.1-1.1" /></svg>
+              <strong>Share Link</strong>
+              <span>Share the link<br />with your friends</span>
+            </button>
+          </section>
+
+          <p class="created-info-pill">Test mode: you can enter Group Chat now.</p>
+
           <button class="start-group-order-button" type="button">
-            <span>👥</span>
-            <strong>Start Group Order</strong>
-            <small>Invite at least 1 friend to start ordering</small>
+            <span>1 / 2 joined</span>
+            <strong>Enter Group Chat</strong>
+            <small>Tap to test the chat</small>
+            <em>Enter Group Chat</em>
           </button>
-          <p class="created-footnote">Group discount (10%) will be applied when the minimum spend of $35 is reached.</p>
+        </div>
+
+        <div class="created-sheet-overlay" hidden>
+          <section class="created-bottom-sheet">
+            <i></i>
+            <button class="created-sheet-close" type="button" aria-label="Close">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+            <div class="created-share-panel">
+              <h2>Invite friends</h2>
+              <p>The more friends, the merrier!</p>
+              <div class="created-social-row">
+                <button type="button" data-share-channel="whatsapp"><span><img src="assets/whatsapp.png" alt="" /></span><b>WhatsApp</b></button>
+                <button type="button" data-share-channel="telegram"><span><img src="assets/telegram.png" alt="" /></span><b>Telegram</b></button>
+                <button type="button" data-share-channel="messages"><span><img src="assets/messages.png" alt="" /></span><b>Messages</b></button>
+              </div>
+              <div class="created-share-options">
+                <button class="created-copy-link" type="button"><span>Link</span><b>Copy group link<small>Anyone with the link can join</small></b><em>Copy</em></button>
+                <button type="button"><span>QR</span><b>QR code<small>Scan to join the group</small></b><em>›</em></button>
+              </div>
+              <button class="created-sheet-done" type="button">Done</button>
+            </div>
+            <div class="created-invite-panel" hidden>
+              <h2>Invite Friends</h2>
+              <label class="created-invite-search">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.8-3.8" /></svg>
+                <input id="createdInviteSearchInput" type="search" placeholder="Search friends by username" />
+              </label>
+              <div class="created-invite-list" id="createdInviteList"></div>
+              <p class="created-invite-empty" id="createdInviteEmpty">No friends yet</p>
+            </div>
+          </section>
         </div>
       </section>
-
       <section class="group-chat-screen" data-screen="group-chat" aria-label="Group Chat">
         <div class="group-chat-scroll">
           <header class="chat-topbar">
             <button class="chat-back" type="button" aria-label="Back to group created">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
-            <div>
-              <h1 id="chatGroupName">Group Order</h1>
-              <p><span id="chatMemberCount">1 of 5 members</span> <b>•</b> <em id="chatCloseCountdown">Order closes soon</em></p>
+            <div class="chat-title-block">
+              <h1>Group Order Chat</h1>
+              <p id="chatRestaurantName">Mori Cafe</p>
             </div>
-            <button class="chat-cart-button" type="button" aria-label="Group cart">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /></svg>
-            </button>
+            <div class="chat-top-actions">
+              <button class="chat-members-button" type="button" aria-label="Members">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
+                <span id="chatTopMemberCount">1</span>
+              </button>
+              <button class="chat-more-button" type="button" aria-label="More">...</button>
+            </div>
           </header>
 
-          <section class="chat-progress-card">
-            <div class="chat-truck-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h11v9H3z" /><path d="M14 10h4l3 3v3h-7z" /><circle cx="7" cy="18" r="2" /><circle cx="18" cy="18" r="2" /></svg>
+          <section class="chat-minimum-card">
+            <div class="chat-minimum-head">
+              <span>Minimum spend</span>
+              <i>i</i>
             </div>
-            <div>
-              <h2>Group order in progress</h2>
-              <p>Invite more friends and start adding items!</p>
+            <h2><strong id="chatSpendAmount">RM0</strong> <span>/ RM35</span></h2>
+            <div class="chat-minimum-track"><span class="chat-discount-fill"></span><em id="chatSpendBubble">RM0</em></div>
+            <p id="chatMinimumText">You need RM35 more to reach minimum spend</p>
+            <div class="chat-reward-grid">
+              <article class="chat-reward-card current-goal" data-step="35"><b class="reward-lock" aria-hidden="true"></b><strong>10%</strong><span>OFF</span><small>RM35</small><em>Current goal</em></article>
+              <article class="chat-reward-card" data-step="40"><b class="reward-lock" aria-hidden="true"></b><strong>20%</strong><span>OFF</span><small>RM40</small><em>Locked</em></article>
+              <article class="chat-reward-card" data-step="45"><b class="reward-lock" aria-hidden="true"></b><strong>30%</strong><span>OFF</span><small>RM45</small><em>Locked</em></article>
+              <article class="chat-reward-card" data-step="50"><b class="reward-lock" aria-hidden="true"></b><strong>FREE</strong><span>Delivery</span><small>RM50</small><em>Locked</em></article>
             </div>
-            <button class="chat-invite-button" type="button">Invite</button>
           </section>
 
           <section class="chat-messages">
-            <time id="chatCreatedTime">9:15 AM</time>
+            <time id="chatCreatedTime">Today</time>
             <div class="chat-system-message">
-              <span id="chatCreatedText">You created the group</span>
-              <small id="chatCreatedClose">Order closes at 1:30 PM</small>
+              <div class="chat-system-avatar">Y</div>
+              <span id="chatCreatedText">You created the group order.</span>
+              <small id="chatCreatedClose">Invite more friends and start ordering together!</small>
+            </div>
+            <div class="chat-unlock-message" hidden>
+              <b>★</b>
+              <span id="chatUnlockText">You have unlocked 10% OFF delivery!</span>
+              <small id="chatUnlockTime">Now</small>
             </div>
           </section>
-
         </div>
 
-        <footer class="chat-composer">
-          <section class="chat-add-items-card">
-            <div class="chat-bag-icon">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /></svg>
-            </div>
-            <div>
-              <h2>Ready to add items?</h2>
-              <p>Start adding items to the group order.</p>
-            </div>
-            <button type="button">Add items</button>
-          </section>
-          <label>
-            <input type="text" placeholder="Message your group..." />
-            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 14s1.2 2 4 2 4-2 4-2" /><path d="M9 10h.01M15 10h.01" /></svg>
+        <footer class="chat-dock">
+          <div class="chat-compose-row">
+            <button class="chat-plus-button" type="button" aria-label="Add">+</button>
+            <label class="chat-message-box">
+              <input type="text" placeholder="Type a message..." />
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M8 14s1.2 2 4 2 4-2 4-2" /><path d="M9 10h.01M15 10h.01" /></svg>
+            </label>
             <button class="chat-send-button" type="button" aria-label="Send message">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13" /><path d="m22 2-7 20-4-9-9-4 20-7Z" /></svg>
             </button>
-          </label>
-          <button class="chat-menu-button" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" /></svg>
-          </button>
-          <span>Menu</span>
-        </footer>
-      </section>
+          </div>
 
+          <div class="chat-order-row" hidden>
+            <div class="chat-current-total">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /></svg>
+              <span>Current Total</span>
+              <strong id="chatCurrentTotal">RM0.00</strong>
+            </div>
+            <button class="chat-cart-button" type="button"><span>View Cart (<b id="chatCartCount">0</b>)</span></button>
+            <button class="chat-checkout-button" type="button"><strong>Checkout</strong><small id="chatCheckoutHint">Need RM35 more</small></button>
+          </div>
+
+          <nav class="chat-tabbar" aria-label="Group chat tabs">
+            <button class="active" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="11" r="8" /><path d="M8.5 11h.01M12 11h.01M15.5 11h.01" /><path d="M9 18.5 7.5 21" /></svg><span>Chat</span></button>
+            <button class="chat-members-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><circle cx="16.5" cy="9" r="2.5" /><path d="M3.5 20c.8-4.1 3-6 5.8-6 2.9 0 5 1.9 5.7 6" /><path d="M14.5 19.5c.6-2.3 2-3.7 4-3.7 1.7 0 3 1.2 3.5 3.7" /></svg><span>Members</span></button>
+            <button class="chat-cart-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /></svg><i id="chatOrderBadge">0</i><span>Order</span></button>
+            <button class="chat-menu-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8" /><path d="M10 3v8" /><path d="M8.5 11v10" /><path d="M17 3v18" /></svg><span>Menu</span></button>
+          </nav>
+        </footer>
+
+        <div class="chat-members-panel" hidden>
+          <div class="chat-members-sheet">
+            <button class="chat-members-close" type="button" aria-label="Close members">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+            </button>
+            <h2>Members (<span id="chatMembersCount">1/5</span>)</h2>
+            <div class="chat-members-list"></div>
+            <button class="chat-panel-invite" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 20c.7-4.1 2.8-6.2 5.5-6.2s4.8 2.1 5.5 6.2" /><path d="M17 7v6" /><path d="M14 10h6" /></svg>
+              <span><strong>Invite friends</strong><small>Friend list, link or QR code</small></span>
+              <b>&rsaquo;</b>
+            </button>
+            <section class="chat-invite-share">
+              <p>Invite link</p>
+              <div>
+                <input id="groupInviteLink" type="text" readonly />
+                <button class="copy-group-link" type="button">Copy</button>
+              </div>
+              <div class="group-qr-placeholder">QR</div>
+            </section>
+          </div>
+        </div>
+      </section>
       <section class="invite-friends-screen" data-screen="invite-friends" aria-label="Invite Friends">
         <div class="invite-friends-scroll">
           <header class="invite-friends-header">
@@ -652,7 +706,7 @@
                 <h2>My Orders</h2>
                 <p>View your orders and history</p>
               </div>
-              <b>›</b>
+              <b>&rsaquo;</b>
             </article>
 
             <article class="profile-card profile-card-visual">
@@ -670,7 +724,7 @@
                 <p>View your ongoing and past group orders</p>
               </div>
               <img src="assets/bag.png" alt="" />
-              <b>›</b>
+              <b>&rsaquo;</b>
             </article>
 
             <article class="profile-card profile-card-visual">
@@ -682,7 +736,7 @@
                 <p>See your friends and manage connections</p>
               </div>
               <img src="assets/friends.png" alt="" />
-              <b>›</b>
+              <b>&rsaquo;</b>
             </article>
           </section>
 
@@ -692,7 +746,7 @@
               <h2>Create Group Order</h2>
               <p>Order together, save delivery.</p>
             </div>
-            <b>›</b>
+            <b>&rsaquo;</b>
           </section>
         </div>
 
@@ -742,7 +796,7 @@
           <section class="friends-section" id="groupInvitesSection">
             <div class="friends-section-title">
               <h2>Group Order Invites <span id="groupInviteCount">0</span></h2>
-              <button type="button">View all <b>›</b></button>
+              <button type="button">View all <b>&rsaquo;</b></button>
             </div>
             <div class="friends-list request-list" id="groupInvitesList"></div>
           </section>
@@ -750,7 +804,7 @@
           <section class="friends-section" id="friendRequestsSection">
             <div class="friends-section-title">
               <h2>Friend Requests <span id="friendRequestCount">0</span></h2>
-              <button type="button">View all <b>›</b></button>
+              <button type="button">View all <b>&rsaquo;</b></button>
             </div>
             <div class="friends-list request-list" id="friendRequestsList"></div>
           </section>
@@ -818,7 +872,7 @@
           <button class="promo-banner">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14v-4l10-5v14L4 14Z" /><path d="M18 9a4 4 0 0 1 0 6" /><path d="M4 14l3 6" /></svg>
             <span>10% OFF your first order!</span>
-            <b>›</b>
+            <b>&rsaquo;</b>
           </button>
 
           <nav class="menu-tabs" aria-label="Menu categories">
@@ -883,7 +937,7 @@
             <button class="cart-shop-note" type="button">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16" /><path d="M6 4h9l3 3v13H6z" /><path d="M9 15h4" /><path d="m14 4 4 4" /></svg>
               <span>Add a note for Mori Cafe</span>
-              <b>›</b>
+              <b>&rsaquo;</b>
             </button>
             <label class="cart-note-editor" hidden>
               <textarea id="cartShopNoteInput" maxlength="150" placeholder="Write a note for Mori Cafe"></textarea>
@@ -907,7 +961,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 8.5 6.5 4 7l1.2 4.4L3 15.5 7.2 17l1.3 4L12 18.4 15.5 21l1.3-4 4.2-1.5-2.2-4.1L20 7l-4.5-.5L12 3Z" /></svg>
               <span>Add a note or special requests</span>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z" /></svg>
-              <b>›</b>
+              <b>&rsaquo;</b>
             </button>
           </section>
 
@@ -941,7 +995,7 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
             </div>
             <div>
-              <h2>You’re saving on delivery!</h2>
+              <h2>You're saving on delivery!</h2>
               <p>Create a group order to save more.</p>
             </div>
             <button type="button">Start Group Order <span>→</span></button>
@@ -1092,6 +1146,95 @@
         <footer class="submit-payment-bar">
           <button type="button">Submit Payment</button>
         </footer>
+      </section>
+
+      <section class="order-placed-screen" data-screen="order-placed" aria-label="Order Placed">
+        <div class="order-placed-scroll">
+          <section class="order-placed-hero">
+            <div class="order-placed-copy">
+              <span class="success-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 12 4 4 8-9" /></svg></span>
+              <h1>Order placed<br />successfully!</h1>
+              <p>Thank you! Your order has been<br />received and is being prepared.</p>
+            </div>
+            <img src="assets/orderplaced.png" alt="" />
+          </section>
+
+          <section class="order-progress-card" data-status="waiting-rider">
+            <h2>Order progress</h2>
+            <div class="progress-steps" id="orderProgressSteps">
+              <article class="progress-step done" data-status="placed">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7z" /><path d="M10 8h4M10 12h4" /><path d="m9 17 2 2 4-5" /></svg></span>
+                <strong>Order placed</strong>
+                <small id="orderPlacedTime">Now</small>
+              </article>
+              <article class="progress-step done" data-status="preparing">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 10h12l-1 8H7l-1-8Z" /><path d="M8 10a4 4 0 0 1 8 0" /><path d="M5 20h14" /></svg></span>
+                <strong>Preparing</strong>
+                <small>Soon</small>
+              </article>
+              <article class="progress-step active" data-status="waiting-rider">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" /><path d="M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" /><path d="M7 17h8l2-6h-5l-2-4H7" /><path d="M13 7h4" /></svg></span>
+                <strong>Waiting for rider</strong>
+                <small>Now</small>
+              </article>
+              <article class="progress-step" data-status="on-way">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" /><path d="M15 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" /><path d="M7 17h8l2-6h-5l-2-4H7" /><path d="M3 11h4" /></svg></span>
+                <strong>On the way</strong>
+                <small>Soon</small>
+              </article>
+              <article class="progress-step" data-status="delivered">
+                <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></svg></span>
+                <strong>Delivered</strong>
+                <small>Soon</small>
+              </article>
+            </div>
+          </section>
+
+          <section class="order-details-card">
+            <div class="order-details-head">
+              <h2>Order details</h2>
+              <p>Order ID: <span id="orderPlacedId">#NOVA000000</span></p>
+            </div>
+            <div class="order-restaurant-row">
+              <img src="assets/mori.png" alt="" />
+              <div>
+                <h3>Mori Cafe</h3>
+                <p>15 - 25 min <span>•</span> 0.8 km</p>
+              </div>
+              <strong id="orderPlacedRestaurantTotal">RM0.00</strong>
+            </div>
+            <div class="order-placed-items" id="orderPlacedItems"></div>
+            <div class="order-placed-summary">
+              <p><span>Subtotal</span><strong id="orderPlacedSubtotal">RM0.00</strong></p>
+              <p><span>Delivery fee</span><strong id="orderPlacedDelivery">RM0.00</strong></p>
+              <div></div>
+              <p class="order-placed-total"><span>Total</span><strong id="orderPlacedTotal">RM0.00</strong></p>
+            </div>
+          </section>
+        </div>
+
+        <nav class="bottom-nav order-placed-nav" aria-label="Primary">
+          <a href="#" class="nav-item home-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V10Z" /></svg>
+            <span>Home</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7z" /><path d="M9.5 8h5M9.5 12h5M9.5 16h3" /></svg>
+            <span>Orders</span>
+          </a>
+          <a href="#" class="nav-item group active-group">
+            <span class="group-bubble"><img src="assets/order.png" alt="" /></span>
+            <span>Group</span>
+          </a>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12 12 20l-8-8V4h8l8 8Z" /><circle cx="8.5" cy="8.5" r="1.5" /></svg>
+            <span>Promo</span>
+          </a>
+          <a href="#" class="nav-item profile-nav">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" /></svg>
+            <span>Profile</span>
+          </a>
+        </nav>
       </section>
     </main>
 

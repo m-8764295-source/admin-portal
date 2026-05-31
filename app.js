@@ -1,4 +1,4 @@
-const phone = document.querySelector(".phone");
+﻿const phone = document.querySelector(".phone");
 const splashScreen = document.querySelector(".splash-screen");
 const authScreen = document.querySelector(".auth-screen");
 const authTitle = document.querySelector("#authTitle");
@@ -65,6 +65,18 @@ const createdHostName = document.querySelector("#createdHostName");
 const createdMembersTitle = document.querySelector(".created-members-section h2");
 const createdMembersRow = document.querySelector(".created-members-row");
 const startGroupOrderButton = document.querySelector(".start-group-order-button");
+const createdInviteAction = document.querySelector(".created-invite-action");
+const createdShareAction = document.querySelector(".created-share-action");
+const createdSheetOverlay = document.querySelector(".created-sheet-overlay");
+const createdSheetClose = document.querySelector(".created-sheet-close");
+const createdSheetDone = document.querySelector(".created-sheet-done");
+const createdSharePanel = document.querySelector(".created-share-panel");
+const createdInvitePanel = document.querySelector(".created-invite-panel");
+const createdInviteSearchInput = document.querySelector("#createdInviteSearchInput");
+const createdInviteList = document.querySelector("#createdInviteList");
+const createdInviteEmpty = document.querySelector("#createdInviteEmpty");
+const createdCopyLink = document.querySelector(".created-copy-link");
+const createdSocialRow = document.querySelector(".created-social-row");
 const chatBack = document.querySelector(".chat-back");
 const chatGroupName = document.querySelector("#chatGroupName");
 const chatMemberCount = document.querySelector("#chatMemberCount");
@@ -72,12 +84,35 @@ const chatCloseCountdown = document.querySelector("#chatCloseCountdown");
 const chatCreatedTime = document.querySelector("#chatCreatedTime");
 const chatCreatedText = document.querySelector("#chatCreatedText");
 const chatCreatedClose = document.querySelector("#chatCreatedClose");
-const chatAddItemsButton = document.querySelector(".chat-add-items-card button");
+const chatAddItemsButton = document.querySelector(".chat-plus-button");
 const chatMenuButton = document.querySelector(".chat-menu-button");
-const chatCartButton = document.querySelector(".chat-cart-button");
+const chatCartButtons = document.querySelectorAll(".chat-cart-button");
 const chatInviteButton = document.querySelector(".chat-invite-button");
+const chatMembersButtons = document.querySelectorAll(".chat-members-button");
+const chatMembersPanel = document.querySelector(".chat-members-panel");
+const chatMembersClose = document.querySelector(".chat-members-close");
+const chatMembersList = document.querySelector(".chat-members-list");
+const chatMembersCount = document.querySelector("#chatMembersCount");
+const chatPanelInvite = document.querySelector(".chat-panel-invite");
+const groupInviteLinkInput = document.querySelector("#groupInviteLink");
+const copyGroupLinkButton = document.querySelector(".copy-group-link");
+const chatDiscountFill = document.querySelector(".chat-discount-fill");
+const chatDiscountSteps = document.querySelectorAll(".chat-discount-track i");
+const chatRewardCards = document.querySelectorAll(".chat-reward-card");
+const chatSpendAmount = document.querySelector("#chatSpendAmount");
+const chatSpendBubble = document.querySelector("#chatSpendBubble");
+const chatMinimumText = document.querySelector("#chatMinimumText");
+const chatCurrentTotal = document.querySelector("#chatCurrentTotal");
+const chatCartCount = document.querySelector("#chatCartCount");
+const chatOrderBadge = document.querySelector("#chatOrderBadge");
+const chatOrderRow = document.querySelector(".chat-order-row");
+const chatCheckoutHint = document.querySelector("#chatCheckoutHint");
+const chatCheckoutButton = document.querySelector(".chat-checkout-button");
+const chatUnlockMessage = document.querySelector(".chat-unlock-message");
+const chatUnlockText = document.querySelector("#chatUnlockText");
+const chatTopMemberCount = document.querySelector("#chatTopMemberCount");
 const chatMessages = document.querySelector(".chat-messages");
-const chatInput = document.querySelector(".chat-composer input");
+const chatInput = document.querySelector(".chat-message-box input");
 const chatSendButton = document.querySelector(".chat-send-button");
 const inviteFriendsBack = document.querySelector(".invite-friends-back");
 const inviteFriendSearchInput = document.querySelector("#inviteFriendSearchInput");
@@ -173,6 +208,14 @@ const paymentScreenshotInput = document.querySelector("#paymentScreenshotInput")
 const paymentUploadTitle = document.querySelector("#paymentUploadTitle");
 const paymentUploadHint = document.querySelector("#paymentUploadHint");
 const submitPaymentButton = document.querySelector(".submit-payment-bar button");
+const orderPlacedId = document.querySelector("#orderPlacedId");
+const orderPlacedTime = document.querySelector("#orderPlacedTime");
+const orderPlacedRestaurantTotal = document.querySelector("#orderPlacedRestaurantTotal");
+const orderPlacedItems = document.querySelector("#orderPlacedItems");
+const orderPlacedSubtotal = document.querySelector("#orderPlacedSubtotal");
+const orderPlacedDelivery = document.querySelector("#orderPlacedDelivery");
+const orderPlacedTotal = document.querySelector("#orderPlacedTotal");
+const orderProgressCard = document.querySelector(".order-progress-card");
 
 const FREE_DELIVERY_TARGET = 50;
 const DELIVERY_FEE = 3;
@@ -239,127 +282,127 @@ const menuSections = [
     id: "recommend",
     title: "Recommend",
     items: [
-      ["101", "Chicken Chop Rice", "鸡扒饭", 9.9, "Crispy chicken chop served with rice and coleslaw.", true],
-      ["102", "Curry Sauce Chicken Rice", "咖喱酱鸡饭", 9.9, "Tender chicken with creamy curry sauce.", true],
-      ["104", "Mushroom Chicken Rice", "蘑菇鸡饭", 9.9, "Chicken rice topped with mushroom sauce.", true],
-      ["115", "Chicken Chop", "鸡扒", 13.9, "Chicken chop with salad and potato.", true],
+      ["101", "Chicken Chop Rice", "é¸¡æ‰’é¥­", 9.9, "Crispy chicken chop served with rice and coleslaw.", true],
+      ["102", "Curry Sauce Chicken Rice", "å’–å–±é…±é¸¡é¥­", 9.9, "Tender chicken with creamy curry sauce.", true],
+      ["104", "Mushroom Chicken Rice", "è˜‘è‡é¸¡é¥­", 9.9, "Chicken rice topped with mushroom sauce.", true],
+      ["115", "Chicken Chop", "é¸¡æ‰’", 13.9, "Chicken chop with salad and potato.", true],
     ],
   },
   {
     id: "rice",
-    title: "Rice 饭",
+    title: "Rice é¥­",
     items: [
-      ["101", "Chicken Chop Rice", "鸡扒饭", 9.9],
-      ["102", "Curry Sauce Chicken Rice", "咖喱酱鸡饭", 9.9],
-      ["103", "Black Pepper Chicken Rice", "黑胡椒鸡饭", 9.9],
-      ["104", "Mushroom Chicken Rice", "蘑菇鸡饭", 9.9],
-      ["105", "Sweet n Spicy Chicken Rice", "泰式甜辣鸡饭", 9.9],
-      ["106", "Mongolia Sauce Chicken Rice", "蒙古酱鸡饭", 9.9],
-      ["107", "Penang Chicken Roll Rice", "槟城鸡肉卷饭", 9.9],
-      ["108", "Dori Fish Rice", "鱼扒饭", 9.9],
-      ["109", "Curry Sauce Fish Rice", "咖喱酱鱼饭", 9.9],
-      ["110", "Black Pepper Fish Rice", "黑胡椒鱼饭", 9.9],
-      ["111", "Mushroom Fish Rice", "蘑菇鱼饭", 9.9],
-      ["112", "Sweet n Spicy Fish Rice", "泰式甜辣鱼饭", 9.9],
-      ["113", "Mongolia Sauce Fish Rice", "蒙古酱鱼饭", 9.9],
-      ["114", "Thai Style BBQ Fish Rice", "泰式烤鱼饭", 9.9],
+      ["101", "Chicken Chop Rice", "é¸¡æ‰’é¥­", 9.9],
+      ["102", "Curry Sauce Chicken Rice", "å’–å–±é…±é¸¡é¥­", 9.9],
+      ["103", "Black Pepper Chicken Rice", "é»‘èƒ¡æ¤’é¸¡é¥­", 9.9],
+      ["104", "Mushroom Chicken Rice", "è˜‘è‡é¸¡é¥­", 9.9],
+      ["105", "Sweet n Spicy Chicken Rice", "æ³°å¼ç”œè¾£é¸¡é¥­", 9.9],
+      ["106", "Mongolia Sauce Chicken Rice", "è’™å¤é…±é¸¡é¥­", 9.9],
+      ["107", "Penang Chicken Roll Rice", "æ§ŸåŸŽé¸¡è‚‰å·é¥­", 9.9],
+      ["108", "Dori Fish Rice", "é±¼æ‰’é¥­", 9.9],
+      ["109", "Curry Sauce Fish Rice", "å’–å–±é…±é±¼é¥­", 9.9],
+      ["110", "Black Pepper Fish Rice", "é»‘èƒ¡æ¤’é±¼é¥­", 9.9],
+      ["111", "Mushroom Fish Rice", "è˜‘è‡é±¼é¥­", 9.9],
+      ["112", "Sweet n Spicy Fish Rice", "æ³°å¼ç”œè¾£é±¼é¥­", 9.9],
+      ["113", "Mongolia Sauce Fish Rice", "è’™å¤é…±é±¼é¥­", 9.9],
+      ["114", "Thai Style BBQ Fish Rice", "æ³°å¼çƒ¤é±¼é¥­", 9.9],
     ],
   },
   {
     id: "mains",
-    title: "Mains 主食",
+    title: "Mains ä¸»é£Ÿ",
     items: [
-      ["115", "Chicken Chop", "鸡扒", 13.9],
-      ["116", "Curry Sauce Chicken Chop", "咖喱酱鸡扒", 13.9],
-      ["117", "Black Pepper Chicken Chop", "黑胡椒鸡扒", 13.9],
-      ["118", "Mushroom Chicken Chop", "蘑菇鸡扒", 13.9],
-      ["119", "Sweet n Spicy Chicken Chop", "泰式甜辣鸡扒", 13.9],
-      ["120", "Mongolia Sauce Chicken Chop", "蒙古酱鸡扒", 13.9],
-      ["121", "Dori Fish Fillet", "鱼扒", 13.9],
-      ["122", "Curry Sauce Fish Fillet", "咖喱酱鱼扒", 13.9],
-      ["123", "Black Pepper Fish Fillet", "黑胡椒鱼扒", 13.9],
-      ["124", "Mushroom Fish Fillet", "蘑菇鱼扒", 13.9],
-      ["125", "Sweet n Spicy Fish Fillet", "泰式甜辣鱼扒", 13.9],
-      ["126", "Mongolia Sauce Fish Fillet", "蒙古酱鱼扒", 13.9],
+      ["115", "Chicken Chop", "é¸¡æ‰’", 13.9],
+      ["116", "Curry Sauce Chicken Chop", "å’–å–±é…±é¸¡æ‰’", 13.9],
+      ["117", "Black Pepper Chicken Chop", "é»‘èƒ¡æ¤’é¸¡æ‰’", 13.9],
+      ["118", "Mushroom Chicken Chop", "è˜‘è‡é¸¡æ‰’", 13.9],
+      ["119", "Sweet n Spicy Chicken Chop", "æ³°å¼ç”œè¾£é¸¡æ‰’", 13.9],
+      ["120", "Mongolia Sauce Chicken Chop", "è’™å¤é…±é¸¡æ‰’", 13.9],
+      ["121", "Dori Fish Fillet", "é±¼æ‰’", 13.9],
+      ["122", "Curry Sauce Fish Fillet", "å’–å–±é…±é±¼æ‰’", 13.9],
+      ["123", "Black Pepper Fish Fillet", "é»‘èƒ¡æ¤’é±¼æ‰’", 13.9],
+      ["124", "Mushroom Fish Fillet", "è˜‘è‡é±¼æ‰’", 13.9],
+      ["125", "Sweet n Spicy Fish Fillet", "æ³°å¼ç”œè¾£é±¼æ‰’", 13.9],
+      ["126", "Mongolia Sauce Fish Fillet", "è’™å¤é…±é±¼æ‰’", 13.9],
     ],
   },
   {
     id: "drinks",
-    title: "Drinks 饮料",
+    title: "Drinks é¥®æ–™",
     items: [
-      ["01", "Oolong Tea", "乌龙青茶", 8.9],
-      ["02", "Oolong Milk Tea", "乌龙奶茶", 8.9],
-      ["03", "Red Tea", "红茶", 8.9],
-      ["04", "Milk Tea", "奶茶", 8.9],
-      ["05", "Green Tea", "绿茶", 8.9],
-      ["06", "Green Milk Tea", "奶绿", 8.9],
-      ["07", "Plum Green Tea", "梅子绿茶", 8.9],
-      ["08", "Plum Oolong Tea", "梅子乌龙", 8.9],
-      ["09", "Plum Honey", "梅子蜂蜜", 8.9],
-      ["10", "Pearl Oolong Milk Tea", "乌龙珍奶", 8.9],
-      ["11", "Pearl Milk Tea", "珍珠奶茶", 8.9],
-      ["12", "Pearl Green Milk Tea", "珍珠奶绿", 8.9],
-      ["13", "Pearl Green Tea", "珍珠绿", 8.9],
-      ["14", "Pearl Oolong", "珍珠乌龙", 8.9],
-      ["15", "Honey Milk Tea", "蜂蜜奶茶", 8.9],
-      ["16", "Honey Green Tea", "蜂蜜绿茶", 8.9],
-      ["17", "Honey Oolong Milk Tea", "蜂蜜乌龙", 8.9],
-      ["18", "Passion Green Tea", "百香绿茶", 8.9],
-      ["19", "Passion Aloe Vera", "百香芦荟", 8.9],
-      ["20", "Honey Aloe Vera", "蜂蜜芦荟", 8.9],
-      ["21", "Lemon Grapefruit", "柠檬柚子", 8.9],
-      ["22", "Honey Grapefruit", "蜂蜜柚子", 8.9],
-      ["23", "Lemon Green", "柠檬绿", 8.9],
-      ["24", "Mango Green", "芒果绿", 8.9],
-      ["25", "Peach Green", "桃子绿", 8.9],
-      ["26", "Pudding Milk Tea", "布丁奶茶", 8.9],
-      ["27", "Pudding Oolong Milk Tea", "乌龙布丁", 8.9],
-      ["28", "Pudding Green Milk Tea", "奶绿布丁", 8.9],
-      ["29", "Apple Green Milk Tea", "苹果奶绿", 8.9],
-      ["30", "Witchery Milk Tea", "魔力点子奶茶", 8.9],
-      ["31", "Lychee Oolong Milk Tea", "贵妃椰果", 8.9],
-      ["32", "Lychee Green Milk Tea", "椰果奶绿", 8.9],
-      ["33", "Azuki Milk Tea", "红豆奶茶", 8.9],
-      ["34", "Azuki Green Milk Tea", "红豆奶绿", 8.9],
-      ["35", "Azuki Oolong Milk Tea", "红豆乌龙", 8.9],
-      ["36", "Crystal Oolong Milk Tea", "寒天乌龙", 8.9],
-      ["37", "Crystal Green Milk Tea", "寒天奶绿", 8.9],
-      ["38", "Dirty Milky", "脏脏奶", 9.9],
-      ["39", "Dirty Milk Tea", "脏奶茶", 9.9],
-      ["40", "Dirty Green Milk Tea", "脏奶绿", 9.9],
-      ["41", "Dirty Wulong Milk Tea", "脏乌龙", 9.9],
-      ["42", "Peach Pudding", "桃子布丁鲜奶", 11.9],
-      ["43", "Mango Pudding", "芒果布丁鲜奶", 11.9],
-      ["44", "Passion Pudding", "百香布丁鲜奶", 11.9],
-      ["45", "Mocha", "摩卡", 8.9],
-      ["46", "Cappuccino", "卡布奇诺", 8.9],
-      ["47", "Tiramisu", "提拉米苏", 8.9],
-      ["48", "Italian Coffee", "意大利咖啡", 8.9],
-      ["49", "Italian Cham", "意大利掺", 8.9],
-      ["50", "Columbia Chocolate", "哥伦比亚", 8.9],
-      ["51", "Chocolate", "巧克力", 8.9],
-      ["52", "Honey Lemon", "蜂蜜柠檬", 8.9],
-      ["53", "Honey Milk", "蜂蜜牛奶", 8.9],
-      ["55", "Classic Mojito", "经典物语", 9.9],
-      ["56", "Blue Ocean", "蓝色海洋", 9.9],
-      ["57", "Passion Vines", "百香の藤", 9.9],
-      ["58", "Mango Tango", "芒里偷闲", 9.9],
-      ["59", "Momotaro", "桃太郎君", 9.9],
-      ["67", "Pepsi", "百事可乐", 3.9],
-      ["68", "Cheers Soda", "苏打汽水", 3.9],
-      ["69", "Plain Water", "白开水", 0.8],
+      ["01", "Oolong Tea", "ä¹Œé¾™é’èŒ¶", 8.9],
+      ["02", "Oolong Milk Tea", "ä¹Œé¾™å¥¶èŒ¶", 8.9],
+      ["03", "Red Tea", "çº¢èŒ¶", 8.9],
+      ["04", "Milk Tea", "å¥¶èŒ¶", 8.9],
+      ["05", "Green Tea", "ç»¿èŒ¶", 8.9],
+      ["06", "Green Milk Tea", "å¥¶ç»¿", 8.9],
+      ["07", "Plum Green Tea", "æ¢…å­ç»¿èŒ¶", 8.9],
+      ["08", "Plum Oolong Tea", "æ¢…å­ä¹Œé¾™", 8.9],
+      ["09", "Plum Honey", "æ¢…å­èœ‚èœœ", 8.9],
+      ["10", "Pearl Oolong Milk Tea", "ä¹Œé¾™çå¥¶", 8.9],
+      ["11", "Pearl Milk Tea", "çç å¥¶èŒ¶", 8.9],
+      ["12", "Pearl Green Milk Tea", "çç å¥¶ç»¿", 8.9],
+      ["13", "Pearl Green Tea", "çç ç»¿", 8.9],
+      ["14", "Pearl Oolong", "çç ä¹Œé¾™", 8.9],
+      ["15", "Honey Milk Tea", "èœ‚èœœå¥¶èŒ¶", 8.9],
+      ["16", "Honey Green Tea", "èœ‚èœœç»¿èŒ¶", 8.9],
+      ["17", "Honey Oolong Milk Tea", "èœ‚èœœä¹Œé¾™", 8.9],
+      ["18", "Passion Green Tea", "ç™¾é¦™ç»¿èŒ¶", 8.9],
+      ["19", "Passion Aloe Vera", "ç™¾é¦™èŠ¦èŸ", 8.9],
+      ["20", "Honey Aloe Vera", "èœ‚èœœèŠ¦èŸ", 8.9],
+      ["21", "Lemon Grapefruit", "æŸ æª¬æŸšå­", 8.9],
+      ["22", "Honey Grapefruit", "èœ‚èœœæŸšå­", 8.9],
+      ["23", "Lemon Green", "æŸ æª¬ç»¿", 8.9],
+      ["24", "Mango Green", "èŠ’æžœç»¿", 8.9],
+      ["25", "Peach Green", "æ¡ƒå­ç»¿", 8.9],
+      ["26", "Pudding Milk Tea", "å¸ƒä¸å¥¶èŒ¶", 8.9],
+      ["27", "Pudding Oolong Milk Tea", "ä¹Œé¾™å¸ƒä¸", 8.9],
+      ["28", "Pudding Green Milk Tea", "å¥¶ç»¿å¸ƒä¸", 8.9],
+      ["29", "Apple Green Milk Tea", "è‹¹æžœå¥¶ç»¿", 8.9],
+      ["30", "Witchery Milk Tea", "é­”åŠ›ç‚¹å­å¥¶èŒ¶", 8.9],
+      ["31", "Lychee Oolong Milk Tea", "è´µå¦ƒæ¤°æžœ", 8.9],
+      ["32", "Lychee Green Milk Tea", "æ¤°æžœå¥¶ç»¿", 8.9],
+      ["33", "Azuki Milk Tea", "çº¢è±†å¥¶èŒ¶", 8.9],
+      ["34", "Azuki Green Milk Tea", "çº¢è±†å¥¶ç»¿", 8.9],
+      ["35", "Azuki Oolong Milk Tea", "çº¢è±†ä¹Œé¾™", 8.9],
+      ["36", "Crystal Oolong Milk Tea", "å¯’å¤©ä¹Œé¾™", 8.9],
+      ["37", "Crystal Green Milk Tea", "å¯’å¤©å¥¶ç»¿", 8.9],
+      ["38", "Dirty Milky", "è„è„å¥¶", 9.9],
+      ["39", "Dirty Milk Tea", "è„å¥¶èŒ¶", 9.9],
+      ["40", "Dirty Green Milk Tea", "è„å¥¶ç»¿", 9.9],
+      ["41", "Dirty Wulong Milk Tea", "è„ä¹Œé¾™", 9.9],
+      ["42", "Peach Pudding", "æ¡ƒå­å¸ƒä¸é²œå¥¶", 11.9],
+      ["43", "Mango Pudding", "èŠ’æžœå¸ƒä¸é²œå¥¶", 11.9],
+      ["44", "Passion Pudding", "ç™¾é¦™å¸ƒä¸é²œå¥¶", 11.9],
+      ["45", "Mocha", "æ‘©å¡", 8.9],
+      ["46", "Cappuccino", "å¡å¸ƒå¥‡è¯º", 8.9],
+      ["47", "Tiramisu", "ææ‹‰ç±³è‹", 8.9],
+      ["48", "Italian Coffee", "æ„å¤§åˆ©å’–å•¡", 8.9],
+      ["49", "Italian Cham", "æ„å¤§åˆ©æŽº", 8.9],
+      ["50", "Columbia Chocolate", "å“¥ä¼¦æ¯”äºš", 8.9],
+      ["51", "Chocolate", "å·§å…‹åŠ›", 8.9],
+      ["52", "Honey Lemon", "èœ‚èœœæŸ æª¬", 8.9],
+      ["53", "Honey Milk", "èœ‚èœœç‰›å¥¶", 8.9],
+      ["55", "Classic Mojito", "ç»å…¸ç‰©è¯­", 9.9],
+      ["56", "Blue Ocean", "è“è‰²æµ·æ´‹", 9.9],
+      ["57", "Passion Vines", "ç™¾é¦™ã®è—¤", 9.9],
+      ["58", "Mango Tango", "èŠ’é‡Œå·é—²", 9.9],
+      ["59", "Momotaro", "æ¡ƒå¤ªéƒŽå›", 9.9],
+      ["67", "Pepsi", "ç™¾äº‹å¯ä¹", 3.9],
+      ["68", "Cheers Soda", "è‹æ‰“æ±½æ°´", 3.9],
+      ["69", "Plain Water", "ç™½å¼€æ°´", 0.8],
     ],
   },
-  { id: "cake", title: "Cake 蛋糕", items: [["90", "Assorted Cake", "精选蛋糕", 12.9]] },
+  { id: "cake", title: "Cake è›‹ç³•", items: [["90", "Assorted Cake", "ç²¾é€‰è›‹ç³•", 12.9]] },
   {
     id: "addons",
-    title: "Add-on 另加",
+    title: "Add-on å¦åŠ ",
     items: [
-      ["A1", "Rice Large", "大饭", 1.5],
-      ["A2", "Rice Small", "小饭", 1.3],
-      ["A3", "Fried Egg", "荷包蛋", 1.5],
-      ["A4", "Fried Vegetable", "炒包菜", 2],
-      ["A5", "Mayonnaise", "美乃滋", 1],
+      ["A1", "Rice Large", "å¤§é¥­", 1.5],
+      ["A2", "Rice Small", "å°é¥­", 1.3],
+      ["A3", "Fried Egg", "è·åŒ…è›‹", 1.5],
+      ["A4", "Fried Vegetable", "ç‚’åŒ…èœ", 2],
+      ["A5", "Mayonnaise", "ç¾Žä¹ƒæ»‹", 1],
     ],
   },
 ];
@@ -431,9 +474,11 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "order-placed-view");
   phone.classList.add(`${screen}-view`);
 }
+
+window.setNovaScreen = setScreen;
 
 function showAuthMessage(message = "") {
   authMessage.textContent = message;
@@ -646,7 +691,7 @@ function renderNotifications() {
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 13 4 4L19 7" /></svg>
                     </button>
                   </div>
-                ` : `<b>›</b>`}
+                ` : `<b>&rsaquo;</b>`}
               </article>
             `;
             }).join("")}
@@ -978,6 +1023,21 @@ function getOwnUsername() {
   return currentProfile?.username || localStorage.getItem(`novaUsername:${user?.uid}`) || "";
 }
 
+function getOwnAvatarUrl() {
+  const user = auth?.currentUser || null;
+  return user?.uid ? localStorage.getItem(`novaAvatar:${user.uid}`) || "" : "";
+}
+
+function chatAvatarMarkup(username = "You", imageUrl = "") {
+  return imageUrl
+    ? `<div class="chat-system-avatar"><img src="${imageUrl}" alt="" /></div>`
+    : `<div class="chat-system-avatar">${firstLetter(username)}</div>`;
+}
+
+function chatSystemMarkup(text, small = "", username = "You", imageUrl = "") {
+  return `${chatAvatarMarkup(username, imageUrl)}<span>${text}</span>${small ? `<small>${small}</small>` : ""}`;
+}
+
 function normalizeUsernameSearch(value) {
   return value.trim().replace(/^@+/, "").replace(/\s+/g, "").toLowerCase();
 }
@@ -1171,7 +1231,9 @@ function groupInviteStatus(friend) {
 function renderGroupMembers() {
   if (!createdMembersRow || !createdMembersTitle) return;
   currentGroupMemberCount = groupMembers.length;
-  createdMembersTitle.textContent = `Members (${currentGroupMemberCount}/5)`;
+  createdMembersTitle.textContent = "Participants";
+  const joinedCount = document.querySelector(".created-joined-count");
+  if (joinedCount) joinedCount.textContent = `${currentGroupMemberCount} / 2 joined`;
 
   const joinedMarkup = groupMembers
     .map((member) => {
@@ -1179,7 +1241,7 @@ function renderGroupMembers() {
       return `
         <div class="created-member">
           <div class="created-member-avatar">${firstLetter(member.name || member.username)}</div>
-          <strong><b>${member.name || member.username}</b> <span>${label}</span></strong>
+          <strong><b>@${member.username || member.name || "user"}</b> <span>${label}</span></strong>
         </div>
       `;
     })
@@ -1192,32 +1254,196 @@ function renderGroupMembers() {
       return `
         <div class="created-member ${invite.status === "rejected" ? "rejected" : "waiting"}">
           <div class="created-member-avatar">${firstLetter(invite.name || invite.username)}</div>
-          <strong><b>${invite.name || invite.username}</b> <span>${label}</span></strong>
+          <strong><b>@${invite.username || invite.name || "friend"}</b> <span>${label}</span></strong>
         </div>
       `;
     })
     .join("");
 
   const filledSlots = groupMembers.length + groupInvites.filter((invite) => invite.status !== "accepted").length;
-  const openSlots = Math.max(0, 5 - filledSlots);
+  const openSlots = Math.max(0, 2 - filledSlots);
   const inviteMarkup = Array.from({ length: openSlots }, () => (
-    `<button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i><span>Invite</span></button>`
+    `<button class="created-invite-slot" type="button" aria-label="Invite friend"><i>+</i></button>`
   )).join("");
 
   createdMembersRow.innerHTML = joinedMarkup + waitingMarkup + inviteMarkup;
-  const startHint = startGroupOrderButton.querySelector("small");
+  const startHint = startGroupOrderButton?.querySelector("small");
   if (startHint) {
-    startHint.textContent = currentGroupMemberCount >= 2
-      ? "Start ordering with your group"
-      : "Invite at least 1 friend to start ordering";
+    startHint.textContent = "Tap to test the chat";
   }
+  if (startGroupOrderButton) {
+    const strong = startGroupOrderButton.querySelector("strong");
+    const count = startGroupOrderButton.querySelector("span");
+    const action = startGroupOrderButton.querySelector("em");
+    startGroupOrderButton.classList.remove("is-locked");
+    if (count) count.textContent = `${currentGroupMemberCount} / 2 joined`;
+    if (strong) strong.textContent = "Enter Group Chat";
+    if (action) action.textContent = "Enter Group Chat";
+  }
+}
+
+function renderCreatedInviteFriends() {
+  if (!createdInviteList || !createdInviteSearchInput) return;
+  const query = createdInviteSearchInput.value.trim().toLowerCase();
+  const friends = currentFriendsList().filter((friend) => {
+    const username = (friend.username || "").toLowerCase();
+    const name = (friend.name || "").toLowerCase();
+    return !query || username.includes(query) || name.includes(query);
+  });
+
+  createdInviteList.innerHTML = friends.map((friend) => {
+    const key = groupFriendKey(friend);
+    const status = groupInviteStatus(friend);
+    const labels = { invite: "Invite", pending: "Waiting", rejected: "Invite", joined: "Joined" };
+    const disabled = status === "pending" || status === "joined" ? "disabled" : "";
+    return `
+      <article class="created-invite-row">
+        <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+        <span><strong>${friend.name || friend.username}</strong><em>@${friend.username || ""}</em></span>
+        <button type="button" data-invite-key="${key}" ${disabled}>${labels[status]}</button>
+      </article>
+    `;
+  }).join("");
+  if (createdInviteEmpty) createdInviteEmpty.hidden = friends.length > 0;
+}
+
+async function openCreatedSheet(mode = "share") {
+  if (!createdSheetOverlay) return;
+  if (mode === "invite") {
+    try {
+      await loadFirebaseFriends();
+    } catch (error) {
+      console.error(error);
+    }
+    if (createdInviteSearchInput) createdInviteSearchInput.value = "";
+    renderCreatedInviteFriends();
+  }
+  createdSharePanel.hidden = mode !== "share";
+  createdInvitePanel.hidden = mode !== "invite";
+  createdSheetOverlay.hidden = false;
+}
+
+function closeCreatedSheet() {
+  if (createdSheetOverlay) createdSheetOverlay.hidden = true;
+}
+
+function groupInviteLink() {
+  const url = new URL(window.location.href);
+  url.searchParams.set("groupInvite", currentGroupId || "preview");
+  url.hash = "group-invite";
+  return url.toString();
+}
+
+function groupInviteMessage() {
+  return `Join my Nova group order for Mori Cafe: ${groupInviteLink()}`;
+}
+
+function renderChatProgress() {
+  const { subtotal, qty, total } = totals(groupCart, "group");
+  const progress = Math.min((subtotal / 35) * 100, 100);
+  const remaining = Math.max(35 - subtotal, 0);
+  if (chatDiscountFill) chatDiscountFill.style.width = `${progress}%`;
+  if (chatSpendAmount) chatSpendAmount.textContent = money(subtotal);
+  if (chatSpendBubble) {
+    chatSpendBubble.textContent = money(subtotal);
+    chatSpendBubble.style.left = `${Math.min(95, Math.max(5, progress))}%`;
+  }
+  if (chatCurrentTotal) chatCurrentTotal.textContent = money(total);
+  if (chatCartCount) chatCartCount.textContent = qty;
+  if (chatOrderBadge) chatOrderBadge.textContent = qty;
+  if (chatOrderRow) chatOrderRow.hidden = qty <= 0;
+  if (chatMinimumText) {
+    chatMinimumText.textContent = remaining > 0
+      ? `You need ${money(remaining)} more to reach minimum spend`
+      : "Minimum spend reached";
+  }
+  if (chatCheckoutHint) {
+    chatCheckoutHint.textContent = remaining > 0 ? `Need ${money(remaining)} more` : "Ready";
+  }
+
+  let unlocked = "";
+  const nextTarget = [35, 40, 45, 50].find((target) => subtotal < target) || 0;
+  chatRewardCards.forEach((card) => {
+    const target = Number(card.dataset.step);
+    const active = subtotal >= target;
+    const current = !active && target === nextTarget;
+    card.classList.toggle("unlocked", active);
+    card.classList.toggle("current-goal", current);
+    const status = card.querySelector("em");
+    if (status) status.textContent = active ? "Unlocked" : current ? "Current goal" : "Locked";
+    if (active) {
+      if (target === 35) unlocked = "You have unlocked 10% OFF delivery!";
+      if (target === 40) unlocked = "You have unlocked 20% OFF delivery!";
+      if (target === 45) unlocked = "You have unlocked 30% OFF delivery!";
+      if (target === 50) unlocked = "You have unlocked free delivery!";
+    }
+  });
+  if (chatUnlockMessage) chatUnlockMessage.hidden = !unlocked;
+  if (chatUnlockText && unlocked) chatUnlockText.textContent = unlocked;
+}
+
+function renderChatMembersPanel() {
+  if (!chatMembersPanel || !chatMembersList) return;
+  const activeMembers = groupMembers.slice(0, 5);
+  const pendingInvites = groupInvites.filter((invite) => invite.status !== "accepted").slice(0, Math.max(0, 5 - activeMembers.length));
+  const openSlots = Math.max(0, 5 - activeMembers.length - pendingInvites.length);
+  if (chatMembersCount) chatMembersCount.textContent = `${activeMembers.length}/5`;
+  if (chatMemberCount) chatMemberCount.textContent = `${activeMembers.length} of 5 members`;
+  if (chatTopMemberCount) chatTopMemberCount.textContent = activeMembers.length;
+  if (groupInviteLinkInput) groupInviteLinkInput.value = groupInviteLink();
+
+  const memberRows = activeMembers.map((member) => {
+    const isHost = member.status === "host";
+    return `
+      <article class="chat-member-row">
+        <div class="chat-member-avatar">${firstLetter(member.name || member.username)}</div>
+        <span>
+          <strong>${member.name || member.username || "Member"}${isHost ? " (You)" : ""}</strong>
+          <small>${isHost ? "Created this group" : "Joined"}</small>
+        </span>
+        <em>${isHost ? "Host" : "Joined"}</em>
+      </article>
+    `;
+  }).join("");
+
+  const inviteRows = pendingInvites.map((invite) => `
+    <article class="chat-member-row pending">
+      <div class="chat-member-avatar">${firstLetter(invite.name || invite.username)}</div>
+      <span>
+        <strong>${invite.name || invite.username || "Friend"}</strong>
+        <small>${invite.status === "rejected" ? "Rejected invite" : "Waiting for reply"}</small>
+      </span>
+      <em>${invite.status === "rejected" ? "Rejected" : "Waiting"}</em>
+    </article>
+  `).join("");
+
+  const emptyRows = Array.from({ length: openSlots }, () => `
+    <button class="chat-member-row empty" type="button">
+      <div class="chat-member-avatar">+</div>
+      <span>
+        <strong>Invite member</strong>
+        <small>Empty slot</small>
+      </span>
+    </button>
+  `).join("");
+
+  chatMembersList.innerHTML = memberRows + inviteRows + emptyRows;
+}
+
+function openChatMembersPanel() {
+  renderChatMembersPanel();
+  chatMembersPanel.hidden = false;
+}
+
+function closeChatMembersPanel() {
+  if (chatMembersPanel) chatMembersPanel.hidden = true;
 }
 
 function appendLocalChatSystem(text, small = "") {
   if (!chatMessages) return;
   const message = document.createElement("div");
   message.className = "chat-system-message cart-chat-message";
-  message.innerHTML = `<span>${text}</span>${small ? `<small>${small}</small>` : ""}`;
+  message.innerHTML = chatSystemMarkup(text, small, getOwnUsername() || "You", getOwnAvatarUrl());
   chatMessages.appendChild(message);
 }
 
@@ -1232,6 +1458,7 @@ async function addGroupMessage(data) {
       ...data,
       senderUid: auth?.currentUser?.uid || "",
       senderUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+      senderAvatar: getOwnAvatarUrl(),
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       clientCreatedAt: Date.now(),
     });
@@ -1266,7 +1493,7 @@ function renderGroupMessages(snapshot) {
       `;
     } else {
       message.className = "chat-system-message cart-chat-message";
-      message.innerHTML = `<span>${data.text || ""}</span>${data.small ? `<small>${data.small}</small>` : ""}`;
+      message.innerHTML = chatSystemMarkup(data.text || "", data.small || "", data.senderUsername || "User", data.senderAvatar || "");
     }
     chatMessages.appendChild(message);
   });
@@ -1313,6 +1540,8 @@ function applyGroupInviteSnapshot(snapshot) {
     }
   });
   renderGroupMembers();
+  renderCreatedInviteFriends();
+  renderChatMembersPanel();
   renderInviteFriends();
 }
 
@@ -1354,6 +1583,7 @@ function applyGroupCartSnapshot(snapshot) {
       qty: Number(data.qty) || 0,
     });
   });
+  renderChatProgress();
   if (cartMode === "group") updateAllCartViews();
 }
 
@@ -1388,12 +1618,13 @@ async function openGroupCreated() {
   currentGroupCloseTime = groupCloseTime(slot);
   currentGroupId = `group_${Date.now()}_${auth?.currentUser?.uid || "guest"}`;
   groupMembers = [currentHostMember()];
+  currentGroupMemberCount = groupMembers.length;
   groupInvites = [];
   groupCart.clear();
-  createdGroupName.textContent = name;
-  createdCloseTime.textContent = currentGroupCloseTime;
-  createdHostAvatar.textContent = firstLetter(groupMembers[0].name);
-  createdHostName.textContent = groupMembers[0].name;
+  if (createdGroupName) createdGroupName.textContent = name;
+  if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
+  if (createdHostAvatar) createdHostAvatar.textContent = firstLetter(groupMembers[0].name);
+  if (createdHostName) createdHostName.textContent = groupMembers[0].name;
   renderGroupMembers();
   if (db) {
     try {
@@ -1429,13 +1660,20 @@ async function openGroupCreated() {
 }
 
 function openGroupChat() {
-  chatGroupName.textContent = currentGroupName;
-  chatMemberCount.textContent = `${currentGroupMemberCount} of 5 members`;
-  chatCloseCountdown.textContent = closeCountdownText(currentGroupCloseTime);
+  if (chatGroupName) chatGroupName.textContent = "Group Order Chat";
+  if (chatMemberCount) chatMemberCount.textContent = `${currentGroupMemberCount} of 5 members`;
+  if (chatCloseCountdown) chatCloseCountdown.textContent = closeCountdownText(currentGroupCloseTime);
+  renderChatProgress();
+  renderChatMembersPanel();
   if (!db || !currentGroupId) {
     chatCreatedTime.textContent = currentClockTime();
     chatCreatedText.textContent = `You created the group "${currentGroupName}"`;
     chatCreatedClose.textContent = `Order closes at ${currentGroupCloseTime}`;
+    const staticAvatar = document.querySelector(".chat-system-message .chat-system-avatar");
+    if (staticAvatar) {
+      const avatarUrl = getOwnAvatarUrl();
+      staticAvatar.innerHTML = avatarUrl ? `<img src="${avatarUrl}" alt="" />` : firstLetter(getOwnUsername() || "You");
+    }
   }
   setScreen("group-chat");
 }
@@ -1449,6 +1687,40 @@ function openSelectedRestaurantMenu() {
   updateAllCartViews();
   setScreen("detail");
 }
+
+function renderOrderProgress(status = "waiting-rider") {
+  if (!orderProgressCard) return;
+  const order = ["placed", "preparing", "waiting-rider", "on-way", "delivered"];
+  const activeIndex = Math.max(0, order.indexOf(status));
+  orderProgressCard.dataset.status = status;
+  orderProgressCard.style.setProperty("--progress", `${(activeIndex / (order.length - 1)) * 100}%`);
+  orderProgressCard.querySelectorAll(".progress-step").forEach((step, index) => {
+    step.classList.toggle("done", index < activeIndex);
+    step.classList.toggle("active", index === activeIndex);
+  });
+}
+
+function renderOrderPlaced(orderData) {
+  const items = orderData.items || [];
+  if (orderPlacedId) orderPlacedId.textContent = orderData.orderId || `#NOVA${Date.now().toString().slice(-8)}`;
+  if (orderPlacedTime) orderPlacedTime.textContent = currentClockTime();
+  if (orderPlacedRestaurantTotal) orderPlacedRestaurantTotal.textContent = money(orderData.total || 0);
+  if (orderPlacedSubtotal) orderPlacedSubtotal.textContent = money(orderData.subtotal || 0);
+  if (orderPlacedDelivery) orderPlacedDelivery.textContent = money(orderData.delivery || 0);
+  if (orderPlacedTotal) orderPlacedTotal.textContent = money(orderData.total || 0);
+  if (orderPlacedItems) {
+    orderPlacedItems.innerHTML = items.map((item) => `
+      <article>
+        <span>${item.name}<small>x ${item.qty}</small></span>
+        <strong>${money(item.price * item.qty)}</strong>
+      </article>
+    `).join("");
+  }
+  renderOrderProgress(orderData.status || "waiting-rider");
+}
+
+window.renderOrderProgress = renderOrderProgress;
+window.renderOrderPlaced = renderOrderPlaced;
 
 function openGroupCart() {
   cartMode = "group";
@@ -1831,12 +2103,43 @@ groupTimeOptions.forEach((option) => {
   });
 });
 createGroupButton.addEventListener("click", openGroupCreated);
-createdBack.addEventListener("click", openGroupOrder);
-startGroupOrderButton.addEventListener("click", openGroupChat);
+if (createdBack) createdBack.addEventListener("click", openGroupOrder);
+if (startGroupOrderButton) {
+  startGroupOrderButton.addEventListener("click", () => {
+    openGroupChat();
+  });
+}
 chatBack.addEventListener("click", () => setScreen("group-created"));
-chatAddItemsButton.addEventListener("click", openSelectedRestaurantMenu);
-chatMenuButton.addEventListener("click", openSelectedRestaurantMenu);
-chatCartButton.addEventListener("click", openGroupCart);
+chatAddItemsButton?.addEventListener("click", openSelectedRestaurantMenu);
+chatMenuButton?.addEventListener("click", openSelectedRestaurantMenu);
+chatCartButtons.forEach((button) => button.addEventListener("click", openGroupCart));
+chatMembersButtons.forEach((button) => button.addEventListener("click", openChatMembersPanel));
+chatCheckoutButton?.addEventListener("click", () => {
+  cartMode = "group";
+  updateAllCartViews();
+  openGroupCart();
+});
+chatMembersClose?.addEventListener("click", closeChatMembersPanel);
+chatMembersPanel?.addEventListener("click", (event) => {
+  if (event.target === chatMembersPanel) closeChatMembersPanel();
+});
+chatPanelInvite?.addEventListener("click", () => {
+  closeChatMembersPanel();
+  openInviteFriends("group-chat");
+});
+chatMembersList?.addEventListener("click", (event) => {
+  if (!event.target.closest(".chat-member-row.empty")) return;
+  closeChatMembersPanel();
+  openInviteFriends("group-chat");
+});
+copyGroupLinkButton?.addEventListener("click", async () => {
+  const link = groupInviteLinkInput?.value || groupInviteLink();
+  await navigator.clipboard?.writeText(link);
+  copyGroupLinkButton.textContent = "Copied";
+  setTimeout(() => {
+    copyGroupLinkButton.textContent = "Copy";
+  }, 1100);
+});
 chatSendButton.addEventListener("click", async () => {
   const text = chatInput.value.trim();
   if (!text) return;
@@ -1853,15 +2156,62 @@ chatInput.addEventListener("keydown", (event) => {
     chatSendButton.click();
   }
 });
-chatInviteButton.addEventListener("click", () => openInviteFriends("group-chat"));
-createdMembersRow.addEventListener("click", (event) => {
-  if (event.target.closest(".created-invite-slot")) openInviteFriends("group-created");
+chatInviteButton?.addEventListener("click", () => openInviteFriends("group-chat"));
+if (createdMembersRow) {
+  createdMembersRow.addEventListener("click", (event) => {
+    if (event.target.closest(".created-invite-slot")) openCreatedSheet("invite");
+  });
+}
+createdInviteAction?.addEventListener("click", () => openCreatedSheet("invite"));
+createdShareAction?.addEventListener("click", () => openCreatedSheet("share"));
+createdSheetClose?.addEventListener("click", closeCreatedSheet);
+createdSheetDone?.addEventListener("click", closeCreatedSheet);
+createdSheetOverlay?.addEventListener("click", (event) => {
+  if (event.target === createdSheetOverlay) closeCreatedSheet();
 });
-inviteFriendsBack.addEventListener("click", () => {
-  if (inviteReturnScreen === "group-created") {
-    setScreen("group-created");
+createdInviteSearchInput?.addEventListener("input", renderCreatedInviteFriends);
+createdInviteList?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-invite-key]");
+  if (!button || button.disabled) return;
+  const friend = currentFriendsList().find((item) => groupFriendKey(item) === button.dataset.inviteKey);
+  if (friend) {
+    await inviteGroupFriend(friend);
+    renderCreatedInviteFriends();
+  }
+});
+createdCopyLink?.addEventListener("click", async () => {
+  await navigator.clipboard?.writeText(groupInviteLink());
+  createdCopyLink.querySelector("em").textContent = "Copied";
+  setTimeout(() => {
+    createdCopyLink.querySelector("em").textContent = "Copy";
+  }, 1100);
+});
+createdSocialRow?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-share-channel]");
+  if (!button) return;
+  const channel = button.dataset.shareChannel;
+  const message = groupInviteMessage();
+  const encoded = encodeURIComponent(message);
+  if (channel === "whatsapp") {
+    window.open(`https://wa.me/?text=${encoded}`, "_blank");
     return;
   }
+  if (channel === "telegram") {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(groupInviteLink())}&text=${encodeURIComponent("Join my Nova group order on Nova")}`, "_blank");
+    return;
+  }
+  if (channel === "messages" && navigator.share) {
+    await navigator.share({ title: "Nova Group Order", text: message, url: groupInviteLink() });
+    return;
+  }
+  await navigator.clipboard?.writeText(message);
+  button.querySelector("b").textContent = "Copied";
+  setTimeout(() => {
+    const labels = { telegram: "Telegram", messages: "Messages" };
+    button.querySelector("b").textContent = labels[channel] || "Share";
+  }, 1100);
+});
+inviteFriendsBack.addEventListener("click", () => {
   openGroupChat();
 });
 inviteFriendSearchInput.addEventListener("input", renderInviteFriends);
@@ -2249,6 +2599,7 @@ function updateAllCartViews() {
   checkoutTotal.textContent = money(current.total);
   placeOrderTotal.textContent = money(current.total);
   phone.classList.toggle("group-cart-mode", isGroupCart);
+  if (isGroupCart) renderChatProgress();
 
   cartItems.innerHTML = [...sourceCart.values()]
     .map(
@@ -2462,7 +2813,8 @@ submitPaymentButton.addEventListener("click", async () => {
     return;
   }
 
-  const current = totals();
+  const current = totals(sourceCart, cartMode);
+  const orderedItems = [...sourceCart.values()].map((item) => ({ ...item }));
   const originalText = submitPaymentButton.textContent;
   submitPaymentButton.disabled = true;
   submitPaymentButton.textContent = "Submitting Payment...";
@@ -2480,12 +2832,12 @@ submitPaymentButton.addEventListener("click", async () => {
       screenshotUrl = await snapshot.ref.getDownloadURL();
     }
 
-    await db.collection("orders").add({
+    const orderRef = await db.collection("orders").add({
       restaurant: "Mori Cafe Bukit Beruang",
       address: activeChoice("addressChoices"),
       slot: activeChoice("slotChoices"),
       paymentMethod: "Touch 'n Go eWallet",
-      items: [...sourceCart.values()].map((item) => ({
+      items: orderedItems.map((item) => ({
         code: item.code,
         name: item.name,
         chineseName: item.cn,
@@ -2503,7 +2855,14 @@ submitPaymentButton.addEventListener("click", async () => {
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
 
-    alert("Payment submitted successfully!");
+    renderOrderPlaced({
+      orderId: `#NOVA${orderRef.id.slice(-8).toUpperCase()}`,
+      items: orderedItems,
+      subtotal: current.subtotal,
+      delivery: current.delivery,
+      total: current.total,
+      status: "waiting-rider",
+    });
     sourceCart.clear();
     paymentScreenshotInput.value = "";
     compressedPaymentScreenshot = null;
@@ -2511,7 +2870,8 @@ submitPaymentButton.addEventListener("click", async () => {
     paymentUploadTitle.textContent = "Tap to upload screenshot";
     paymentUploadHint.textContent = "Supports JPG, PNG (Max 2MB)";
     updateAllCartViews();
-    setScreen("home");
+    window.scrollTo(0, 0);
+    setScreen("order-placed");
   } catch (error) {
     console.error(error);
     alert("Payment submission failed. Please try again.");
