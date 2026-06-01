@@ -144,6 +144,7 @@ let firebaseGroupInvitesLoaded = false;
 let notificationItems = [];
 let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
+let paymentSuccessLottie = null;
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -176,17 +177,12 @@ const cartBack = document.querySelector(".cart-back");
 const cartPageScroll = document.querySelector(".cart-page-scroll");
 const cartItems = document.querySelector("#cartItems");
 const cartItemsTitle = document.querySelector("#cartItemsTitle");
-const cartDeliveryText = document.querySelector("#cartDeliveryText");
-const cartDeliveryRemain = document.querySelector("#cartDeliveryRemain");
-const deliveryProgress = document.querySelector("#deliveryProgress");
 const summarySubtotal = document.querySelector("#summarySubtotal");
 const summaryDelivery = document.querySelector("#summaryDelivery");
 const summaryTotal = document.querySelector("#summaryTotal");
 const cartPageQty = document.querySelector("#cartPageQty");
 const cartPageSubtotal = document.querySelector("#cartPageSubtotal");
 const cartPageDelivery = document.querySelector("#cartPageDelivery");
-const cartInlineDelivery = document.querySelector("#cartInlineDelivery");
-const cartFreeRow = document.querySelector(".cart-free-row");
 const clearCartButton = document.querySelector(".cart-delete");
 const cartShopNoteButton = document.querySelector(".cart-shop-note");
 const cartNoteEditor = document.querySelector(".cart-note-editor");
@@ -208,6 +204,8 @@ const paymentScreenshotInput = document.querySelector("#paymentScreenshotInput")
 const paymentUploadTitle = document.querySelector("#paymentUploadTitle");
 const paymentUploadHint = document.querySelector("#paymentUploadHint");
 const submitPaymentButton = document.querySelector(".submit-payment-bar button");
+const paymentSuccessAnimation = document.querySelector("#paymentSuccessAnimation");
+const paymentSuccessTitle = document.querySelector(".payment-success-content h1");
 const orderPlacedId = document.querySelector("#orderPlacedId");
 const orderPlacedTime = document.querySelector("#orderPlacedTime");
 const orderPlacedRestaurantTotal = document.querySelector("#orderPlacedRestaurantTotal");
@@ -407,6 +405,57 @@ const menuSections = [
   },
 ];
 
+function fixMojibakeText(value) {
+  if (typeof value !== "string" || !/[ÃÂÄÅÆÇÈÉãäåæçèé‰ŠŒŽ‘’“”•–—˜™š›œžŸ]/.test(value)) return value;
+  const cp1252Bytes = {
+    "€": 0x80,
+    "‚": 0x82,
+    "ƒ": 0x83,
+    "„": 0x84,
+    "…": 0x85,
+    "†": 0x86,
+    "‡": 0x87,
+    "ˆ": 0x88,
+    "‰": 0x89,
+    "Š": 0x8a,
+    "‹": 0x8b,
+    "Œ": 0x8c,
+    "Ž": 0x8e,
+    "‘": 0x91,
+    "’": 0x92,
+    "“": 0x93,
+    "”": 0x94,
+    "•": 0x95,
+    "–": 0x96,
+    "—": 0x97,
+    "˜": 0x98,
+    "™": 0x99,
+    "š": 0x9a,
+    "›": 0x9b,
+    "œ": 0x9c,
+    "ž": 0x9e,
+    "Ÿ": 0x9f,
+  };
+  try {
+    const bytes = Array.from(value, (char) => {
+      const code = char.charCodeAt(0);
+      const byte = code <= 0xff ? code : cp1252Bytes[char];
+      if (byte === undefined) throw new Error("Not mojibake");
+      return `%${byte.toString(16).padStart(2, "0")}`;
+    }).join("");
+    return decodeURIComponent(bytes);
+  } catch {
+    return value;
+  }
+}
+
+menuSections.forEach((section) => {
+  section.title = fixMojibakeText(section.title);
+  section.items.forEach((item) => {
+    item[2] = fixMojibakeText(item[2]);
+  });
+});
+
 const normalCart = new Map();
 const groupCart = new Map();
 let cartMode = "normal";
@@ -474,7 +523,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "order-placed-view");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -1722,6 +1771,60 @@ function renderOrderPlaced(orderData) {
 window.renderOrderProgress = renderOrderProgress;
 window.renderOrderPlaced = renderOrderPlaced;
 
+function showPaymentSuccessThenOrderPlaced() {
+  phone.classList.remove("payment-success-ready", "order-placed-entering");
+  phone.classList.add("payment-success-overlay-active");
+  if (paymentSuccessTitle) paymentSuccessTitle.hidden = false;
+  window.scrollTo(0, 0);
+  return new Promise((resolve) => {
+    let finished = false;
+    let titleShown = false;
+    const showTitle = () => {
+      if (titleShown) return;
+      titleShown = true;
+      phone.classList.add("payment-success-ready");
+    };
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      showTitle();
+      phone.classList.remove("payment-success-overlay-active", "payment-success-ready");
+      setScreen("order-placed");
+      phone.classList.add("order-placed-entering");
+      setTimeout(() => phone.classList.remove("order-placed-entering"), 650);
+      resolve();
+    };
+
+    if (paymentSuccessLottie) {
+      paymentSuccessLottie.destroy();
+      paymentSuccessLottie = null;
+    }
+    if (paymentSuccessAnimation) paymentSuccessAnimation.innerHTML = "";
+
+    if (window.lottie && paymentSuccessAnimation) {
+      paymentSuccessLottie = window.lottie.loadAnimation({
+        container: paymentSuccessAnimation,
+        renderer: "svg",
+        loop: false,
+        autoplay: true,
+        path: "assets/animations/success.json",
+      });
+      paymentSuccessLottie.addEventListener("enterFrame", (event) => {
+        const total = paymentSuccessLottie.totalFrames || 0;
+        if (total && event.currentTime >= total * 0.6) showTitle();
+      });
+      paymentSuccessLottie.addEventListener("complete", finish);
+      paymentSuccessLottie.addEventListener("data_failed", () => setTimeout(finish, 1400));
+      setTimeout(showTitle, 1600);
+      setTimeout(finish, 3200);
+      return;
+    }
+
+    setTimeout(showTitle, 900);
+    setTimeout(finish, 1800);
+  });
+}
+
 function openGroupCart() {
   cartMode = "group";
   cartReturnScreen = "group-chat";
@@ -2582,17 +2685,12 @@ function updateAllCartViews() {
   phone.classList.toggle("has-cart", current.qty > 0);
 
   cartItemsTitle.textContent = `Items (${current.qty})`;
-  cartDeliveryText.textContent = remaining > 0 ? `Add ${money(remaining)} more to enjoy free delivery!` : "You have unlocked free delivery!";
-  cartDeliveryRemain.innerHTML = remaining > 0 ? `${money(remaining)}<br />to go` : `Free<br />delivery`;
-  deliveryProgress.style.width = `${progress}%`;
   summarySubtotal.textContent = money(current.subtotal);
   summaryDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
   summaryTotal.textContent = money(current.total);
   cartPageQty.textContent = current.qty;
   cartPageSubtotal.textContent = money(current.total);
   cartPageDelivery.textContent = isGroupCart ? message : "";
-  cartInlineDelivery.textContent = isGroupCart ? message : "";
-  cartFreeRow.style.setProperty("--free-progress", `${progress}%`);
   checkoutItemsTitle.textContent = `Order Items (${current.qty})`;
   checkoutSubtotal.textContent = money(current.subtotal);
   checkoutDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
@@ -2870,8 +2968,7 @@ submitPaymentButton.addEventListener("click", async () => {
     paymentUploadTitle.textContent = "Tap to upload screenshot";
     paymentUploadHint.textContent = "Supports JPG, PNG (Max 2MB)";
     updateAllCartViews();
-    window.scrollTo(0, 0);
-    setScreen("order-placed");
+    await showPaymentSuccessThenOrderPlaced();
   } catch (error) {
     console.error(error);
     alert("Payment submission failed. Please try again.");

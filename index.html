@@ -945,15 +945,6 @@
             </label>
           </section>
 
-          <section class="delivery-progress" aria-label="Free delivery progress">
-            <div class="delivery-copy">
-              <p id="cartDeliveryText">Add RM50.00 more to enjoy free delivery!</p>
-              <div class="progress-track"><span id="deliveryProgress"></span></div>
-            </div>
-            <img src="assets/motor.png" alt="" />
-            <strong id="cartDeliveryRemain">RM50.00<br />to go</strong>
-          </section>
-
           <section class="cart-items-block">
             <h2 id="cartItemsTitle">Items (0)</h2>
             <div id="cartItems"></div>
@@ -970,10 +961,6 @@
             <p><span>Delivery Fee <i>i</i></span><strong id="summaryDelivery">RM 3.00</strong></p>
             <div></div>
             <p class="total-row"><span>Total</span><strong id="summaryTotal">RM 0.00</strong></p>
-            <div class="cart-free-row">
-              <span id="cartInlineDelivery">Add RM50.00 more for free delivery</span>
-              <img src="assets/motor.png" alt="" />
-            </div>
             <button class="checkout-button">
               <span>Checkout</span>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
@@ -1148,6 +1135,13 @@
         </footer>
       </section>
 
+      <section class="payment-success-screen" data-screen="payment-success" aria-label="Payment Success">
+        <div class="payment-success-content">
+          <div id="paymentSuccessAnimation" class="payment-success-animation"></div>
+          <h1>Order placed successfully!</h1>
+        </div>
+      </section>
+
       <section class="order-placed-screen" data-screen="order-placed" aria-label="Order Placed">
         <div class="order-placed-scroll">
           <section class="order-placed-hero">
@@ -1242,6 +1236,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-storage-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
     <script src="app.js"></script>
   </body>
 </html>
