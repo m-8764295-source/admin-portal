@@ -23,6 +23,9 @@ const usernameInput = document.querySelector("#usernameInput");
 const usernameMessage = document.querySelector(".username-message");
 const profileAvatar = document.querySelector("#profileAvatar");
 const avatarInput = document.querySelector("#avatarInput");
+const avatarSheetOverlay = document.querySelector(".avatar-sheet-overlay");
+const avatarSheetClose = document.querySelector(".avatar-sheet-close");
+const avatarOptions = document.querySelector("#avatarOptions");
 const profileGreeting = document.querySelector("#profileGreeting");
 const profileUsername = document.querySelector("#profileUsername");
 const profileEmail = document.querySelector("#profileEmail");
@@ -145,6 +148,7 @@ let notificationItems = [];
 let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
 let paymentSuccessLottie = null;
+const PROFILE_AVATARS = Array.from({ length: 5 }, (_, index) => `assets/avatars/avatar_${index + 1}.png`);
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -561,14 +565,69 @@ function setAvatarContent(letter, imageUrl = "") {
     : `<span>${letter}</span>`;
 }
 
+function getProfileAvatarUrl(user = auth?.currentUser || null, profile = currentProfile || {}) {
+  if (!user?.uid) return "";
+  const savedAvatar = profile.avatarUrl || localStorage.getItem(`novaAvatar:${user.uid}`) || "";
+  if (profile.avatarUrl) localStorage.setItem(`novaAvatar:${user.uid}`, profile.avatarUrl);
+  return savedAvatar;
+}
+
+function renderAvatarOptions(selectedUrl = "") {
+  if (!avatarOptions) return;
+  avatarOptions.innerHTML = PROFILE_AVATARS.map((url, index) => `
+    <button class="avatar-option ${url === selectedUrl ? "is-selected" : ""}" type="button" data-avatar-url="${url}" aria-label="Choose avatar ${index + 1}">
+      <img src="${url}" alt="" />
+    </button>
+  `).join("");
+}
+
+function openAvatarSheet() {
+  const user = auth?.currentUser || null;
+  if (!user || isGuestUser) return;
+  renderAvatarOptions(getProfileAvatarUrl(user));
+  avatarSheetOverlay?.classList.add("is-open");
+  avatarSheetOverlay?.setAttribute("aria-hidden", "false");
+}
+
+function closeAvatarSheet() {
+  avatarSheetOverlay?.classList.remove("is-open");
+  avatarSheetOverlay?.setAttribute("aria-hidden", "true");
+}
+
+async function saveProfileAvatar(avatarUrl) {
+  const user = auth?.currentUser || null;
+  if (!user?.uid || isGuestUser || !PROFILE_AVATARS.includes(avatarUrl)) return;
+
+  localStorage.setItem(`novaAvatar:${user.uid}`, avatarUrl);
+  currentProfile = {
+    ...(currentProfile || {}),
+    avatarUrl,
+  };
+  setAvatarContent(firstLetter(currentProfile?.username || user.displayName || "User"), avatarUrl);
+  renderAvatarOptions(avatarUrl);
+
+  if (db) {
+    try {
+      await db.collection("users").doc(user.uid).set(
+        {
+          avatarUrl,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+    } catch {
+      // Keep the local avatar even if the network is briefly unavailable.
+    }
+  }
+}
+
 function updateProfileView() {
   const user = auth?.currentUser || null;
   const profile = currentProfile || {};
   const username = profile.username || localStorage.getItem(`novaUsername:${user?.uid}`) || "";
   const email = user?.email || profile.email || "";
   const displayName = username || user?.displayName || "Guest";
-  const avatarKey = user?.uid ? `novaAvatar:${user.uid}` : "";
-  const savedAvatar = avatarKey ? localStorage.getItem(avatarKey) : "";
+  const savedAvatar = getProfileAvatarUrl(user, profile);
   const guest = isGuestUser || !user;
 
   phone.classList.toggle("guest-profile", guest);
@@ -1074,7 +1133,7 @@ function getOwnUsername() {
 
 function getOwnAvatarUrl() {
   const user = auth?.currentUser || null;
-  return user?.uid ? localStorage.getItem(`novaAvatar:${user.uid}`) || "" : "";
+  return getProfileAvatarUrl(user);
 }
 
 function chatAvatarMarkup(username = "You", imageUrl = "") {
@@ -2364,18 +2423,19 @@ guestSignupButton.addEventListener("click", () => {
   setScreen("auth");
 });
 
-avatarInput.addEventListener("change", () => {
-  const file = avatarInput.files?.[0];
-  const user = auth?.currentUser;
-  if (!file || !user || isGuestUser) return;
+avatarInput?.addEventListener("click", openAvatarSheet);
 
-  const reader = new FileReader();
-  reader.addEventListener("load", () => {
-    const dataUrl = String(reader.result || "");
-    localStorage.setItem(`novaAvatar:${user.uid}`, dataUrl);
-    setAvatarContent(firstLetter(currentProfile?.username || user.displayName || "User"), dataUrl);
-  });
-  reader.readAsDataURL(file);
+avatarSheetClose?.addEventListener("click", closeAvatarSheet);
+
+avatarSheetOverlay?.addEventListener("click", (event) => {
+  if (event.target === avatarSheetOverlay) closeAvatarSheet();
+});
+
+avatarOptions?.addEventListener("click", async (event) => {
+  const button = event.target.closest("[data-avatar-url]");
+  if (!button) return;
+  await saveProfileAvatar(button.dataset.avatarUrl || "");
+  closeAvatarSheet();
 });
 
 heart.addEventListener("click", (event) => {

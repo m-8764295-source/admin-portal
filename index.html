@@ -679,10 +679,9 @@
           <section class="profile-hero">
             <div class="profile-avatar-wrap">
               <div class="profile-avatar" id="profileAvatar">G</div>
-              <label class="avatar-camera">
-                <input id="avatarInput" type="file" accept="image/*" />
+              <button class="avatar-camera" id="avatarInput" type="button" aria-label="Change avatar">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h3l1.5-2h5L16 8h3v11H5z" /><circle cx="12" cy="13.5" r="3.5" /></svg>
-              </label>
+              </button>
             </div>
             <div class="profile-name-block">
               <h1 id="profileGreeting">Hey, Guest!</h1>
@@ -773,6 +772,15 @@
           </a>
         </nav>
       </section>
+
+      <div class="avatar-sheet-overlay" aria-hidden="true">
+        <section class="avatar-sheet" aria-label="Choose avatar">
+          <button class="avatar-sheet-close" type="button" aria-label="Close avatar picker">&times;</button>
+          <h2>Choose avatar</h2>
+          <p>Pick one profile photo for your Nova account.</p>
+          <div class="avatar-options" id="avatarOptions"></div>
+        </section>
+      </div>
 
       <section class="friends-screen" data-screen="friends" aria-label="My Friends">
         <div class="friends-scroll">
