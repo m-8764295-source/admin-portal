@@ -26,6 +26,16 @@ const avatarInput = document.querySelector("#avatarInput");
 const avatarSheetOverlay = document.querySelector(".avatar-sheet-overlay");
 const avatarSheetClose = document.querySelector(".avatar-sheet-close");
 const avatarOptions = document.querySelector("#avatarOptions");
+const groupInviteModalOverlay = document.querySelector(".group-invite-modal-overlay");
+const inviteHostAvatar = document.querySelector("#inviteHostAvatar");
+const inviteModalSubtitle = document.querySelector("#inviteModalSubtitle");
+const inviteRestaurantImage = document.querySelector("#inviteRestaurantImage");
+const inviteRestaurantName = document.querySelector("#inviteRestaurantName");
+const inviteDeliveryTime = document.querySelector("#inviteDeliveryTime");
+const inviteDeliveryTo = document.querySelector("#inviteDeliveryTo");
+const inviteGroupName = document.querySelector("#inviteGroupName");
+const inviteModalDecline = document.querySelector(".invite-modal-decline");
+const inviteModalAccept = document.querySelector(".invite-modal-accept");
 const profileGreeting = document.querySelector("#profileGreeting");
 const profileUsername = document.querySelector("#profileUsername");
 const profileEmail = document.querySelector("#profileEmail");
@@ -140,6 +150,10 @@ let inviteReturnScreen = "group-chat";
 let groupInviteUnsubscribe = null;
 let groupMessagesUnsubscribe = null;
 let groupCartUnsubscribe = null;
+let incomingGroupInviteUnsubscribe = null;
+let friendRequestInboxUnsubscribe = null;
+let friendRequestSentUnsubscribe = null;
+let activeIncomingGroupInvite = null;
 let notificationReturnScreen = "home";
 let activeNotificationFilter = "all";
 let firebaseGroupInvites = [];
@@ -552,6 +566,8 @@ function continueToHome() {
   authScreen.classList.remove("is-routing");
   authScreen.classList.remove("is-loading");
   setScreen("home");
+  watchFriendRequests();
+  watchIncomingGroupInvites();
   seedPromoNotifications().then(loadNotifications).catch(() => {});
 }
 
@@ -758,6 +774,144 @@ async function loadFirebaseGroupInvites() {
   firebaseGroupInvitesLoaded = true;
 }
 
+function restaurantInviteMeta(name = "Mori Cafe") {
+  const normalized = name.toLowerCase();
+  if (normalized.includes("mori")) {
+    return {
+      name: "Mori Cafe",
+      image: "assets/mori.png",
+      rating: "4.9",
+      distance: "0.8 km",
+    };
+  }
+  return {
+    name: name || "Restaurant",
+    image: "assets/mori.png",
+    rating: "4.9",
+    distance: "0.8 km",
+  };
+}
+
+function inviteTimeLabel(value = "") {
+  const clean = String(value || "").trim();
+  if (!clean) return "Today 2pm";
+  return clean.toLowerCase().startsWith("today") ? clean : `Today ${clean}`;
+}
+
+function setInviteHostAvatar(invite) {
+  const avatarUrl = invite.fromAvatar || "";
+  const name = invite.fromName || invite.fromUsername || "A";
+  inviteHostAvatar.innerHTML = avatarUrl
+    ? `<img src="${avatarUrl}" alt="" />`
+    : firstLetter(name);
+}
+
+function openIncomingGroupInvite(invite) {
+  if (!groupInviteModalOverlay || !invite) return;
+  activeIncomingGroupInvite = invite;
+  const restaurant = restaurantInviteMeta(invite.restaurant || "Mori Cafe");
+  setInviteHostAvatar(invite);
+  inviteModalSubtitle.textContent = `${invite.fromName || invite.fromUsername || "Someone"} invited you to a group order.`;
+  inviteRestaurantImage.src = invite.restaurantImage || restaurant.image;
+  inviteRestaurantName.textContent = restaurant.name;
+  document.querySelector(".invite-rating-row b")?.replaceChildren(document.createTextNode(restaurant.rating));
+  const ratingValues = document.querySelectorAll(".invite-rating-row b");
+  if (ratingValues[0]) ratingValues[0].textContent = restaurant.rating;
+  if (ratingValues[1]) ratingValues[1].textContent = restaurant.distance;
+  inviteDeliveryTime.textContent = inviteTimeLabel(invite.deliveryTime);
+  inviteDeliveryTo.textContent = invite.deliveryTo || "Select location";
+  inviteGroupName.textContent = invite.groupName || "Group Order";
+  groupInviteModalOverlay.classList.add("is-open");
+  groupInviteModalOverlay.setAttribute("aria-hidden", "false");
+}
+
+function closeIncomingGroupInvite() {
+  activeIncomingGroupInvite = null;
+  groupInviteModalOverlay?.classList.remove("is-open");
+  groupInviteModalOverlay?.setAttribute("aria-hidden", "true");
+}
+
+function showNextIncomingGroupInvite() {
+  const nextInvite = firebaseGroupInvites.find((invite) => invite.status === "pending");
+  if (nextInvite) {
+    if (activeIncomingGroupInvite?.id !== nextInvite.id) openIncomingGroupInvite(nextInvite);
+  } else {
+    closeIncomingGroupInvite();
+  }
+}
+
+function stopIncomingGroupInviteWatcher() {
+  if (incomingGroupInviteUnsubscribe) {
+    incomingGroupInviteUnsubscribe();
+    incomingGroupInviteUnsubscribe = null;
+  }
+  firebaseGroupInvites = [];
+  firebaseGroupInvitesLoaded = false;
+  closeIncomingGroupInvite();
+}
+
+function refreshFriendRequestViews() {
+  Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadNotifications()])
+    .then(() => {
+      if (phone.classList.contains("friends-view")) renderFriends();
+    })
+    .catch(() => {});
+}
+
+function stopFriendRequestWatchers() {
+  if (friendRequestInboxUnsubscribe) {
+    friendRequestInboxUnsubscribe();
+    friendRequestInboxUnsubscribe = null;
+  }
+  if (friendRequestSentUnsubscribe) {
+    friendRequestSentUnsubscribe();
+    friendRequestSentUnsubscribe = null;
+  }
+}
+
+function watchFriendRequests() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    stopFriendRequestWatchers();
+    return;
+  }
+  if (friendRequestInboxUnsubscribe || friendRequestSentUnsubscribe) return;
+
+  friendRequestInboxUnsubscribe = db
+    .collection("friendRequests")
+    .where("toUid", "==", user.uid)
+    .onSnapshot(refreshFriendRequestViews);
+
+  friendRequestSentUnsubscribe = db
+    .collection("friendRequests")
+    .where("fromUid", "==", user.uid)
+    .onSnapshot(refreshFriendRequestViews);
+}
+
+function watchIncomingGroupInvites() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) {
+    stopIncomingGroupInviteWatcher();
+    return;
+  }
+  if (incomingGroupInviteUnsubscribe) return;
+
+  incomingGroupInviteUnsubscribe = db
+    .collection("groupInvites")
+    .where("toUid", "==", user.uid)
+    .onSnapshot((snapshot) => {
+      firebaseGroupInvites = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((data) => data.status === "pending");
+      firebaseGroupInvitesLoaded = true;
+      loadNotifications().catch(() => {});
+      if (phone.classList.contains("friends-view")) renderFriends();
+      showNextIncomingGroupInvite();
+    });
+}
+
 function notificationIcon(type) {
   if (type === "social") return `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>`;
   if (type === "group") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9h10l1 11H6L7 9Z" /><path d="M9 9a3 3 0 0 1 6 0" /><circle cx="10" cy="14" r="1.3" /><circle cx="14" cy="14" r="1.3" /></svg>`;
@@ -826,14 +980,20 @@ async function loadNotifications() {
 
     notificationItems.push(...requestSnap.docs.map((doc) => {
       const data = doc.data();
+      const fromName = data.fromUsername || data.fromName || "Someone";
+      const title = data.status === "accepted"
+        ? `You and ${fromName} are now friends`
+        : data.status === "rejected"
+          ? `You rejected ${fromName}'s friend request`
+          : `${fromName} sent you a friend request`;
       return {
         id: doc.id,
         type: "social",
         actionType: data.status === "pending" ? "friendRequest" : "",
-        title: `${data.fromName || data.fromUsername || "Someone"} sent you a friend request`,
-        body: relativeTime(data.createdAt || data.createdAtMs),
+        title,
+        body: relativeTime(data.respondedAt || data.createdAt || data.createdAtMs),
         read: data.status !== "pending",
-        createdAt: data.createdAt,
+        createdAt: data.respondedAt || data.createdAt,
         createdAtMs: data.createdAtMs || Date.now(),
       };
     }));
@@ -845,7 +1005,9 @@ async function loadNotifications() {
         id: `sent-${data.id}`,
         type: "social",
         actionType: "",
-        title: `${data.toUsername || "Your friend"} ${data.status === "accepted" ? "accepted" : "rejected"} your friend request`,
+        title: data.status === "accepted"
+          ? `You and ${data.toUsername || "your friend"} are now friends`
+          : `${data.toUsername || "Your friend"} rejected your friend request`,
         body: relativeTime(data.respondedAt || data.createdAtMs),
         read: false,
         createdAt: data.respondedAt,
@@ -1083,6 +1245,8 @@ async function updateGroupInviteStatus(inviteId, status) {
   }
 
   await loadFirebaseGroupInvites();
+  if (activeIncomingGroupInvite?.id === inviteId) closeIncomingGroupInvite();
+  showNextIncomingGroupInvite();
   renderFriends();
   await loadNotifications();
 }
@@ -1099,6 +1263,7 @@ async function updateFriendRequestStatus(requestId, status) {
   await requestRef.set({
     status,
     respondedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   }, { merge: true });
 
   if (status === "accepted") {
@@ -1142,6 +1307,12 @@ function chatAvatarMarkup(username = "You", imageUrl = "") {
     : `<div class="chat-system-avatar">${firstLetter(username)}</div>`;
 }
 
+function roundAvatarMarkup(className, username = "User", imageUrl = "") {
+  return imageUrl
+    ? `<div class="${className}"><img src="${imageUrl}" alt="" /></div>`
+    : `<div class="${className}">${firstLetter(username)}</div>`;
+}
+
 function chatSystemMarkup(text, small = "", username = "You", imageUrl = "") {
   return `${chatAvatarMarkup(username, imageUrl)}<span>${text}</span>${small ? `<small>${small}</small>` : ""}`;
 }
@@ -1176,28 +1347,29 @@ async function getRelationshipStatus(otherUid) {
 
   const requestId = `${otherUid}_${user.uid}`;
   const requestDoc = await db.collection("friendRequests").doc(requestId).get();
-  if (!requestDoc.exists) {
-    return { label: "Add", disabled: false };
+  const incomingRequestId = `${user.uid}_${otherUid}`;
+  const incomingRequestDoc = await db.collection("friendRequests").doc(incomingRequestId).get();
+
+  if (requestDoc.exists) {
+    const status = requestDoc.data()?.status;
+    if (status === "pending") return { label: "Sent", disabled: true };
+    if (status === "accepted") return { label: "Friends", disabled: true };
   }
 
-  const status = requestDoc.data()?.status;
-  if (status === "pending") return { label: "Sent", disabled: true };
-  if (status === "accepted") return { label: "Friends", disabled: true };
+  if (incomingRequestDoc.exists) {
+    const status = incomingRequestDoc.data()?.status;
+    if (status === "pending") return { label: "Respond in Requests", disabled: true };
+    if (status === "accepted") return { label: "Friends", disabled: true };
+  }
+
   return { label: "Add", disabled: false };
 }
 
 function renderSuggestedUsers() {
-  const query = normalizeUsernameSearch(addFriendSearchInput.value);
-  const suggested = readFriendData("novaSuggestedUsers").filter((user) => {
-    const username = (user.username || "").toLowerCase();
-    return Number(user.mutualFriends || 0) >= 1 && (!query || username.includes(query));
-  });
-  addFriendsSectionTitle.textContent = "Suggested users";
-  suggestedUsersList.innerHTML = suggested
-    .map((user) => addFriendRow(user))
-    .join("");
-  suggestedEmpty.hidden = suggested.length > 0;
-  suggestedEmpty.textContent = "No suggested users yet";
+  addFriendsSectionTitle.textContent = "Search result";
+  suggestedUsersList.innerHTML = "";
+  suggestedEmpty.hidden = false;
+  suggestedEmpty.textContent = "Search a username to add friends";
 }
 
 function renderAddFriendMessage(message) {
@@ -1266,6 +1438,14 @@ function queueFirebaseUserSearch() {
 }
 
 function openAddFriends() {
+  if (isGuestUser || !auth?.currentUser) {
+    addFriendSearchInput.value = "";
+    shareUsernameText.textContent = "@guest";
+    addFriendsSectionTitle.textContent = "Login required";
+    renderAddFriendMessage("Please sign up or login to add friends");
+    setScreen("add-friends");
+    return;
+  }
   addFriendSearchInput.value = "";
   const username = getOwnUsername();
   shareUsernameText.textContent = username ? `@${username}` : "@your.username";
@@ -1592,7 +1772,7 @@ function renderGroupMessages(snapshot) {
       const isMine = data.senderUid && data.senderUid === auth?.currentUser?.uid;
       message.className = `chat-bubble-row ${isMine ? "mine" : ""}`;
       message.innerHTML = `
-        <div class="chat-bubble-avatar">${firstLetter(data.senderUsername || "U")}</div>
+        ${roundAvatarMarkup("chat-bubble-avatar", data.senderUsername || "User", data.senderAvatar || "")}
         <div>
           <strong>${data.senderUsername || "User"}</strong>
           <p>${data.text || ""}</p>
@@ -1740,9 +1920,13 @@ async function openGroupCreated() {
         groupId: currentGroupId,
         groupName: currentGroupName,
         restaurant: "Mori Cafe",
+        restaurantImage: "assets/mori.png",
+        deliveryTo: selectedGroupLocation,
+        deliveryTime: slot,
         closeTime: currentGroupCloseTime,
         hostUid: auth?.currentUser?.uid || "",
         hostUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+        hostAvatar: getOwnAvatarUrl(),
         memberLimit: 5,
         members: groupMembers.map((member) => ({
           uid: member.uid || "",
@@ -1962,10 +2146,15 @@ async function inviteGroupFriend(friend) {
       const invitePayload = {
         groupId: currentGroupId,
         groupName: currentGroupName,
+        restaurant: "Mori Cafe",
+        restaurantImage: "assets/mori.png",
+        deliveryTime: groupTimeButton.textContent.trim(),
+        deliveryTo: selectedGroupLocation,
         closeTime: currentGroupCloseTime,
         fromUid: auth?.currentUser?.uid || "",
         fromUsername: getOwnUsername() || "",
         fromName: currentProfile?.name || getOwnUsername() || "You",
+        fromAvatar: getOwnAvatarUrl(),
         toUid: friend.uid,
         toUsername: friend.username || "",
         status: "pending",
@@ -2213,10 +2402,14 @@ suggestedUsersList.addEventListener("click", async (event) => {
         toUsername,
         status: "pending",
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAtMs: Date.now(),
+        respondedAt: null,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
     button.textContent = "Sent";
+    await loadNotifications();
   } catch (error) {
     console.error(error);
     button.disabled = false;
@@ -2438,6 +2631,16 @@ avatarOptions?.addEventListener("click", async (event) => {
   closeAvatarSheet();
 });
 
+inviteModalDecline?.addEventListener("click", async () => {
+  if (!activeIncomingGroupInvite?.id) return;
+  await updateGroupInviteStatus(activeIncomingGroupInvite.id, "rejected");
+});
+
+inviteModalAccept?.addEventListener("click", async () => {
+  if (!activeIncomingGroupInvite?.id) return;
+  await updateGroupInviteStatus(activeIncomingGroupInvite.id, "accepted");
+});
+
 heart.addEventListener("click", (event) => {
   event.stopPropagation();
   heart.classList.toggle("is-liked");
@@ -2483,6 +2686,8 @@ authClose?.addEventListener("click", () => setScreen("home"));
 guestLogin.addEventListener("click", () => {
   isGuestUser = true;
   currentProfile = null;
+  stopFriendRequestWatchers();
+  stopIncomingGroupInviteWatcher();
   setScreen("home");
   loadNotifications().catch(() => {});
 });
@@ -2693,6 +2898,8 @@ if (auth) {
     }
 
     if (!user && phone.classList.contains("auth-view") && !suppressAuthRedirect) {
+      stopFriendRequestWatchers();
+      stopIncomingGroupInviteWatcher();
       setAuthRoutingView(false);
     }
   });

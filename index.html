@@ -782,6 +782,48 @@
         </section>
       </div>
 
+      <div class="group-invite-modal-overlay" aria-hidden="true">
+        <section class="group-invite-modal" aria-label="Group order invite">
+          <div class="invite-host-avatar" id="inviteHostAvatar">A</div>
+          <span class="invite-host-badge">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
+          </span>
+          <h2>You&rsquo;re invited!</h2>
+          <p id="inviteModalSubtitle">Alex invited you to a group order.</p>
+          <article class="invite-details-card">
+            <img id="inviteRestaurantImage" src="assets/mori.png" alt="" />
+            <div class="invite-details-copy">
+              <h3 id="inviteRestaurantName">Mori Cafe</h3>
+              <div class="invite-rating-row"><span>★</span><b>4.9</b><i>•</i><b>0.8 km</b></div>
+              <dl>
+                <div>
+                  <dt>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>
+                  </dt>
+                  <dd><strong>Delivery time:</strong> <span id="inviteDeliveryTime">Today 2pm</span></dd>
+                </div>
+                <div>
+                  <dt>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+                  </dt>
+                  <dd><strong>Delivery to:</strong> <span id="inviteDeliveryTo">Hostel MMU Boys</span></dd>
+                </div>
+                <div>
+                  <dt>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /></svg>
+                  </dt>
+                  <dd><strong>Group name:</strong> <span id="inviteGroupName">Breakfast Buddies</span></dd>
+                </div>
+              </dl>
+            </div>
+          </article>
+          <div class="invite-modal-actions">
+            <button class="invite-modal-decline" type="button">Decline</button>
+            <button class="invite-modal-accept" type="button">Accept Invite</button>
+          </div>
+        </section>
+      </div>
+
       <section class="friends-screen" data-screen="friends" aria-label="My Friends">
         <div class="friends-scroll">
           <header class="friends-header">
