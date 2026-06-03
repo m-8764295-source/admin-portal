@@ -169,6 +169,8 @@ let firebaseGroupInvites = [];
 let firebaseGroupInvitesLoaded = false;
 let notificationItems = [];
 let notificationLoadToken = 0;
+let groupListLoadToken = 0;
+let cachedGroupOrders = [];
 let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
 let paymentSuccessLottie = null;
@@ -1594,10 +1596,10 @@ function uniqueGroups(groups) {
   });
 }
 
-function renderGroupOrders(groups = []) {
+function renderGroupOrders(groups = [], options = {}) {
   if (!groupOrdersList || !groupOrdersEmpty) return;
   const list = uniqueGroups(groups);
-  groupOrdersEmpty.hidden = list.length > 0;
+  groupOrdersEmpty.hidden = options.hideEmpty || list.length > 0;
   groupOrdersList.innerHTML = list.map(groupListCard).join("");
 }
 
@@ -1613,14 +1615,18 @@ async function loadGroupOrders() {
 }
 
 async function openGroupList() {
-  renderGroupOrders([]);
+  const loadToken = ++groupListLoadToken;
+  renderGroupOrders(cachedGroupOrders, { hideEmpty: true });
   setScreen("group-list");
   try {
     const groups = await loadGroupOrders();
+    if (loadToken !== groupListLoadToken) return;
+    cachedGroupOrders = groups;
     renderGroupOrders(groups);
   } catch (error) {
     console.error(error);
-    renderGroupOrders([]);
+    if (loadToken !== groupListLoadToken) return;
+    renderGroupOrders(cachedGroupOrders);
   }
 }
 
@@ -2637,7 +2643,7 @@ groupTimeOptions.forEach((option) => {
   });
 });
 createGroupButton.addEventListener("click", openGroupCreated);
-if (createdBack) createdBack.addEventListener("click", openGroupOrder);
+if (createdBack) createdBack.addEventListener("click", openGroupList);
 if (startGroupOrderButton) {
   startGroupOrderButton.addEventListener("click", () => {
     openGroupChat();
