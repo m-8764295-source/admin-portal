@@ -480,6 +480,26 @@
             </div>
           </section>
 
+          <section class="chat-delivery-card">
+            <div class="chat-delivery-left">
+              <span class="chat-location-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+              </span>
+              <div>
+                <h3>Delivery to</h3>
+                <p id="chatDeliveryTo">Select location</p>
+              </div>
+            </div>
+            <div class="chat-delivery-right">
+              <h3>Delivery time</h3>
+              <p id="chatDeliveryTime">Select time</p>
+            </div>
+            <button class="chat-delivery-edit" type="button" aria-label="Edit delivery and time">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
+          </section>
+          <p class="chat-delivery-hint">Tap to edit delivery &amp; time</p>
+
           <section class="chat-messages">
             <time id="chatCreatedTime">Today</time>
             <div class="chat-system-message">
@@ -823,6 +843,26 @@
           </div>
         </section>
       </div>
+
+      <section class="group-list-screen" data-screen="group-list" aria-label="My Group Orders">
+        <div class="group-list-scroll">
+          <header class="group-list-header">
+            <button class="group-list-back" type="button" aria-label="Back to profile">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <h1>My Group Orders</h1>
+            <p>View your group orders and continue anytime.</p>
+          </header>
+          <div class="group-list" id="groupOrdersList"></div>
+          <p class="group-list-empty" id="groupOrdersEmpty">No group orders yet</p>
+        </div>
+        <footer class="group-list-footer">
+          <button class="start-new-group-order" type="button">
+            <span>+</span>
+            Start New Group Order
+          </button>
+        </footer>
+      </section>
 
       <section class="friends-screen" data-screen="friends" aria-label="My Friends">
         <div class="friends-scroll">

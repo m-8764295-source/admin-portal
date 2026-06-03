@@ -52,6 +52,10 @@ const friendsPageEmpty = document.querySelector("#friendsPageEmpty");
 const groupInvitesSection = document.querySelector("#groupInvitesSection");
 const groupInvitesList = document.querySelector("#groupInvitesList");
 const groupInviteCount = document.querySelector("#groupInviteCount");
+const groupOrdersList = document.querySelector("#groupOrdersList");
+const groupOrdersEmpty = document.querySelector("#groupOrdersEmpty");
+const groupListBack = document.querySelector(".group-list-back");
+const startNewGroupOrder = document.querySelector(".start-new-group-order");
 const addFriendButton = document.querySelector(".add-friend-button");
 const addFriendsBack = document.querySelector(".add-friends-back");
 const addFriendSearchInput = document.querySelector("#addFriendSearchInput");
@@ -97,6 +101,8 @@ const chatCloseCountdown = document.querySelector("#chatCloseCountdown");
 const chatCreatedTime = document.querySelector("#chatCreatedTime");
 const chatCreatedText = document.querySelector("#chatCreatedText");
 const chatCreatedClose = document.querySelector("#chatCreatedClose");
+const chatDeliveryTo = document.querySelector("#chatDeliveryTo");
+const chatDeliveryTime = document.querySelector("#chatDeliveryTime");
 const chatAddItemsButton = document.querySelector(".chat-plus-button");
 const chatMenuButton = document.querySelector(".chat-menu-button");
 const chatCartButtons = document.querySelectorAll(".chat-cart-button");
@@ -142,6 +148,8 @@ const notificationsEmpty = document.querySelector("#notificationsEmpty");
 let selectedGroupLocation = "";
 let currentGroupName = "Group Order";
 let currentGroupCloseTime = "1:30 PM";
+let currentGroupDeliveryTo = "Select location";
+let currentGroupDeliveryTime = "Select time";
 let currentGroupMemberCount = 1;
 let currentGroupId = "";
 let groupMembers = [];
@@ -160,6 +168,7 @@ let activeNotificationFilter = "all";
 let firebaseGroupInvites = [];
 let firebaseGroupInvitesLoaded = false;
 let notificationItems = [];
+let notificationLoadToken = 0;
 let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
 let paymentSuccessLottie = null;
@@ -542,7 +551,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-list-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -969,10 +978,21 @@ function renderNotifications() {
     .join("");
 }
 
+function uniqueNotifications(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = `${item.type || ""}:${item.id || item.title || ""}:${item.actionType || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 async function loadNotifications() {
   initFirebase();
+  const loadToken = ++notificationLoadToken;
   const user = auth?.currentUser;
-  notificationItems = [];
+  let nextItems = [];
 
   if (db && user && !isGuestUser) {
     await seedPromoNotifications();
@@ -983,7 +1003,7 @@ async function loadNotifications() {
       db.collection("users").doc(user.uid).collection("notifications").get(),
     ]);
 
-    notificationItems.push(...requestSnap.docs.map((doc) => {
+    nextItems.push(...requestSnap.docs.map((doc) => {
       const data = doc.data();
       const fromName = data.fromUsername || data.fromName || "Someone";
       const title = data.status === "accepted"
@@ -1003,7 +1023,7 @@ async function loadNotifications() {
       };
     }));
 
-    notificationItems.push(...sentRequestSnap.docs
+    nextItems.push(...sentRequestSnap.docs
       .map((doc) => ({ id: doc.id, ...doc.data() }))
       .filter((data) => data.status === "accepted" || data.status === "rejected")
       .map((data) => ({
@@ -1019,7 +1039,7 @@ async function loadNotifications() {
         createdAtMs: data.createdAtMs || Date.now(),
       })));
 
-    notificationItems.push(...inviteSnap.docs.map((doc) => {
+    nextItems.push(...inviteSnap.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -1033,17 +1053,20 @@ async function loadNotifications() {
       };
     }));
 
-    notificationItems.push(...notificationSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
+    nextItems.push(...notificationSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() })));
   } else {
-    notificationItems = promoNotifications();
+    nextItems = promoNotifications();
   }
 
-  notificationItems.sort((a, b) => {
+  nextItems = uniqueNotifications(nextItems);
+  nextItems.sort((a, b) => {
     const aTime = a.createdAt?.toDate ? a.createdAt.toDate().getTime() : Number(a.createdAtMs || 0);
     const bTime = b.createdAt?.toDate ? b.createdAt.toDate().getTime() : Number(b.createdAtMs || 0);
     return bTime - aTime;
   });
 
+  if (loadToken !== notificationLoadToken) return;
+  notificationItems = nextItems;
   updateNotificationBadges();
   renderNotifications();
 }
@@ -1227,6 +1250,16 @@ async function updateGroupInviteStatus(inviteId, status) {
     }, { merge: true });
 
     if (status === "accepted") {
+      await db.collection("groups").doc(invite.groupId).set({
+        memberUids: firebase.firestore.FieldValue.arrayUnion(user.uid),
+        memberDetails: firebase.firestore.FieldValue.arrayUnion({
+          uid: user.uid,
+          username: getOwnUsername() || user.displayName || "User",
+          name: currentProfile?.name || getOwnUsername() || user.displayName || "User",
+          avatarUrl: getOwnAvatarUrl(),
+          status: "joined",
+        }),
+      }, { merge: true });
       await db.collection("groups").doc(invite.groupId).collection("messages").add({
         type: "event",
         text: `${getOwnUsername() || user.displayName || "Someone"} joined the group`,
@@ -1470,6 +1503,11 @@ function groupCloseTime(slot) {
   return "1:30 PM";
 }
 
+function updateChatDeliveryDetails() {
+  if (chatDeliveryTo) chatDeliveryTo.textContent = currentGroupDeliveryTo || "Select location";
+  if (chatDeliveryTime) chatDeliveryTime.textContent = currentGroupDeliveryTime || "Select time";
+}
+
 function closeCountdownText(closeTime) {
   const match = closeTime.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
   if (!match) return "Order closes soon";
@@ -1509,8 +1547,119 @@ function currentHostMember() {
     uid: auth?.currentUser?.uid || "host",
     name: username,
     username,
+    avatarUrl: getOwnAvatarUrl(),
     status: "host",
   };
+}
+
+function groupMemberAvatar(member = {}) {
+  const imageUrl = member.avatarUrl || member.avatar || "";
+  const name = member.name || member.username || "U";
+  return imageUrl
+    ? `<span><img src="${imageUrl}" alt="" /></span>`
+    : `<span>${firstLetter(name)}</span>`;
+}
+
+function groupListCard(group) {
+  const members = (group.memberDetails || group.members || []).slice(0, 5);
+  const fallbackMembers = members.length ? members : [{
+    username: group.hostUsername || "Host",
+    name: group.hostUsername || "Host",
+    avatarUrl: group.hostAvatar || "",
+  }];
+  return `
+    <button class="group-order-list-card" type="button" data-group-id="${group.groupId || group.id || ""}">
+      <img src="${group.restaurantImage || "assets/mori.png"}" alt="" />
+      <div>
+        <h2>${group.groupName || "Group Order"}</h2>
+        <div class="group-order-meta"><span>${group.restaurant || "Mori Cafe"}</span><i></i><span>${group.deliveryTime || "Select time"}</span></div>
+        <div class="group-order-location">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg>
+          <span>${group.deliveryTo || "Select location"}</span>
+        </div>
+        <div class="group-order-avatars">${fallbackMembers.map(groupMemberAvatar).join("")}</div>
+      </div>
+      <b>&rsaquo;</b>
+    </button>
+  `;
+}
+
+function uniqueGroups(groups) {
+  const seen = new Set();
+  return groups.filter((group) => {
+    const key = group.groupId || group.id;
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+function renderGroupOrders(groups = []) {
+  if (!groupOrdersList || !groupOrdersEmpty) return;
+  const list = uniqueGroups(groups);
+  groupOrdersEmpty.hidden = list.length > 0;
+  groupOrdersList.innerHTML = list.map(groupListCard).join("");
+}
+
+async function loadGroupOrders() {
+  initFirebase();
+  const user = auth?.currentUser;
+  if (!db || !user || isGuestUser) return [];
+  const [hostSnap, memberSnap] = await Promise.all([
+    db.collection("groups").where("hostUid", "==", user.uid).get(),
+    db.collection("groups").where("memberUids", "array-contains", user.uid).get().catch(() => ({ docs: [] })),
+  ]);
+  return uniqueGroups([...hostSnap.docs, ...memberSnap.docs].map((doc) => ({ id: doc.id, ...doc.data() })));
+}
+
+async function openGroupList() {
+  renderGroupOrders([]);
+  setScreen("group-list");
+  try {
+    const groups = await loadGroupOrders();
+    renderGroupOrders(groups);
+  } catch (error) {
+    console.error(error);
+    renderGroupOrders([]);
+  }
+}
+
+function openGroupFromList(groupId) {
+  const card = document.querySelector(`[data-group-id="${groupId}"]`);
+  if (!card) return;
+  loadGroupOrders()
+    .then((groups) => {
+      const group = groups.find((item) => (item.groupId || item.id) === groupId);
+      if (!group) return;
+      currentGroupId = group.groupId || group.id || "";
+      currentGroupName = group.groupName || "Group Order";
+      currentGroupDeliveryTo = group.deliveryTo || "Select location";
+      currentGroupDeliveryTime = group.deliveryTime || "Select time";
+      currentGroupCloseTime = group.closeTime || groupCloseTime(currentGroupDeliveryTime);
+      groupMembers = (group.memberDetails || group.members || []).map((member) => ({
+        ...member,
+        name: member.name || member.username || "Member",
+      }));
+      if (groupMembers.length === 0) groupMembers = [currentHostMember()];
+      currentGroupMemberCount = groupMembers.length;
+      groupInvites = [];
+      if (createdGroupName) createdGroupName.textContent = currentGroupName;
+      if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
+      if (createdHostAvatar) {
+        const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
+        createdHostAvatar.innerHTML = host?.avatarUrl ? `<img src="${host.avatarUrl}" alt="" />` : firstLetter(host?.name || host?.username || "U");
+      }
+      if (createdHostName) {
+        const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
+        createdHostName.textContent = host?.name || host?.username || "Host";
+      }
+      renderGroupMembers();
+      watchGroupInvites();
+      watchGroupMessages();
+      watchGroupCart();
+      setScreen("group-created");
+    })
+    .catch((error) => console.error(error));
 }
 
 function groupInviteStatus(friend) {
@@ -1907,6 +2056,8 @@ async function openGroupCreated() {
   const name = groupNameInput.value.trim() || "Group Order";
   const slot = groupTimeButton.textContent.trim();
   currentGroupName = name;
+  currentGroupDeliveryTo = selectedGroupLocation || "Select location";
+  currentGroupDeliveryTime = slot || "Select time";
   currentGroupCloseTime = groupCloseTime(slot);
   currentGroupId = `group_${Date.now()}_${auth?.currentUser?.uid || "guest"}`;
   groupMembers = [currentHostMember()];
@@ -1915,7 +2066,9 @@ async function openGroupCreated() {
   groupCart.clear();
   if (createdGroupName) createdGroupName.textContent = name;
   if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
-  if (createdHostAvatar) createdHostAvatar.textContent = firstLetter(groupMembers[0].name);
+  if (createdHostAvatar) {
+    createdHostAvatar.innerHTML = groupMembers[0].avatarUrl ? `<img src="${groupMembers[0].avatarUrl}" alt="" />` : firstLetter(groupMembers[0].name);
+  }
   if (createdHostName) createdHostName.textContent = groupMembers[0].name;
   renderGroupMembers();
   if (db) {
@@ -1925,16 +2078,26 @@ async function openGroupCreated() {
         groupName: currentGroupName,
         restaurant: "Mori Cafe",
         restaurantImage: "assets/mori.png",
-        deliveryTo: selectedGroupLocation,
-        deliveryTime: slot,
+        deliveryTo: currentGroupDeliveryTo,
+        deliveryTime: currentGroupDeliveryTime,
         closeTime: currentGroupCloseTime,
         hostUid: auth?.currentUser?.uid || "",
         hostUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
         hostAvatar: getOwnAvatarUrl(),
         memberLimit: 5,
+        memberUids: groupMembers.map((member) => member.uid || "").filter(Boolean),
+        memberDetails: groupMembers.map((member) => ({
+          uid: member.uid || "",
+          username: member.username || member.name || "",
+          name: member.name || member.username || "",
+          avatarUrl: member.avatarUrl || "",
+          status: member.status || "joined",
+        })),
         members: groupMembers.map((member) => ({
           uid: member.uid || "",
           username: member.username || member.name || "",
+          name: member.name || member.username || "",
+          avatarUrl: member.avatarUrl || "",
           status: member.status || "joined",
         })),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1959,6 +2122,7 @@ function openGroupChat() {
   if (chatGroupName) chatGroupName.textContent = "Group Order Chat";
   if (chatMemberCount) chatMemberCount.textContent = `${currentGroupMemberCount} of 5 members`;
   if (chatCloseCountdown) chatCloseCountdown.textContent = closeCountdownText(currentGroupCloseTime);
+  updateChatDeliveryDetails();
   renderChatProgress();
   renderChatMembersPanel();
   if (!db || !currentGroupId) {
@@ -2359,15 +2523,26 @@ notificationsList.addEventListener("click", async (event) => {
 document.querySelectorAll(".nav-item.group").forEach((item) => {
   item.addEventListener("click", (event) => {
     event.preventDefault();
-    openGroupOrder();
+    openGroupList();
   });
 });
 
 document.querySelectorAll(".profile-card").forEach((card) => {
   const title = card.querySelector("h2")?.textContent.trim();
+  if (title === "My Group Orders") {
+    card.addEventListener("click", openGroupList);
+  }
   if (title === "My Friends") {
     card.addEventListener("click", openFriends);
   }
+});
+document.querySelector(".create-group-profile")?.addEventListener("click", openGroupOrder);
+startNewGroupOrder?.addEventListener("click", openGroupOrder);
+groupListBack?.addEventListener("click", openProfile);
+groupOrdersList?.addEventListener("click", (event) => {
+  const card = event.target.closest("[data-group-id]");
+  if (!card) return;
+  openGroupFromList(card.dataset.groupId);
 });
 
 friendsBack.addEventListener("click", openProfile);
