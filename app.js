@@ -153,6 +153,7 @@ let groupCartUnsubscribe = null;
 let incomingGroupInviteUnsubscribe = null;
 let friendRequestInboxUnsubscribe = null;
 let friendRequestSentUnsubscribe = null;
+let friendRequestRefreshTimer = null;
 let activeIncomingGroupInvite = null;
 let notificationReturnScreen = "home";
 let activeNotificationFilter = "all";
@@ -851,14 +852,18 @@ function stopIncomingGroupInviteWatcher() {
 }
 
 function refreshFriendRequestViews() {
-  Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadNotifications()])
-    .then(() => {
-      if (phone.classList.contains("friends-view")) renderFriends();
-    })
-    .catch(() => {});
+  clearTimeout(friendRequestRefreshTimer);
+  friendRequestRefreshTimer = setTimeout(() => {
+    Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadNotifications()])
+      .then(() => {
+        if (phone.classList.contains("friends-view")) renderFriends();
+      })
+      .catch(() => {});
+  }, 120);
 }
 
 function stopFriendRequestWatchers() {
+  clearTimeout(friendRequestRefreshTimer);
   if (friendRequestInboxUnsubscribe) {
     friendRequestInboxUnsubscribe();
     friendRequestInboxUnsubscribe = null;
@@ -1056,8 +1061,9 @@ async function openNotifications(returnScreen = "home") {
   notificationReturnScreen = returnScreen;
   activeNotificationFilter = "all";
   notificationsTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.notificationFilter === "all"));
-  await loadNotifications();
   setScreen("notifications");
+  renderNotifications();
+  loadNotifications().catch((error) => console.error(error));
 }
 
 function friendAvatar(name) {
@@ -1194,13 +1200,11 @@ async function loadFirebaseFriends() {
 
 async function openFriends() {
   friendsSearchInput.value = "";
-  try {
-    await Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadFirebaseGroupInvites()]);
-  } catch (error) {
-    console.error(error);
-  }
   renderFriends();
   setScreen("friends");
+  Promise.all([loadFirebaseFriends(), loadFirebaseFriendRequests(), loadFirebaseGroupInvites()])
+    .then(renderFriends)
+    .catch((error) => console.error(error));
 }
 
 async function updateGroupInviteStatus(inviteId, status) {
