@@ -55,6 +55,9 @@ const groupInviteCount = document.querySelector("#groupInviteCount");
 const groupOrdersList = document.querySelector("#groupOrdersList");
 const groupOrdersEmpty = document.querySelector("#groupOrdersEmpty");
 const groupListBack = document.querySelector(".group-list-back");
+const homeStartGroupOrder = document.querySelector(".home-start-group-order");
+const homeGroupListed = document.querySelector(".home-group-listed");
+const profileGroupListed = document.querySelector(".profile-group-listed");
 const startNewGroupOrder = document.querySelector(".start-new-group-order");
 const addFriendButton = document.querySelector(".add-friend-button");
 const addFriendsBack = document.querySelector(".add-friends-back");
@@ -1596,9 +1599,20 @@ function uniqueGroups(groups) {
   });
 }
 
+function groupCreatedTime(group = {}) {
+  const firestoreCreated = group.createdAt?.toDate ? group.createdAt.toDate().getTime() : 0;
+  const firestoreUpdated = group.updatedAt?.toDate ? group.updatedAt.toDate().getTime() : 0;
+  const idTime = String(group.groupId || group.id || "").match(/group_(\d+)/)?.[1] || 0;
+  return Number(group.createdAtMs || firestoreCreated || firestoreUpdated || idTime || 0);
+}
+
+function sortGroupsNewestFirst(groups = []) {
+  return [...groups].sort((a, b) => groupCreatedTime(b) - groupCreatedTime(a));
+}
+
 function renderGroupOrders(groups = [], options = {}) {
   if (!groupOrdersList || !groupOrdersEmpty) return;
-  const list = uniqueGroups(groups);
+  const list = sortGroupsNewestFirst(uniqueGroups(groups));
   groupOrdersEmpty.hidden = options.hideEmpty || list.length > 0;
   groupOrdersList.innerHTML = list.map(groupListCard).join("");
 }
@@ -1611,7 +1625,7 @@ async function loadGroupOrders() {
     db.collection("groups").where("hostUid", "==", user.uid).get(),
     db.collection("groups").where("memberUids", "array-contains", user.uid).get().catch(() => ({ docs: [] })),
   ]);
-  return uniqueGroups([...hostSnap.docs, ...memberSnap.docs].map((doc) => ({ id: doc.id, ...doc.data() })));
+  return sortGroupsNewestFirst(uniqueGroups([...hostSnap.docs, ...memberSnap.docs].map((doc) => ({ id: doc.id, ...doc.data() }))));
 }
 
 async function openGroupList() {
@@ -2107,6 +2121,7 @@ async function openGroupCreated() {
           status: member.status || "joined",
         })),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        createdAtMs: Date.now(),
       }, { merge: true });
     } catch (error) {
       console.warn("Group could not be saved yet.", error);
@@ -2535,16 +2550,19 @@ document.querySelectorAll(".nav-item.group").forEach((item) => {
 
 document.querySelectorAll(".profile-card").forEach((card) => {
   const title = card.querySelector("h2")?.textContent.trim();
-  if (title === "My Group Orders") {
-    card.addEventListener("click", openGroupList);
-  }
   if (title === "My Friends") {
     card.addEventListener("click", openFriends);
   }
 });
 document.querySelector(".create-group-profile")?.addEventListener("click", openGroupOrder);
+homeStartGroupOrder?.addEventListener("click", openGroupOrder);
+homeGroupListed?.addEventListener("click", openGroupList);
+profileGroupListed?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openGroupList();
+});
 startNewGroupOrder?.addEventListener("click", openGroupOrder);
-groupListBack?.addEventListener("click", openProfile);
+groupListBack?.addEventListener("click", () => setScreen("home"));
 groupOrdersList?.addEventListener("click", (event) => {
   const card = event.target.closest("[data-group-id]");
   if (!card) return;

@@ -138,13 +138,16 @@
             <span class="badge">NEW</span>
             <h2>Order together,<br />save delivery.</h2>
             <p>Create a group order with your friends and split the bill easily.</p>
-            <button class="cta">
-              <span>Start Group Order</span>
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M5 12h14" />
-                <path d="m13 6 6 6-6 6" />
-              </svg>
-            </button>
+            <div class="group-card-actions">
+              <button class="cta home-start-group-order" type="button">
+                <span>Start Group Order</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12h14" />
+                  <path d="m13 6 6 6-6 6" />
+                </svg>
+              </button>
+              <button class="group-listed-link home-group-listed" type="button">Group Listed</button>
+            </div>
           </div>
           <img class="group-art" src="assets/group.png" alt="" />
         </section>
@@ -728,7 +731,7 @@
               <b>&rsaquo;</b>
             </article>
 
-            <article class="profile-card profile-card-visual">
+            <article class="profile-card profile-card-visual profile-card-disabled">
               <div class="profile-card-icon group-order-icon">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M7 9h10l1 11H6L7 9Z" />
@@ -740,7 +743,7 @@
               </div>
               <div>
                 <h2>My Group Orders</h2>
-                <p>View your ongoing and past group orders</p>
+                <p>Past group order history</p>
               </div>
               <img src="assets/bag.png" alt="" />
               <b>&rsaquo;</b>
@@ -764,6 +767,7 @@
             <div>
               <h2>Create Group Order</h2>
               <p>Order together, save delivery.</p>
+              <button class="profile-group-listed" type="button">Group Listed</button>
             </div>
             <b>&rsaquo;</b>
           </section>
@@ -844,17 +848,17 @@
         </section>
       </div>
 
-      <section class="group-list-screen" data-screen="group-list" aria-label="My Group Orders">
+      <section class="group-list-screen" data-screen="group-list" aria-label="Group Listed">
         <div class="group-list-scroll">
           <header class="group-list-header">
-            <button class="group-list-back" type="button" aria-label="Back to profile">
+            <button class="group-list-back" type="button" aria-label="Back to home">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
-            <h1>My Group Orders</h1>
+            <h1>Group Listed</h1>
             <p>View your group orders and continue anytime.</p>
           </header>
           <div class="group-list" id="groupOrdersList"></div>
-          <p class="group-list-empty" id="groupOrdersEmpty">No group orders yet</p>
+          <p class="group-list-empty" id="groupOrdersEmpty">No groups listed yet</p>
         </div>
         <footer class="group-list-footer">
           <button class="start-new-group-order" type="button">
