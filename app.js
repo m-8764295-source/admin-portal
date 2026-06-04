@@ -56,8 +56,6 @@ const groupOrdersList = document.querySelector("#groupOrdersList");
 const groupOrdersEmpty = document.querySelector("#groupOrdersEmpty");
 const groupListBack = document.querySelector(".group-list-back");
 const homeStartGroupOrder = document.querySelector(".home-start-group-order");
-const homeGroupListed = document.querySelector(".home-group-listed");
-const profileGroupListed = document.querySelector(".profile-group-listed");
 const startNewGroupOrder = document.querySelector(".start-new-group-order");
 const addFriendButton = document.querySelector(".add-friend-button");
 const addFriendsBack = document.querySelector(".add-friends-back");
@@ -2554,13 +2552,8 @@ document.querySelectorAll(".profile-card").forEach((card) => {
     card.addEventListener("click", openFriends);
   }
 });
-document.querySelector(".create-group-profile")?.addEventListener("click", openGroupOrder);
-homeStartGroupOrder?.addEventListener("click", openGroupOrder);
-homeGroupListed?.addEventListener("click", openGroupList);
-profileGroupListed?.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openGroupList();
-});
+document.querySelector(".create-group-profile")?.addEventListener("click", openGroupList);
+homeStartGroupOrder?.addEventListener("click", openGroupList);
 startNewGroupOrder?.addEventListener("click", openGroupOrder);
 groupListBack?.addEventListener("click", () => setScreen("home"));
 groupOrdersList?.addEventListener("click", (event) => {

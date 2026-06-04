@@ -927,26 +927,17 @@ svg {
   font-weight: 500;
 }
 
-.group-card-actions {
-  position: absolute;
-  left: 17px;
-  bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin-top: 0;
-}
-
 .cta {
-  height: 35px;
+  height: 37px;
+  margin-top: 10px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 12px;
+  gap: 10px;
+  padding: 0 16px;
   border-radius: 20px;
   background: var(--yellow);
   color: #141414;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   box-shadow: 0 9px 18px rgba(238, 158, 0, 0.3);
 }
@@ -955,18 +946,6 @@ svg {
   width: 14px;
   height: 14px;
   stroke-width: 2.6;
-}
-
-.group-listed-link {
-  height: 35px;
-  padding: 0 9px;
-  border: 1px solid rgba(20, 20, 20, 0.12);
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.78);
-  color: #141414;
-  font-size: 10px;
-  font-weight: 850;
-  white-space: nowrap;
 }
 
 .group-art {
@@ -5207,18 +5186,6 @@ svg {
   margin-top: 18px;
   padding: 16px 20px;
   background: linear-gradient(90deg, #fff7e7, #fff4dd);
-}
-
-.profile-group-listed {
-  height: 28px;
-  margin-top: 10px;
-  padding: 0 11px;
-  border: 1px solid rgba(243, 164, 0, 0.28);
-  border-radius: 12px;
-  background: #fff;
-  color: #cf8200;
-  font-size: 10.5px;
-  font-weight: 850;
 }
 
 .create-plus {
