@@ -9730,3 +9730,98 @@ img[src^="assets/"] {
     margin-left: -42px;
   }
 }
+
+/* Cross-device PNG anchoring: Android WebView is more sensitive to vw + transform positioning. */
+img {
+  max-width: 100%;
+}
+
+.group-card {
+  contain: paint;
+}
+
+.group-art {
+  right: clamp(8px, 4%, 18px);
+  bottom: -8px;
+  width: clamp(150px, 46%, 176px);
+  height: auto;
+  transform: none;
+}
+
+.add-friends-art,
+.group-order-hero img,
+.created-lobby-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  transform: none;
+}
+
+.add-friends-art {
+  width: min(100%, 390px);
+  height: clamp(148px, 36vw, 170px);
+}
+
+.group-order-hero img {
+  width: min(100%, 390px);
+  height: clamp(176px, 43vw, 198px);
+}
+
+.created-lobby-image {
+  width: min(86%, 320px);
+  height: clamp(128px, 38vw, 174px);
+}
+
+.created-hero-card {
+  overflow: hidden;
+}
+
+.created-hero-card > img {
+  right: -8px;
+  top: -12px;
+  width: min(72%, 300px);
+  height: auto;
+  transform: none;
+}
+
+.location-card {
+  grid-template-columns: minmax(108px, 38%) 1fr 24px;
+}
+
+.location-card img {
+  justify-self: center;
+  width: min(100%, 154px);
+  height: clamp(96px, 30vw, 116px);
+  transform: none;
+}
+
+.profile-card-visual {
+  grid-template-columns: 58px minmax(0, 1fr) minmax(104px, 128px) auto;
+}
+
+.profile-card img[src*="bag.png"],
+.profile-card img[src*="friends.png"] {
+  justify-self: end;
+  width: min(32vw, 128px);
+  height: 92px;
+  transform: none;
+}
+
+.order-placed-hero > img {
+  margin-left: clamp(-28px, -7%, -14px);
+  margin-bottom: clamp(-18px, -5%, -10px);
+  transform: none;
+}
+
+@media (max-width: 360px) {
+  .group-art {
+    width: 150px;
+  }
+
+  .profile-card img[src*="bag.png"],
+  .profile-card img[src*="friends.png"] {
+    width: 108px;
+    height: 84px;
+  }
+}
