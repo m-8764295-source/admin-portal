@@ -10455,6 +10455,36 @@ img[src^="assets/"] {
   height: 24px;
 }
 
+.group-cart-restaurant h2,
+.group-cart-participants-section > h2,
+.participant-avatar,
+.participant-order-head h3,
+.participant-subtotal strong,
+.group-cart-summary-card h2,
+.group-cart-total-row span,
+.group-cart-total-row strong {
+  font-weight: 740 !important;
+}
+
+.participant-subtotal span,
+.participant-item h4,
+.participant-item-price strong,
+.group-cart-summary-card p strong {
+  font-weight: 560 !important;
+}
+
+.participant-order-head p,
+.participant-item small,
+.group-cart-summary-card p,
+.group-cart-summary-card small,
+.group-cart-your-order aside span {
+  font-weight: 450 !important;
+}
+
+.participant-qty span {
+  font-weight: 650 !important;
+}
+
 /* Cross-device PNG anchoring: Android WebView is more sensitive to vw + transform positioning. */
 img {
   max-width: 100%;
