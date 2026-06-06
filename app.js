@@ -783,6 +783,16 @@ function currentFriendsList() {
   return firebaseFriendsLoaded ? firebaseFriends : readFriendData("novaFriends");
 }
 
+function refreshFriendsForInvites() {
+  loadFirebaseFriends()
+    .then(() => {
+      renderCreatedInviteFriends();
+      renderInviteFriends();
+      renderChatMembersPanel();
+    })
+    .catch((error) => console.error(error));
+}
+
 async function loadFirebaseGroupInvites() {
   initFirebase();
   const user = auth?.currentUser;
@@ -1805,16 +1815,12 @@ function renderCreatedInviteFriends() {
   if (createdInviteEmpty) createdInviteEmpty.hidden = friends.length > 0;
 }
 
-async function openCreatedSheet(mode = "share") {
+function openCreatedSheet(mode = "share") {
   if (!createdSheetOverlay) return;
   if (mode === "invite") {
-    try {
-      await loadFirebaseFriends();
-    } catch (error) {
-      console.error(error);
-    }
     if (createdInviteSearchInput) createdInviteSearchInput.value = "";
     renderCreatedInviteFriends();
+    refreshFriendsForInvites();
   }
   createdSharePanel.hidden = mode !== "share";
   createdInvitePanel.hidden = mode !== "invite";
@@ -2502,16 +2508,12 @@ function renderInviteFriends() {
   inviteFriendsEmpty.hidden = friends.length > 0;
 }
 
-async function openInviteFriends(returnScreen = "group-chat") {
+function openInviteFriends(returnScreen = "group-chat") {
   inviteReturnScreen = returnScreen;
   inviteFriendSearchInput.value = "";
-  try {
-    await loadFirebaseFriends();
-  } catch (error) {
-    console.error(error);
-  }
   renderInviteFriends();
   setScreen("invite-friends");
+  refreshFriendsForInvites();
 }
 
 async function inviteGroupFriend(friend) {
