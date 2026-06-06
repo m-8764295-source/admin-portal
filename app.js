@@ -134,6 +134,19 @@ const chatTopMemberCount = document.querySelector("#chatTopMemberCount");
 const chatMessages = document.querySelector(".chat-messages");
 const chatInput = document.querySelector(".chat-message-box input");
 const chatSendButton = document.querySelector(".chat-send-button");
+const groupCartBack = document.querySelector(".group-cart-back");
+const groupCartParticipants = document.querySelector("#groupCartParticipants");
+const groupCartRestaurantImage = document.querySelector("#groupCartRestaurantImage");
+const groupCartRestaurantName = document.querySelector("#groupCartRestaurantName");
+const groupCartItemCount = document.querySelector("#groupCartItemCount");
+const groupCartItemTotal = document.querySelector("#groupCartItemTotal");
+const groupCartDeliveryFee = document.querySelector("#groupCartDeliveryFee");
+const groupCartGroupTotal = document.querySelector("#groupCartGroupTotal");
+const groupCartYourName = document.querySelector("#groupCartYourName");
+const groupCartYourItems = document.querySelector("#groupCartYourItems");
+const groupCartYourDelivery = document.querySelector("#groupCartYourDelivery");
+const groupCartYouPay = document.querySelector("#groupCartYouPay");
+const groupCartCheckout = document.querySelector(".group-cart-checkout");
 const inviteFriendsBack = document.querySelector(".invite-friends-back");
 const inviteFriendSearchInput = document.querySelector("#inviteFriendSearchInput");
 const inviteFriendsList = document.querySelector("#inviteFriendsList");
@@ -153,6 +166,8 @@ let currentGroupDeliveryTo = "Select location";
 let currentGroupDeliveryTime = "Select time";
 let currentGroupMemberCount = 1;
 let currentGroupId = "";
+let currentGroupRestaurant = "Mori Cafe";
+let currentGroupRestaurantImage = "assets/mori.png";
 let groupMembers = [];
 let groupInvites = [];
 let inviteReturnScreen = "group-chat";
@@ -248,6 +263,7 @@ const orderProgressCard = document.querySelector(".order-progress-card");
 
 const FREE_DELIVERY_TARGET = 50;
 const DELIVERY_FEE = 3;
+const GROUP_DELIVERY_FEE = 2;
 const firebaseConfig = {
   apiKey: "AIzaSyACnUILcO28dC9pZvXzSrCYxxfSL-fPe7Q",
   authDomain: "nova-63fc5.firebaseapp.com",
@@ -539,8 +555,7 @@ function activeCart() {
 function totals(sourceCart = activeCart(), mode = cartMode) {
   const subtotal = [...sourceCart.values()].reduce((sum, item) => sum + item.price * item.qty, 0);
   const qty = [...sourceCart.values()].reduce((sum, item) => sum + item.qty, 0);
-  const freeDelivery = mode === "group" && subtotal >= FREE_DELIVERY_TARGET;
-  const delivery = freeDelivery || subtotal === 0 ? 0 : DELIVERY_FEE;
+  const delivery = subtotal === 0 ? 0 : mode === "group" ? discountedGroupDeliveryFee(subtotal) : DELIVERY_FEE;
   return { subtotal, qty, delivery, total: subtotal + delivery };
 }
 
@@ -554,7 +569,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-list-view", "group-order-view", "group-created-view", "group-chat-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-list-view", "group-order-view", "group-created-view", "group-chat-view", "group-cart-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -1654,6 +1669,8 @@ function openGroupFromList(groupId) {
       currentGroupDeliveryTo = group.deliveryTo || "Select location";
       currentGroupDeliveryTime = group.deliveryTime || "Select time";
       currentGroupCloseTime = group.closeTime || groupCloseTime(currentGroupDeliveryTime);
+      currentGroupRestaurant = group.restaurant || "Mori Cafe";
+      currentGroupRestaurantImage = group.restaurantImage || "assets/mori.png";
       groupMembers = (group.memberDetails || group.members || []).map((member) => ({
         ...member,
         name: member.name || member.username || "Member",
@@ -2017,15 +2034,48 @@ function watchGroupInvites() {
     .onSnapshot(applyGroupInviteSnapshot, () => {});
 }
 
+function groupCartOwner() {
+  const uid = auth?.currentUser?.uid || "host";
+  const username = getOwnUsername() || auth?.currentUser?.displayName || "You";
+  return {
+    uid,
+    username,
+    name: username,
+    avatarUrl: getOwnAvatarUrl(),
+  };
+}
+
+function groupCartKey(code, uid = groupCartOwner().uid) {
+  return `${uid || "host"}_${code}`;
+}
+
+function groupCartItemImage(item = {}) {
+  const name = (item.name || "").toLowerCase();
+  if (name.includes("tea") || name.includes("milk") || name.includes("honey") || name.includes("oolong")) return "assets/mori.png";
+  return "assets/morifood1.png";
+}
+
+function discountedGroupDeliveryFee(subtotal) {
+  if (subtotal >= 50) return 0;
+  if (subtotal >= 45) return GROUP_DELIVERY_FEE * 0.7;
+  if (subtotal >= 40) return GROUP_DELIVERY_FEE * 0.8;
+  if (subtotal >= 35) return GROUP_DELIVERY_FEE * 0.9;
+  return GROUP_DELIVERY_FEE;
+}
+
 function groupCartDoc(item) {
+  const owner = item.owner || groupCartOwner();
   return {
     code: item.code,
     name: item.name,
     chineseName: item.cn,
     price: item.price,
     qty: item.qty,
-    addedByUid: auth?.currentUser?.uid || "",
-    addedByUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
+    image: item.image || groupCartItemImage(item),
+    addedByUid: owner.uid || "",
+    addedByUsername: owner.username || owner.name || "You",
+    addedByName: owner.name || owner.username || "You",
+    addedByAvatar: owner.avatarUrl || "",
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 }
@@ -2035,15 +2085,144 @@ function applyGroupCartSnapshot(snapshot) {
   snapshot.forEach((doc) => {
     const data = doc.data();
     groupCart.set(doc.id, {
+      id: doc.id,
       code: data.code || doc.id,
       name: data.name || "",
       cn: data.chineseName || "",
       price: Number(data.price) || 0,
       qty: Number(data.qty) || 0,
+      image: data.image || "",
+      owner: {
+        uid: data.addedByUid || auth?.currentUser?.uid || "host",
+        username: data.addedByUsername || getOwnUsername() || "You",
+        name: data.addedByName || data.addedByUsername || getOwnUsername() || "You",
+        avatarUrl: data.addedByAvatar || "",
+      },
     });
   });
   renderChatProgress();
+  renderGroupCart();
   if (cartMode === "group") updateAllCartViews();
+}
+
+function groupCartParticipantsData() {
+  const own = currentHostMember();
+  const byUid = new Map();
+  const addMember = (member = {}) => {
+    const uid = member.uid || (member.username ? `user_${member.username}` : "");
+    if (!uid) return;
+    byUid.set(uid, {
+      uid,
+      username: member.username || member.name || "user",
+      name: member.name || member.username || "User",
+      avatarUrl: member.avatarUrl || member.avatar || "",
+      status: member.status || "joined",
+      items: [],
+    });
+  };
+
+  groupMembers.length ? groupMembers.forEach(addMember) : addMember(own);
+  if (!byUid.has(own.uid)) addMember(own);
+
+  groupCart.forEach((item, id) => {
+    const owner = item.owner || {};
+    const uid = owner.uid || own.uid;
+    if (!byUid.has(uid)) {
+      addMember({
+        uid,
+        username: owner.username || owner.name || "user",
+        name: owner.name || owner.username || "User",
+        avatarUrl: owner.avatarUrl || "",
+      });
+    }
+    byUid.get(uid).items.push({ ...item, id });
+  });
+
+  return [...byUid.values()].map((participant) => ({
+    ...participant,
+    items: participant.items.sort((a, b) => (a.name || "").localeCompare(b.name || "")),
+  }));
+}
+
+function participantAvatarMarkup(participant) {
+  return participant.avatarUrl
+    ? `<div class="participant-avatar"><img src="${participant.avatarUrl}" alt="" /></div>`
+    : `<div class="participant-avatar">${firstLetter(participant.name || participant.username)}</div>`;
+}
+
+function renderGroupCart() {
+  if (!groupCartParticipants) return;
+
+  const participants = groupCartParticipantsData();
+  const ownUid = groupCartOwner().uid;
+  const itemTotal = [...groupCart.values()].reduce((sum, item) => sum + item.price * item.qty, 0);
+  const itemCount = [...groupCart.values()].reduce((sum, item) => sum + item.qty, 0);
+  const delivery = itemTotal > 0 ? discountedGroupDeliveryFee(itemTotal) : 0;
+  const participantCount = Math.max(1, participants.length);
+  const yourItems = [...groupCart.values()]
+    .filter((item) => (item.owner?.uid || ownUid) === ownUid)
+    .reduce((sum, item) => sum + item.price * item.qty, 0);
+  const yourDelivery = delivery / participantCount;
+  const yourTotal = yourItems + yourDelivery;
+  const ownParticipant = participants.find((participant) => participant.uid === ownUid) || participants[0] || { name: "You" };
+
+  if (groupCartRestaurantName) groupCartRestaurantName.textContent = currentGroupRestaurant || "Mori Cafe";
+  if (groupCartRestaurantImage) groupCartRestaurantImage.src = currentGroupRestaurantImage || "assets/mori.png";
+  if (groupCartItemCount) groupCartItemCount.textContent = `(${itemCount} ${itemCount === 1 ? "item" : "items"})`;
+  if (groupCartItemTotal) groupCartItemTotal.textContent = money(itemTotal);
+  if (groupCartDeliveryFee) groupCartDeliveryFee.textContent = delivery === 0 ? "Free" : money(delivery);
+  if (groupCartGroupTotal) groupCartGroupTotal.textContent = money(itemTotal + delivery);
+  if (groupCartYourName) groupCartYourName.textContent = ownParticipant.name || ownParticipant.username || "You";
+  if (groupCartYourItems) groupCartYourItems.textContent = money(yourItems);
+  if (groupCartYourDelivery) groupCartYourDelivery.textContent = money(yourDelivery);
+  if (groupCartYouPay) groupCartYouPay.textContent = money(yourTotal);
+
+  if (participants.length === 0 || itemCount === 0) {
+    groupCartParticipants.innerHTML = `<p class="group-cart-empty">No group cart items yet</p>`;
+    return;
+  }
+
+  groupCartParticipants.innerHTML = participants.map((participant) => {
+    const items = participant.items;
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const canEdit = participant.uid === ownUid;
+    const itemWord = items.length === 1 ? "item" : "items";
+    const itemRows = items.length ? items.map((item) => `
+      <article class="participant-item">
+        <img src="${item.image || groupCartItemImage(item)}" alt="" />
+        <div>
+          <h4>${item.name || "Item"}</h4>
+          <small>x${item.qty}</small>
+        </div>
+        <div class="participant-item-price">
+          <strong>${money(item.price * item.qty)}</strong>
+          <div class="participant-qty">
+            <button type="button" data-group-cart-action="decrease" data-group-cart-id="${item.id}" ${canEdit ? "" : "disabled"} aria-label="Decrease ${item.name}">−</button>
+            <span>${item.qty}</span>
+            <button type="button" data-group-cart-action="increase" data-group-cart-id="${item.id}" ${canEdit ? "" : "disabled"} aria-label="Increase ${item.name}">+</button>
+          </div>
+        </div>
+      </article>
+    `).join("") : `<p class="group-cart-empty">No items yet</p>`;
+
+    return `
+      <article class="participant-order-card">
+        <header class="participant-order-head">
+          ${participantAvatarMarkup(participant)}
+          <div>
+            <h3>${participant.name || participant.username || "Member"}</h3>
+            <p>${items.length} ${itemWord}</p>
+          </div>
+          <div class="participant-subtotal">
+            <span>Subtotal</span>
+            <strong>${money(subtotal)}</strong>
+          </div>
+          <b class="participant-chevron">›</b>
+        </header>
+        <div class="participant-items">${itemRows}</div>
+      </article>
+    `;
+  }).join("");
 }
 
 function watchGroupCart() {
@@ -2061,7 +2240,7 @@ function watchGroupCart() {
 
 async function saveGroupCartItem(item) {
   if (!db || !currentGroupId) return;
-  await db.collection("groups").doc(currentGroupId).collection("cartItems").doc(item.code).set(groupCartDoc(item), { merge: true });
+  await db.collection("groups").doc(currentGroupId).collection("cartItems").doc(item.id || groupCartKey(item.code, item.owner?.uid)).set(groupCartDoc(item), { merge: true });
 }
 
 async function removeGroupCartItem(code) {
@@ -2077,6 +2256,8 @@ async function openGroupCreated() {
   currentGroupDeliveryTo = selectedGroupLocation || "Select location";
   currentGroupDeliveryTime = slot || "Select time";
   currentGroupCloseTime = groupCloseTime(slot);
+  currentGroupRestaurant = "Mori Cafe";
+  currentGroupRestaurantImage = "assets/mori.png";
   currentGroupId = `group_${Date.now()}_${auth?.currentUser?.uid || "guest"}`;
   groupMembers = [currentHostMember()];
   currentGroupMemberCount = groupMembers.length;
@@ -2258,10 +2439,11 @@ function showPaymentSuccessThenOrderPlaced() {
 function openGroupCart() {
   cartMode = "group";
   cartReturnScreen = "group-chat";
+  renderGroupCart();
   updateAllCartViews();
   window.scrollTo(0, 0);
-  setScreen("cart");
-  requestAnimationFrame(() => cartPageScroll.scrollTo(0, 0));
+  setScreen("group-cart");
+  requestAnimationFrame(() => document.querySelector(".group-cart-scroll")?.scrollTo(0, 0));
 }
 
 function renderInviteFriends() {
@@ -2667,8 +2849,38 @@ chatCartButtons.forEach((button) => button.addEventListener("click", openGroupCa
 chatMembersButtons.forEach((button) => button.addEventListener("click", openChatMembersPanel));
 chatCheckoutButton?.addEventListener("click", () => {
   cartMode = "group";
-  updateAllCartViews();
   openGroupCart();
+});
+groupCartBack?.addEventListener("click", () => setScreen("group-chat"));
+groupCartCheckout?.addEventListener("click", () => {
+  alert("Group order checkout is coming soon.");
+});
+groupCartParticipants?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-group-cart-action]");
+  if (!button || button.disabled) return;
+  const id = button.dataset.groupCartId;
+  const item = groupCart.get(id);
+  if (!item) return;
+  const ownUid = groupCartOwner().uid;
+  if ((item.owner?.uid || ownUid) !== ownUid) return;
+
+  if (button.dataset.groupCartAction === "increase") {
+    item.qty += 1;
+    groupCart.set(id, item);
+    saveGroupCartItem(item).catch(() => {});
+  } else {
+    item.qty -= 1;
+    if (item.qty <= 0) {
+      groupCart.delete(id);
+      removeGroupCartItem(id).catch(() => {});
+    } else {
+      groupCart.set(id, item);
+      saveGroupCartItem(item).catch(() => {});
+    }
+  }
+  renderChatProgress();
+  renderGroupCart();
+  updateAllCartViews();
 });
 chatMembersClose?.addEventListener("click", closeChatMembersPanel);
 chatMembersPanel?.addEventListener("click", (event) => {
@@ -3159,7 +3371,6 @@ function updateAllCartViews() {
   checkoutDelivery.textContent = current.delivery === 0 ? "Free" : money(current.delivery);
   checkoutTotal.textContent = money(current.total);
   placeOrderTotal.textContent = money(current.total);
-  phone.classList.toggle("group-cart-mode", isGroupCart);
   if (isGroupCart) renderChatProgress();
 
   cartItems.innerHTML = [...sourceCart.values()]
@@ -3207,17 +3418,26 @@ function addToCart(button) {
   cartMode = detailCartMode;
   const sourceCart = activeCart();
   const code = button.dataset.code;
-  const item = sourceCart.get(code) || {
+  const owner = groupCartOwner();
+  const existingGroupItem = cartMode === "group"
+    ? [...groupCart.entries()].find(([, value]) => value.code === code && value.owner?.uid === owner.uid)
+    : null;
+  const key = cartMode === "group" ? (existingGroupItem?.[0] || groupCartKey(code, owner.uid)) : code;
+  const item = sourceCart.get(key) || {
+    id: key,
     code,
     name: button.dataset.name,
     cn: button.dataset.cn,
     price: Number(button.dataset.price),
     qty: 0,
+    image: groupCartItemImage({ name: button.dataset.name }),
+    owner: cartMode === "group" ? owner : null,
   };
   item.qty += 1;
-  sourceCart.set(code, item);
+  sourceCart.set(key, item);
   updateAllCartViews();
   if (cartMode === "group") {
+    renderGroupCart();
     saveGroupCartItem(item).catch(() => {});
     appendCartChatMessage(item.name).catch(() => {});
   }
@@ -3296,7 +3516,7 @@ viewCart.addEventListener("click", () => {
 
 checkoutButton.addEventListener("click", () => {
   if (cartMode === "group") {
-    alert("Group order checkout is coming soon.");
+    openGroupCart();
     return;
   }
   if (activeCart().size === 0) return;
@@ -3306,7 +3526,7 @@ checkoutButton.addEventListener("click", () => {
 
 summaryCheckoutButton.addEventListener("click", () => {
   if (cartMode === "group") {
-    alert("Group order checkout is coming soon.");
+    openGroupCart();
     return;
   }
   if (activeCart().size === 0) return;
