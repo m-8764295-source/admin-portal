@@ -191,6 +191,7 @@ let detailReturnScreen = "home";
 let cartReturnScreen = "detail";
 let paymentSuccessLottie = null;
 const PROFILE_AVATARS = Array.from({ length: 5 }, (_, index) => `assets/avatars/avatar_${index + 1}.png`);
+const DEFAULT_AVATAR_URL = "assets/avatars/avatar_2.png";
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -604,16 +605,14 @@ function firstLetter(value) {
 }
 
 function setAvatarContent(letter, imageUrl = "") {
-  profileAvatar.innerHTML = imageUrl
-    ? `<img src="${imageUrl}" alt="" />`
-    : `<span>${letter}</span>`;
+  profileAvatar.innerHTML = `<img src="${imageUrl || DEFAULT_AVATAR_URL}" alt="" />`;
 }
 
 function getProfileAvatarUrl(user = auth?.currentUser || null, profile = currentProfile || {}) {
-  if (!user?.uid) return "";
+  if (!user?.uid) return DEFAULT_AVATAR_URL;
   const savedAvatar = profile.avatarUrl || localStorage.getItem(`novaAvatar:${user.uid}`) || "";
   if (profile.avatarUrl) localStorage.setItem(`novaAvatar:${user.uid}`, profile.avatarUrl);
-  return savedAvatar;
+  return savedAvatar || DEFAULT_AVATAR_URL;
 }
 
 function renderAvatarOptions(selectedUrl = "") {
@@ -649,6 +648,19 @@ async function saveProfileAvatar(avatarUrl) {
   };
   setAvatarContent(firstLetter(currentProfile?.username || user.displayName || "User"), avatarUrl);
   renderAvatarOptions(avatarUrl);
+  groupMembers = groupMembers.map((member) => (
+    member.uid === user.uid ? { ...member, avatarUrl } : member
+  ));
+  cachedGroupOrders = cachedGroupOrders.map((group) => ({
+    ...group,
+    hostAvatar: group.hostUid === user.uid ? avatarUrl : group.hostAvatar,
+    memberDetails: (group.memberDetails || []).map((member) => member.uid === user.uid ? { ...member, avatarUrl } : member),
+    members: (group.members || []).map((member) => member.uid === user.uid ? { ...member, avatarUrl } : member),
+  }));
+  renderGroupOrders(cachedGroupOrders, { hideEmpty: true });
+  renderGroupMembers();
+  renderChatMembersPanel();
+  renderGroupCart();
 
   if (db) {
     try {
@@ -679,12 +691,7 @@ function updateProfileView() {
   profileUsername.textContent = guest ? "@guest" : `@${username || displayName}`;
   profileEmail.textContent = guest ? "" : email;
   if (guest) {
-    profileAvatar.innerHTML = `
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="8" r="4" />
-        <path d="M4 21c1.1-4 4-6 8-6s6.9 2 8 6" />
-      </svg>
-    `;
+    setAvatarContent("G", DEFAULT_AVATAR_URL);
   } else {
     setAvatarContent(firstLetter(displayName), savedAvatar);
   }
@@ -838,10 +845,7 @@ function inviteTimeLabel(value = "") {
 
 function setInviteHostAvatar(invite) {
   const avatarUrl = invite.fromAvatar || "";
-  const name = invite.fromName || invite.fromUsername || "A";
-  inviteHostAvatar.innerHTML = avatarUrl
-    ? `<img src="${avatarUrl}" alt="" />`
-    : firstLetter(name);
+  inviteHostAvatar.innerHTML = `<img src="${avatarUrl || DEFAULT_AVATAR_URL}" alt="" />`;
 }
 
 function openIncomingGroupInvite(invite) {
@@ -1143,7 +1147,7 @@ function renderFriends() {
   groupInvitesList.innerHTML = groupInvites
     .map((invite) => `
       <article class="friend-row group-invite-row">
-        <div class="friend-avatar">${friendAvatar(invite.fromName || invite.fromUsername)}</div>
+        ${roundAvatarMarkup("friend-avatar", invite.fromName || invite.fromUsername || "Friend", invite.fromAvatar || "")}
         <div class="friend-info">
           <h3>${invite.groupName || "Group Order"}</h3>
           <p>${invite.fromName || invite.fromUsername || "Someone"} invited you</p>
@@ -1164,7 +1168,7 @@ function renderFriends() {
     .map(
       (friend) => `
         <article class="friend-row" data-request-id="${friend.id || ""}">
-          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          ${roundAvatarMarkup("friend-avatar", friend.name || friend.username || "Friend", friend.avatarUrl || "")}
           <div class="friend-info">
             <h3>${friend.name || friend.username}</h3>
             <p>@${friend.username || ""}</p>
@@ -1186,7 +1190,7 @@ function renderFriends() {
     .map(
       (friend) => `
         <article class="friend-row">
-          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          ${roundAvatarMarkup("friend-avatar", friend.name || friend.username || "Friend", friend.avatarUrl || "")}
           <div class="friend-info">
             <h3>${friend.name || friend.username}</h3>
             <p>@${friend.username || ""}</p>
@@ -1220,6 +1224,7 @@ async function loadFirebaseFriendRequests() {
       name: data.fromName || data.fromUsername || "Friend",
       username: data.fromUsername || "",
       uid: data.fromUid || "",
+      avatarUrl: data.fromAvatar || DEFAULT_AVATAR_URL,
     }));
   firebaseFriendRequestsLoaded = true;
 }
@@ -1234,7 +1239,7 @@ async function loadFirebaseFriends() {
   }
 
   const snapshot = await db.collection("users").doc(user.uid).collection("friends").get();
-  firebaseFriends = snapshot.docs
+  const friends = snapshot.docs
     .map((doc) => {
       const data = doc.data();
       return {
@@ -1243,9 +1248,21 @@ async function loadFirebaseFriends() {
         name: data.name || data.username || "Friend",
         username: data.username || "",
         email: data.email || "",
+        avatarUrl: data.avatarUrl || DEFAULT_AVATAR_URL,
       };
     })
     .sort((a, b) => (a.username || a.name).localeCompare(b.username || b.name));
+  const hydratedFriends = await Promise.all(friends.map(async (friend) => {
+    if ((friend.avatarUrl && friend.avatarUrl !== DEFAULT_AVATAR_URL) || !friend.uid) return friend;
+    try {
+      const friendDoc = await db.collection("users").doc(friend.uid).get();
+      const profile = friendDoc.exists ? friendDoc.data() : null;
+      return { ...friend, avatarUrl: profile?.avatarUrl || DEFAULT_AVATAR_URL };
+    } catch {
+      return friend;
+    }
+  }));
+  firebaseFriends = hydratedFriends;
   firebaseFriendsLoaded = true;
 }
 
@@ -1284,7 +1301,7 @@ async function updateGroupInviteStatus(inviteId, status) {
           uid: user.uid,
           username: getOwnUsername() || user.displayName || "User",
           name: currentProfile?.name || getOwnUsername() || user.displayName || "User",
-          avatarUrl: getOwnAvatarUrl(),
+          avatarUrl: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
           status: "joined",
         }),
       }, { merge: true });
@@ -1293,6 +1310,7 @@ async function updateGroupInviteStatus(inviteId, status) {
         text: `${getOwnUsername() || user.displayName || "Someone"} joined the group`,
         senderUid: user.uid,
         senderUsername: getOwnUsername() || user.displayName || "User",
+        senderAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         clientCreatedAt: Date.now(),
       });
@@ -1303,6 +1321,7 @@ async function updateGroupInviteStatus(inviteId, status) {
         small: "You can invite again",
         senderUid: user.uid,
         senderUsername: getOwnUsername() || user.displayName || "User",
+        senderAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
         clientCreatedAt: Date.now(),
       });
@@ -1339,6 +1358,7 @@ async function updateFriendRequestStatus(requestId, status) {
         username: request.fromUsername || "",
         name: request.fromName || request.fromUsername || "Friend",
         email: request.fromEmail || "",
+        avatarUrl: request.fromAvatar || DEFAULT_AVATAR_URL,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true }),
       db.collection("users").doc(request.fromUid).collection("friends").doc(user.uid).set({
@@ -1346,6 +1366,7 @@ async function updateFriendRequestStatus(requestId, status) {
         username: myUsername,
         name: currentProfile?.name || myUsername,
         email: user.email || "",
+        avatarUrl: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true }),
     ]);
@@ -1367,15 +1388,11 @@ function getOwnAvatarUrl() {
 }
 
 function chatAvatarMarkup(username = "You", imageUrl = "") {
-  return imageUrl
-    ? `<div class="chat-system-avatar"><img src="${imageUrl}" alt="" /></div>`
-    : `<div class="chat-system-avatar">${firstLetter(username)}</div>`;
+  return `<div class="chat-system-avatar"><img src="${imageUrl || DEFAULT_AVATAR_URL}" alt="" /></div>`;
 }
 
 function roundAvatarMarkup(className, username = "User", imageUrl = "") {
-  return imageUrl
-    ? `<div class="${className}"><img src="${imageUrl}" alt="" /></div>`
-    : `<div class="${className}">${firstLetter(username)}</div>`;
+  return `<div class="${className}"><img src="${imageUrl || DEFAULT_AVATAR_URL}" alt="" /></div>`;
 }
 
 function chatSystemMarkup(text, small = "", username = "You", imageUrl = "") {
@@ -1389,7 +1406,7 @@ function normalizeUsernameSearch(value) {
 function addFriendRow(user, buttonText = "Add", disabled = false) {
   return `
     <article class="suggested-user-row">
-      <div class="suggested-avatar">${friendAvatar(user.name || user.username)}</div>
+      ${roundAvatarMarkup("suggested-avatar", user.name || user.username || "User", user.avatarUrl || DEFAULT_AVATAR_URL)}
       <span>
         <strong>${user.name || user.username}</strong>
         <em>@${user.username || ""}</em>
@@ -1489,6 +1506,7 @@ async function searchFirebaseUserByUsername() {
       uid: doc.id,
       username: data.username || "",
       name: data.name || data.username || "Nova user",
+      avatarUrl: data.avatarUrl || DEFAULT_AVATAR_URL,
     }, relationship.label, relationship.disabled);
     suggestedEmpty.hidden = true;
   } catch (error) {
@@ -1575,17 +1593,14 @@ function currentHostMember() {
     uid: auth?.currentUser?.uid || "host",
     name: username,
     username,
-    avatarUrl: getOwnAvatarUrl(),
+    avatarUrl: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
     status: "host",
   };
 }
 
 function groupMemberAvatar(member = {}) {
   const imageUrl = member.avatarUrl || member.avatar || "";
-  const name = member.name || member.username || "U";
-  return imageUrl
-    ? `<span><img src="${imageUrl}" alt="" /></span>`
-    : `<span>${firstLetter(name)}</span>`;
+  return `<span><img src="${imageUrl || DEFAULT_AVATAR_URL}" alt="" /></span>`;
 }
 
 function groupListCard(group) {
@@ -1593,7 +1608,7 @@ function groupListCard(group) {
   const fallbackMembers = members.length ? members : [{
     username: group.hostUsername || "Host",
     name: group.hostUsername || "Host",
-    avatarUrl: group.hostAvatar || "",
+    avatarUrl: group.hostAvatar || DEFAULT_AVATAR_URL,
   }];
   return `
     <button class="group-order-list-card" type="button" data-group-id="${group.groupId || group.id || ""}">
@@ -1648,7 +1663,46 @@ async function loadGroupOrders() {
     db.collection("groups").where("hostUid", "==", user.uid).get(),
     db.collection("groups").where("memberUids", "array-contains", user.uid).get().catch(() => ({ docs: [] })),
   ]);
-  return sortGroupsNewestFirst(uniqueGroups([...hostSnap.docs, ...memberSnap.docs].map((doc) => ({ id: doc.id, ...doc.data() }))));
+  const groups = uniqueGroups([...hostSnap.docs, ...memberSnap.docs].map((doc) => ({ id: doc.id, ...doc.data() })));
+  return sortGroupsNewestFirst(await hydrateGroupOrderAvatars(groups));
+}
+
+async function hydrateGroupOrderAvatars(groups = []) {
+  const ownUid = auth?.currentUser?.uid || "";
+  const ownAvatar = getOwnAvatarUrl();
+  const uids = new Set();
+  groups.forEach((group) => {
+    if (group.hostUid) uids.add(group.hostUid);
+    [...(group.memberDetails || []), ...(group.members || [])].forEach((member) => {
+      if (member.uid) uids.add(member.uid);
+    });
+  });
+
+  const avatars = new Map();
+  if (ownUid && ownAvatar) avatars.set(ownUid, ownAvatar);
+  if (db) {
+    await Promise.all([...uids].map(async (uid) => {
+      if (!uid || avatars.has(uid)) return;
+      try {
+        const snapshot = await db.collection("users").doc(uid).get();
+        const profile = snapshot.exists ? snapshot.data() : null;
+        if (profile?.avatarUrl) avatars.set(uid, profile.avatarUrl);
+      } catch {}
+    }));
+  }
+
+  return groups.map((group) => ({
+    ...group,
+    hostAvatar: avatars.get(group.hostUid) || group.hostAvatar || DEFAULT_AVATAR_URL,
+    memberDetails: (group.memberDetails || []).map((member) => ({
+      ...member,
+      avatarUrl: avatars.get(member.uid) || member.avatarUrl || DEFAULT_AVATAR_URL,
+    })),
+    members: (group.members || []).map((member) => ({
+      ...member,
+      avatarUrl: avatars.get(member.uid) || member.avatarUrl || DEFAULT_AVATAR_URL,
+    })),
+  }));
 }
 
 async function openGroupList() {
@@ -1686,7 +1740,7 @@ function applyGroupLobby(group = {}) {
   if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
   if (createdHostAvatar) {
     const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
-    createdHostAvatar.innerHTML = host?.avatarUrl ? `<img src="${host.avatarUrl}" alt="" />` : firstLetter(host?.name || host?.username || "U");
+    createdHostAvatar.innerHTML = `<img src="${host?.avatarUrl || DEFAULT_AVATAR_URL}" alt="" />`;
   }
   if (createdHostName) {
     const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
@@ -1696,6 +1750,33 @@ function applyGroupLobby(group = {}) {
   watchGroupInvites();
   watchGroupMessages();
   watchGroupCart();
+  refreshGroupMemberAvatars();
+}
+
+function refreshGroupMemberAvatars() {
+  if (!db || !groupMembers.length) return;
+  const membersWithUid = groupMembers.filter((member) => member.uid);
+  if (!membersWithUid.length) return;
+
+  Promise.all(membersWithUid.map((member) => (
+    db.collection("users").doc(member.uid).get()
+      .then((snapshot) => ({ uid: member.uid, profile: snapshot.exists ? snapshot.data() : null }))
+      .catch(() => ({ uid: member.uid, profile: null }))
+  ))).then((profiles) => {
+    let changed = false;
+    profiles.forEach(({ uid, profile }) => {
+      if (!profile?.avatarUrl) return;
+      groupMembers = groupMembers.map((member) => {
+        if (member.uid !== uid || member.avatarUrl === profile.avatarUrl) return member;
+        changed = true;
+        return { ...member, avatarUrl: profile.avatarUrl };
+      });
+    });
+    if (!changed) return;
+    renderGroupMembers();
+    renderChatMembersPanel();
+    renderGroupCart();
+  });
 }
 
 function groupFromListCard(card, groupId) {
@@ -1748,7 +1829,7 @@ function renderGroupMembers() {
       const label = member.status === "host" ? "Host" : "Joined";
       return `
         <div class="created-member">
-          <div class="created-member-avatar">${firstLetter(member.name || member.username)}</div>
+          ${roundAvatarMarkup("created-member-avatar", member.name || member.username || "user", member.avatarUrl || member.avatar || "")}
           <strong><b>@${member.username || member.name || "user"}</b> <span>${label}</span></strong>
         </div>
       `;
@@ -1761,7 +1842,7 @@ function renderGroupMembers() {
       const label = invite.status === "rejected" ? "Rejected" : "Waiting";
       return `
         <div class="created-member ${invite.status === "rejected" ? "rejected" : "waiting"}">
-          <div class="created-member-avatar">${firstLetter(invite.name || invite.username)}</div>
+          ${roundAvatarMarkup("created-member-avatar", invite.name || invite.username || "friend", invite.avatarUrl || invite.avatar || invite.toAvatar || "")}
           <strong><b>@${invite.username || invite.name || "friend"}</b> <span>${label}</span></strong>
         </div>
       `;
@@ -1806,7 +1887,7 @@ function renderCreatedInviteFriends() {
     const disabled = status === "pending" || status === "joined" ? "disabled" : "";
     return `
       <article class="created-invite-row">
-        <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+        ${roundAvatarMarkup("friend-avatar", friend.name || friend.username || "Friend", friend.avatarUrl || "")}
         <span><strong>${friend.name || friend.username}</strong><em>@${friend.username || ""}</em></span>
         <button type="button" data-invite-key="${key}" ${disabled}>${labels[status]}</button>
       </article>
@@ -1900,7 +1981,7 @@ function renderChatMembersPanel() {
     const isHost = member.status === "host";
     return `
       <article class="chat-member-row">
-        <div class="chat-member-avatar">${firstLetter(member.name || member.username)}</div>
+        ${roundAvatarMarkup("chat-member-avatar", member.name || member.username || "Member", member.avatarUrl || member.avatar || "")}
         <span>
           <strong>${member.name || member.username || "Member"}${isHost ? " (You)" : ""}</strong>
           <small>${isHost ? "Created this group" : "Joined"}</small>
@@ -1912,7 +1993,7 @@ function renderChatMembersPanel() {
 
   const inviteRows = pendingInvites.map((invite) => `
     <article class="chat-member-row pending">
-      <div class="chat-member-avatar">${firstLetter(invite.name || invite.username)}</div>
+      ${roundAvatarMarkup("chat-member-avatar", invite.name || invite.username || "Friend", invite.avatarUrl || invite.avatar || invite.toAvatar || "")}
       <span>
         <strong>${invite.name || invite.username || "Friend"}</strong>
         <small>${invite.status === "rejected" ? "Rejected invite" : "Waiting for reply"}</small>
@@ -1947,7 +2028,7 @@ function appendLocalChatSystem(text, small = "") {
   if (!chatMessages) return;
   const message = document.createElement("div");
   message.className = "chat-system-message cart-chat-message";
-  message.innerHTML = chatSystemMarkup(text, small, getOwnUsername() || "You", getOwnAvatarUrl());
+  message.innerHTML = chatSystemMarkup(text, small, getOwnUsername() || "You", getOwnAvatarUrl() || DEFAULT_AVATAR_URL);
   chatMessages.appendChild(message);
 }
 
@@ -1962,7 +2043,7 @@ async function addGroupMessage(data) {
       ...data,
       senderUid: auth?.currentUser?.uid || "",
       senderUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
-      senderAvatar: getOwnAvatarUrl(),
+      senderAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
       clientCreatedAt: Date.now(),
     });
@@ -2025,6 +2106,7 @@ function applyGroupInviteSnapshot(snapshot) {
     if (!existing) return;
 
     const previousStatus = existing.status;
+    existing.avatarUrl = existing.avatarUrl || data.toAvatar || data.avatarUrl || "";
     existing.status = data.status || existing.status;
     if (existing.status === "accepted" && !groupMembers.some((member) => groupFriendKey(member) === groupFriendKey(existing))) {
       groupMembers.push({ ...existing, status: "joined" });
@@ -2047,6 +2129,7 @@ function applyGroupInviteSnapshot(snapshot) {
   renderCreatedInviteFriends();
   renderChatMembersPanel();
   renderInviteFriends();
+  refreshGroupMemberAvatars();
 }
 
 function watchGroupInvites() {
@@ -2069,7 +2152,7 @@ function groupCartOwner() {
     uid,
     username,
     name: username,
-    avatarUrl: getOwnAvatarUrl(),
+    avatarUrl: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
   };
 }
 
@@ -2103,7 +2186,7 @@ function groupCartDoc(item) {
     addedByUid: owner.uid || "",
     addedByUsername: owner.username || owner.name || "You",
     addedByName: owner.name || owner.username || "You",
-    addedByAvatar: owner.avatarUrl || "",
+    addedByAvatar: owner.avatarUrl || DEFAULT_AVATAR_URL,
     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
   };
 }
@@ -2124,7 +2207,7 @@ function applyGroupCartSnapshot(snapshot) {
         uid: data.addedByUid || auth?.currentUser?.uid || "host",
         username: data.addedByUsername || getOwnUsername() || "You",
         name: data.addedByName || data.addedByUsername || getOwnUsername() || "You",
-        avatarUrl: data.addedByAvatar || "",
+        avatarUrl: data.addedByAvatar || DEFAULT_AVATAR_URL,
       },
     });
   });
@@ -2143,7 +2226,7 @@ function groupCartParticipantsData() {
       uid,
       username: member.username || member.name || "user",
       name: member.name || member.username || "User",
-      avatarUrl: member.avatarUrl || member.avatar || "",
+      avatarUrl: member.avatarUrl || member.avatar || DEFAULT_AVATAR_URL,
       status: member.status || "joined",
       items: [],
     });
@@ -2160,7 +2243,7 @@ function groupCartParticipantsData() {
         uid,
         username: owner.username || owner.name || "user",
         name: owner.name || owner.username || "User",
-        avatarUrl: owner.avatarUrl || "",
+        avatarUrl: owner.avatarUrl || DEFAULT_AVATAR_URL,
       });
     }
     byUid.get(uid).items.push({ ...item, id });
@@ -2173,9 +2256,7 @@ function groupCartParticipantsData() {
 }
 
 function participantAvatarMarkup(participant) {
-  return participant.avatarUrl
-    ? `<div class="participant-avatar"><img src="${participant.avatarUrl}" alt="" /></div>`
-    : `<div class="participant-avatar">${firstLetter(participant.name || participant.username)}</div>`;
+  return `<div class="participant-avatar"><img src="${participant.avatarUrl || DEFAULT_AVATAR_URL}" alt="" /></div>`;
 }
 
 function renderGroupCart() {
@@ -2294,7 +2375,7 @@ async function openGroupCreated() {
   if (createdGroupName) createdGroupName.textContent = name;
   if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
   if (createdHostAvatar) {
-    createdHostAvatar.innerHTML = groupMembers[0].avatarUrl ? `<img src="${groupMembers[0].avatarUrl}" alt="" />` : firstLetter(groupMembers[0].name);
+    createdHostAvatar.innerHTML = `<img src="${groupMembers[0].avatarUrl || DEFAULT_AVATAR_URL}" alt="" />`;
   }
   if (createdHostName) createdHostName.textContent = groupMembers[0].name;
   renderGroupMembers();
@@ -2310,21 +2391,21 @@ async function openGroupCreated() {
         closeTime: currentGroupCloseTime,
         hostUid: auth?.currentUser?.uid || "",
         hostUsername: getOwnUsername() || auth?.currentUser?.displayName || "You",
-        hostAvatar: getOwnAvatarUrl(),
+        hostAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         memberLimit: 5,
         memberUids: groupMembers.map((member) => member.uid || "").filter(Boolean),
         memberDetails: groupMembers.map((member) => ({
           uid: member.uid || "",
           username: member.username || member.name || "",
           name: member.name || member.username || "",
-          avatarUrl: member.avatarUrl || "",
+          avatarUrl: member.avatarUrl || DEFAULT_AVATAR_URL,
           status: member.status || "joined",
         })),
         members: groupMembers.map((member) => ({
           uid: member.uid || "",
           username: member.username || member.name || "",
           name: member.name || member.username || "",
-          avatarUrl: member.avatarUrl || "",
+          avatarUrl: member.avatarUrl || DEFAULT_AVATAR_URL,
           status: member.status || "joined",
         })),
         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2360,7 +2441,7 @@ function openGroupChat() {
     const staticAvatar = document.querySelector(".chat-system-message .chat-system-avatar");
     if (staticAvatar) {
       const avatarUrl = getOwnAvatarUrl();
-      staticAvatar.innerHTML = avatarUrl ? `<img src="${avatarUrl}" alt="" />` : firstLetter(getOwnUsername() || "You");
+      staticAvatar.innerHTML = `<img src="${avatarUrl || DEFAULT_AVATAR_URL}" alt="" />`;
     }
   }
   setScreen("group-chat");
@@ -2495,7 +2576,7 @@ function renderInviteFriends() {
       const statusClass = status === "rejected" ? " is-rejected" : "";
       return `
         <article class="invite-friend-row">
-          <div class="friend-avatar">${friendAvatar(friend.name || friend.username)}</div>
+          ${roundAvatarMarkup("friend-avatar", friend.name || friend.username || "Friend", friend.avatarUrl || "")}
           <span>
             <strong>${friend.name || friend.username}</strong>
             <em>@${friend.username || ""}</em>
@@ -2547,9 +2628,10 @@ async function inviteGroupFriend(friend) {
         fromUid: auth?.currentUser?.uid || "",
         fromUsername: getOwnUsername() || "",
         fromName: currentProfile?.name || getOwnUsername() || "You",
-        fromAvatar: getOwnAvatarUrl(),
+        fromAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         toUid: friend.uid,
         toUsername: friend.username || "",
+        toAvatar: friend.avatarUrl || DEFAULT_AVATAR_URL,
         status: "pending",
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       };
@@ -2592,20 +2674,39 @@ async function getUserProfile(user) {
   if (!user) return null;
 
   const cachedUsername = localStorage.getItem(`novaUsername:${user.uid}`);
-  if (cachedUsername) {
-    return { username: cachedUsername };
-  }
+  const cachedAvatar = localStorage.getItem(`novaAvatar:${user.uid}`) || "";
 
   initFirebase();
-  if (!db) return null;
-
-  const snapshot = await db.collection("users").doc(user.uid).get();
-  const profile = snapshot.exists ? snapshot.data() : null;
-  if (profile?.username) {
-    localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
+  if (!db) {
+    currentProfile = { username: cachedUsername || "", avatarUrl: cachedAvatar || DEFAULT_AVATAR_URL };
+    return currentProfile;
   }
-  currentProfile = profile;
-  return profile;
+
+  try {
+    const snapshot = await db.collection("users").doc(user.uid).get();
+    const profile = snapshot.exists ? snapshot.data() : null;
+    if (profile?.username) {
+      localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
+    }
+    if (profile?.avatarUrl) {
+      localStorage.setItem(`novaAvatar:${user.uid}`, profile.avatarUrl);
+    } else if (snapshot.exists) {
+      localStorage.setItem(`novaAvatar:${user.uid}`, DEFAULT_AVATAR_URL);
+      db.collection("users").doc(user.uid).set({
+        avatarUrl: DEFAULT_AVATAR_URL,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(() => {});
+    }
+    currentProfile = {
+      ...(profile || {}),
+      username: profile?.username || cachedUsername || "",
+      avatarUrl: profile?.avatarUrl || cachedAvatar || DEFAULT_AVATAR_URL,
+    };
+    return currentProfile;
+  } catch (error) {
+    currentProfile = { username: cachedUsername || "", avatarUrl: cachedAvatar || DEFAULT_AVATAR_URL };
+    return currentProfile;
+  }
 }
 
 async function waitForUserProfile(user) {
@@ -2804,6 +2905,7 @@ suggestedUsersList.addEventListener("click", async (event) => {
         fromUsername,
         fromName: currentProfile?.name || user.displayName || fromUsername,
         fromEmail: user.email || "",
+        fromAvatar: getOwnAvatarUrl() || DEFAULT_AVATAR_URL,
         toUid,
         toUsername,
         status: "pending",
@@ -3172,11 +3274,13 @@ authForm.addEventListener("submit", async (event) => {
             email,
             provider: "password",
             username: "",
+            avatarUrl: DEFAULT_AVATAR_URL,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
       }
+      localStorage.setItem(`novaAvatar:${credential.user.uid}`, DEFAULT_AVATAR_URL);
       await new Promise((resolve) => setTimeout(resolve, 600));
       showOnboarding(credential.user);
       setAuthRoutingView(false);
@@ -3222,6 +3326,7 @@ usernameForm.addEventListener("submit", async (event) => {
           usernameLower: username.toLowerCase(),
           email: onboardingUser.email || "",
           name: onboardingUser.displayName || authName.value.trim() || username,
+          avatarUrl: currentProfile?.avatarUrl || localStorage.getItem(`novaAvatar:${onboardingUser.uid}`) || DEFAULT_AVATAR_URL,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -3234,6 +3339,7 @@ usernameForm.addEventListener("submit", async (event) => {
       usernameLower: username.toLowerCase(),
       email: onboardingUser.email || "",
       name: onboardingUser.displayName || authName.value.trim() || username,
+      avatarUrl: currentProfile?.avatarUrl || localStorage.getItem(`novaAvatar:${onboardingUser.uid}`) || DEFAULT_AVATAR_URL,
     };
     isGuestUser = false;
     await new Promise((resolve) => setTimeout(resolve, 450));
