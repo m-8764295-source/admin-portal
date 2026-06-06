@@ -1657,42 +1657,64 @@ async function openGroupList() {
   }
 }
 
+function applyGroupLobby(group = {}) {
+  currentGroupId = group.groupId || group.id || "";
+  currentGroupName = group.groupName || "Group Order";
+  currentGroupDeliveryTo = group.deliveryTo || "Select location";
+  currentGroupDeliveryTime = group.deliveryTime || "Select time";
+  currentGroupCloseTime = group.closeTime || groupCloseTime(currentGroupDeliveryTime);
+  currentGroupRestaurant = group.restaurant || "Mori Cafe";
+  currentGroupRestaurantImage = group.restaurantImage || "assets/mori.png";
+  groupMembers = (group.memberDetails || group.members || []).map((member) => ({
+    ...member,
+    name: member.name || member.username || "Member",
+  }));
+  if (groupMembers.length === 0) groupMembers = [currentHostMember()];
+  currentGroupMemberCount = groupMembers.length;
+  groupInvites = [];
+  if (createdGroupName) createdGroupName.textContent = currentGroupName;
+  if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
+  if (createdHostAvatar) {
+    const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
+    createdHostAvatar.innerHTML = host?.avatarUrl ? `<img src="${host.avatarUrl}" alt="" />` : firstLetter(host?.name || host?.username || "U");
+  }
+  if (createdHostName) {
+    const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
+    createdHostName.textContent = host?.name || host?.username || "Host";
+  }
+  renderGroupMembers();
+  watchGroupInvites();
+  watchGroupMessages();
+  watchGroupCart();
+}
+
+function groupFromListCard(card, groupId) {
+  const metaSpans = card.querySelectorAll(".group-order-meta span");
+  return {
+    id: groupId,
+    groupId,
+    groupName: card.querySelector("h2")?.textContent.trim() || "Group Order",
+    restaurant: metaSpans[0]?.textContent.trim() || "Mori Cafe",
+    restaurantImage: card.querySelector("img")?.getAttribute("src") || "assets/mori.png",
+    deliveryTime: metaSpans[1]?.textContent.trim() || "Select time",
+    deliveryTo: card.querySelector(".group-order-location span")?.textContent.trim() || "Select location",
+  };
+}
+
 function openGroupFromList(groupId) {
   const card = document.querySelector(`[data-group-id="${groupId}"]`);
-  if (!card) return;
+  const cachedGroup = cachedGroupOrders.find((item) => (item.groupId || item.id) === groupId);
+  const group = cachedGroup || (card ? groupFromListCard(card, groupId) : null);
+  if (!group) return;
+
+  applyGroupLobby(group);
+  setScreen("group-created");
+
   loadGroupOrders()
     .then((groups) => {
-      const group = groups.find((item) => (item.groupId || item.id) === groupId);
-      if (!group) return;
-      currentGroupId = group.groupId || group.id || "";
-      currentGroupName = group.groupName || "Group Order";
-      currentGroupDeliveryTo = group.deliveryTo || "Select location";
-      currentGroupDeliveryTime = group.deliveryTime || "Select time";
-      currentGroupCloseTime = group.closeTime || groupCloseTime(currentGroupDeliveryTime);
-      currentGroupRestaurant = group.restaurant || "Mori Cafe";
-      currentGroupRestaurantImage = group.restaurantImage || "assets/mori.png";
-      groupMembers = (group.memberDetails || group.members || []).map((member) => ({
-        ...member,
-        name: member.name || member.username || "Member",
-      }));
-      if (groupMembers.length === 0) groupMembers = [currentHostMember()];
-      currentGroupMemberCount = groupMembers.length;
-      groupInvites = [];
-      if (createdGroupName) createdGroupName.textContent = currentGroupName;
-      if (createdCloseTime) createdCloseTime.textContent = currentGroupCloseTime;
-      if (createdHostAvatar) {
-        const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
-        createdHostAvatar.innerHTML = host?.avatarUrl ? `<img src="${host.avatarUrl}" alt="" />` : firstLetter(host?.name || host?.username || "U");
-      }
-      if (createdHostName) {
-        const host = groupMembers.find((member) => member.status === "host") || groupMembers[0];
-        createdHostName.textContent = host?.name || host?.username || "Host";
-      }
-      renderGroupMembers();
-      watchGroupInvites();
-      watchGroupMessages();
-      watchGroupCart();
-      setScreen("group-created");
+      cachedGroupOrders = groups;
+      const freshGroup = groups.find((item) => (item.groupId || item.id) === groupId);
+      if (freshGroup && currentGroupId === groupId) applyGroupLobby(freshGroup);
     })
     .catch((error) => console.error(error));
 }
@@ -2740,8 +2762,12 @@ startNewGroupOrder?.addEventListener("click", openGroupOrder);
 groupListBack?.addEventListener("click", () => setScreen("home"));
 groupOrdersList?.addEventListener("click", (event) => {
   const card = event.target.closest("[data-group-id]");
-  if (!card) return;
+  if (!card || card.disabled) return;
+  card.disabled = true;
   openGroupFromList(card.dataset.groupId);
+  setTimeout(() => {
+    card.disabled = false;
+  }, 800);
 });
 
 friendsBack.addEventListener("click", openProfile);

@@ -10386,7 +10386,10 @@ img[src^="assets/"] {
 }
 
 .group-cart-summary-card p em {
-  font-size: 12px;
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.1;
 }
 
 .group-cart-summary-card > div {
@@ -10396,6 +10399,21 @@ img[src^="assets/"] {
 .group-cart-total-row span,
 .group-cart-total-row strong {
   font-size: 14.5px !important;
+}
+
+.group-cart-summary-card .group-cart-total-row {
+  grid-template-columns: minmax(0, 1fr) max-content;
+  column-gap: 10px;
+}
+
+.group-cart-summary-card .group-cart-total-row span {
+  white-space: normal;
+  line-height: 1.15;
+}
+
+.group-cart-summary-card .group-cart-total-row strong {
+  justify-self: end;
+  white-space: nowrap;
 }
 
 .group-cart-summary-card small {
