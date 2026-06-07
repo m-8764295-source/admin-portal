@@ -4602,6 +4602,27 @@ svg {
   font-weight: 900;
 }
 
+.avatar-sheet-actions {
+  margin-top: 18px;
+}
+
+.avatar-confirm {
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #ff9f05, #ff8200);
+  color: #111;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 10px 20px rgba(255, 132, 0, 0.24);
+}
+
+.avatar-confirm:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
 .add-friends-card .add-section-title button {
   display: none;
 }

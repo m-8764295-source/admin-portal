@@ -26,6 +26,7 @@ const avatarInput = document.querySelector("#avatarInput");
 const avatarSheetOverlay = document.querySelector(".avatar-sheet-overlay");
 const avatarSheetClose = document.querySelector(".avatar-sheet-close");
 const avatarOptions = document.querySelector("#avatarOptions");
+const avatarConfirm = document.querySelector("#avatarConfirm");
 const groupInviteModalOverlay = document.querySelector(".group-invite-modal-overlay");
 const inviteHostAvatar = document.querySelector("#inviteHostAvatar");
 const inviteModalSubtitle = document.querySelector("#inviteModalSubtitle");
@@ -192,6 +193,7 @@ let cartReturnScreen = "detail";
 let paymentSuccessLottie = null;
 const PROFILE_AVATARS = Array.from({ length: 5 }, (_, index) => `assets/avatars/avatar_${index + 1}.png`);
 const DEFAULT_AVATAR_URL = "assets/avatars/avatar_2.png";
+let pendingProfileAvatarUrl = "";
 
 function setAppHeight() {
   document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
@@ -622,12 +624,22 @@ function renderAvatarOptions(selectedUrl = "") {
       <img src="${url}" alt="" />
     </button>
   `).join("");
+  if (avatarConfirm) {
+    avatarConfirm.disabled = !PROFILE_AVATARS.includes(selectedUrl);
+  }
+}
+
+function selectPendingAvatar(avatarUrl) {
+  if (!PROFILE_AVATARS.includes(avatarUrl)) return;
+  pendingProfileAvatarUrl = avatarUrl;
+  renderAvatarOptions(pendingProfileAvatarUrl);
 }
 
 function openAvatarSheet() {
   const user = auth?.currentUser || null;
   if (!user || isGuestUser) return;
-  renderAvatarOptions(getProfileAvatarUrl(user));
+  pendingProfileAvatarUrl = getProfileAvatarUrl(user);
+  renderAvatarOptions(pendingProfileAvatarUrl);
   avatarSheetOverlay?.classList.add("is-open");
   avatarSheetOverlay?.setAttribute("aria-hidden", "false");
 }
@@ -635,6 +647,7 @@ function openAvatarSheet() {
 function closeAvatarSheet() {
   avatarSheetOverlay?.classList.remove("is-open");
   avatarSheetOverlay?.setAttribute("aria-hidden", "true");
+  pendingProfileAvatarUrl = "";
 }
 
 async function saveProfileAvatar(avatarUrl) {
@@ -2688,19 +2701,22 @@ async function getUserProfile(user) {
     if (profile?.username) {
       localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
     }
-    if (profile?.avatarUrl) {
-      localStorage.setItem(`novaAvatar:${user.uid}`, profile.avatarUrl);
-    } else if (snapshot.exists) {
-      localStorage.setItem(`novaAvatar:${user.uid}`, DEFAULT_AVATAR_URL);
+    const storedAvatar = PROFILE_AVATARS.includes(profile?.avatarUrl) ? profile.avatarUrl : "";
+    const savedLocalAvatar = PROFILE_AVATARS.includes(cachedAvatar) ? cachedAvatar : "";
+    const resolvedAvatar = savedLocalAvatar && storedAvatar === DEFAULT_AVATAR_URL
+      ? savedLocalAvatar
+      : storedAvatar || savedLocalAvatar || DEFAULT_AVATAR_URL;
+    localStorage.setItem(`novaAvatar:${user.uid}`, resolvedAvatar);
+    if (snapshot.exists && storedAvatar !== resolvedAvatar) {
       db.collection("users").doc(user.uid).set({
-        avatarUrl: DEFAULT_AVATAR_URL,
+        avatarUrl: resolvedAvatar,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       }, { merge: true }).catch(() => {});
     }
     currentProfile = {
       ...(profile || {}),
       username: profile?.username || cachedUsername || "",
-      avatarUrl: profile?.avatarUrl || cachedAvatar || DEFAULT_AVATAR_URL,
+      avatarUrl: resolvedAvatar,
     };
     return currentProfile;
   } catch (error) {
@@ -3165,7 +3181,12 @@ avatarSheetOverlay?.addEventListener("click", (event) => {
 avatarOptions?.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-avatar-url]");
   if (!button) return;
-  await saveProfileAvatar(button.dataset.avatarUrl || "");
+  selectPendingAvatar(button.dataset.avatarUrl || "");
+});
+
+avatarConfirm?.addEventListener("click", async () => {
+  if (!PROFILE_AVATARS.includes(pendingProfileAvatarUrl)) return;
+  await saveProfileAvatar(pendingProfileAvatarUrl);
   closeAvatarSheet();
 });
 
