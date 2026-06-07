@@ -27,6 +27,7 @@ const avatarSheetOverlay = document.querySelector(".avatar-sheet-overlay");
 const avatarSheetClose = document.querySelector(".avatar-sheet-close");
 const avatarOptions = document.querySelector("#avatarOptions");
 const avatarConfirm = document.querySelector("#avatarConfirm");
+const avatarSheetMessage = document.querySelector("#avatarSheetMessage");
 const groupInviteModalOverlay = document.querySelector(".group-invite-modal-overlay");
 const inviteHostAvatar = document.querySelector("#inviteHostAvatar");
 const inviteModalSubtitle = document.querySelector("#inviteModalSubtitle");
@@ -613,7 +614,8 @@ function setAvatarContent(letter, imageUrl = "") {
 function getProfileAvatarUrl(user = auth?.currentUser || null, profile = currentProfile || {}) {
   if (!user?.uid) return DEFAULT_AVATAR_URL;
   const profileAvatar = PROFILE_AVATARS.includes(profile.avatarUrl) ? profile.avatarUrl : "";
-  return profileAvatar || DEFAULT_AVATAR_URL;
+  const authAvatar = PROFILE_AVATARS.includes(user.photoURL) ? user.photoURL : "";
+  return profileAvatar || authAvatar || DEFAULT_AVATAR_URL;
 }
 
 function renderAvatarOptions(selectedUrl = "") {
@@ -639,6 +641,7 @@ function openAvatarSheet() {
   if (!user || isGuestUser) return;
   pendingProfileAvatarUrl = getProfileAvatarUrl(user);
   renderAvatarOptions(pendingProfileAvatarUrl);
+  if (avatarSheetMessage) avatarSheetMessage.textContent = "Pick one profile photo for your Nova account.";
   avatarSheetOverlay?.classList.add("is-open");
   avatarSheetOverlay?.setAttribute("aria-hidden", "false");
 }
@@ -657,13 +660,18 @@ async function saveProfileAvatar(avatarUrl) {
   if (!db) return false;
 
   try {
-    await db.collection("users").doc(user.uid).set(
+    const userDoc = db.collection("users").doc(user.uid);
+    await userDoc.set(
       {
         avatarUrl,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
+    await user.updateProfile?.({ photoURL: avatarUrl }).catch(() => {});
+    const verifySnapshot = await userDoc.get();
+    const verifiedAvatar = verifySnapshot.exists ? verifySnapshot.data()?.avatarUrl : "";
+    if (verifiedAvatar !== avatarUrl) return false;
   } catch {
     return false;
   }
@@ -2701,7 +2709,8 @@ async function getUserProfile(user) {
       localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
     }
     const storedAvatar = PROFILE_AVATARS.includes(profile?.avatarUrl) ? profile.avatarUrl : "";
-    const resolvedAvatar = storedAvatar || DEFAULT_AVATAR_URL;
+    const authAvatar = PROFILE_AVATARS.includes(user.photoURL) ? user.photoURL : "";
+    const resolvedAvatar = storedAvatar || authAvatar || DEFAULT_AVATAR_URL;
     if (snapshot.exists && !storedAvatar) {
       db.collection("users").doc(user.uid).set({
         avatarUrl: resolvedAvatar,
@@ -3182,9 +3191,14 @@ avatarOptions?.addEventListener("click", async (event) => {
 avatarConfirm?.addEventListener("click", async () => {
   if (!PROFILE_AVATARS.includes(pendingProfileAvatarUrl)) return;
   avatarConfirm.disabled = true;
+  if (avatarSheetMessage) avatarSheetMessage.textContent = "Saving avatar to your account...";
   const saved = await saveProfileAvatar(pendingProfileAvatarUrl);
   avatarConfirm.disabled = false;
-  if (saved) closeAvatarSheet();
+  if (saved) {
+    closeAvatarSheet();
+  } else if (avatarSheetMessage) {
+    avatarSheetMessage.textContent = "Could not save avatar to your account. Please try again.";
+  }
 });
 
 inviteModalDecline?.addEventListener("click", async () => {
@@ -3284,7 +3298,7 @@ authForm.addEventListener("submit", async (event) => {
   try {
     if (isSignupMode) {
       const credential = await auth.createUserWithEmailAndPassword(email, password);
-      await credential.user.updateProfile({ displayName: name });
+      await credential.user.updateProfile({ displayName: name, photoURL: DEFAULT_AVATAR_URL });
       if (db) {
         await db.collection("users").doc(credential.user.uid).set(
           {
@@ -3384,15 +3398,24 @@ googleLogin.addEventListener("click", async () => {
     googleLogin.querySelector("strong").textContent = "Opening Google...";
     const credential = await auth.signInWithPopup(googleProvider);
     if (db && credential.user) {
+      const userDoc = db.collection("users").doc(credential.user.uid);
+      const snapshot = await userDoc.get();
+      const existingAvatar = snapshot.exists && PROFILE_AVATARS.includes(snapshot.data()?.avatarUrl)
+        ? snapshot.data().avatarUrl
+        : "";
       await db.collection("users").doc(credential.user.uid).set(
         {
           name: credential.user.displayName || "",
           email: credential.user.email || "",
           provider: "google",
+          avatarUrl: existingAvatar || DEFAULT_AVATAR_URL,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
+      if (!PROFILE_AVATARS.includes(credential.user.photoURL)) {
+        await credential.user.updateProfile({ photoURL: existingAvatar || DEFAULT_AVATAR_URL }).catch(() => {});
+      }
     }
     await routeAfterAuth(credential.user);
   } catch (error) {
@@ -3427,15 +3450,24 @@ if (auth) {
     .getRedirectResult()
     .then(async (credential) => {
       if (credential?.user && db) {
-        await db.collection("users").doc(credential.user.uid).set(
+        const userDoc = db.collection("users").doc(credential.user.uid);
+        const snapshot = await userDoc.get();
+        const existingAvatar = snapshot.exists && PROFILE_AVATARS.includes(snapshot.data()?.avatarUrl)
+          ? snapshot.data().avatarUrl
+          : "";
+        await userDoc.set(
           {
             name: credential.user.displayName || "",
             email: credential.user.email || "",
             provider: "google",
+            avatarUrl: existingAvatar || DEFAULT_AVATAR_URL,
             updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
           },
           { merge: true }
         );
+        if (!PROFILE_AVATARS.includes(credential.user.photoURL)) {
+          await credential.user.updateProfile({ photoURL: existingAvatar || DEFAULT_AVATAR_URL }).catch(() => {});
+        }
       }
       if (credential?.user) {
         await routeAfterAuth(credential.user);
