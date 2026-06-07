@@ -612,9 +612,8 @@ function setAvatarContent(letter, imageUrl = "") {
 
 function getProfileAvatarUrl(user = auth?.currentUser || null, profile = currentProfile || {}) {
   if (!user?.uid) return DEFAULT_AVATAR_URL;
-  const savedAvatar = profile.avatarUrl || localStorage.getItem(`novaAvatar:${user.uid}`) || "";
-  if (profile.avatarUrl) localStorage.setItem(`novaAvatar:${user.uid}`, profile.avatarUrl);
-  return savedAvatar || DEFAULT_AVATAR_URL;
+  const profileAvatar = PROFILE_AVATARS.includes(profile.avatarUrl) ? profile.avatarUrl : "";
+  return profileAvatar || DEFAULT_AVATAR_URL;
 }
 
 function renderAvatarOptions(selectedUrl = "") {
@@ -652,9 +651,23 @@ function closeAvatarSheet() {
 
 async function saveProfileAvatar(avatarUrl) {
   const user = auth?.currentUser || null;
-  if (!user?.uid || isGuestUser || !PROFILE_AVATARS.includes(avatarUrl)) return;
+  if (!user?.uid || isGuestUser || !PROFILE_AVATARS.includes(avatarUrl)) return false;
 
-  localStorage.setItem(`novaAvatar:${user.uid}`, avatarUrl);
+  initFirebase();
+  if (!db) return false;
+
+  try {
+    await db.collection("users").doc(user.uid).set(
+      {
+        avatarUrl,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+  } catch {
+    return false;
+  }
+
   currentProfile = {
     ...(currentProfile || {}),
     avatarUrl,
@@ -674,20 +687,7 @@ async function saveProfileAvatar(avatarUrl) {
   renderGroupMembers();
   renderChatMembersPanel();
   renderGroupCart();
-
-  if (db) {
-    try {
-      await db.collection("users").doc(user.uid).set(
-        {
-          avatarUrl,
-          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-        },
-        { merge: true }
-      );
-    } catch {
-      // Keep the local avatar even if the network is briefly unavailable.
-    }
-  }
+  return true;
 }
 
 function updateProfileView() {
@@ -2687,11 +2687,10 @@ async function getUserProfile(user) {
   if (!user) return null;
 
   const cachedUsername = localStorage.getItem(`novaUsername:${user.uid}`);
-  const cachedAvatar = localStorage.getItem(`novaAvatar:${user.uid}`) || "";
 
   initFirebase();
   if (!db) {
-    currentProfile = { username: cachedUsername || "", avatarUrl: cachedAvatar || DEFAULT_AVATAR_URL };
+    currentProfile = { username: cachedUsername || "", avatarUrl: DEFAULT_AVATAR_URL };
     return currentProfile;
   }
 
@@ -2702,12 +2701,8 @@ async function getUserProfile(user) {
       localStorage.setItem(`novaUsername:${user.uid}`, profile.username);
     }
     const storedAvatar = PROFILE_AVATARS.includes(profile?.avatarUrl) ? profile.avatarUrl : "";
-    const savedLocalAvatar = PROFILE_AVATARS.includes(cachedAvatar) ? cachedAvatar : "";
-    const resolvedAvatar = savedLocalAvatar && storedAvatar === DEFAULT_AVATAR_URL
-      ? savedLocalAvatar
-      : storedAvatar || savedLocalAvatar || DEFAULT_AVATAR_URL;
-    localStorage.setItem(`novaAvatar:${user.uid}`, resolvedAvatar);
-    if (snapshot.exists && storedAvatar !== resolvedAvatar) {
+    const resolvedAvatar = storedAvatar || DEFAULT_AVATAR_URL;
+    if (snapshot.exists && !storedAvatar) {
       db.collection("users").doc(user.uid).set({
         avatarUrl: resolvedAvatar,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
@@ -2720,7 +2715,7 @@ async function getUserProfile(user) {
     };
     return currentProfile;
   } catch (error) {
-    currentProfile = { username: cachedUsername || "", avatarUrl: cachedAvatar || DEFAULT_AVATAR_URL };
+    currentProfile = { username: cachedUsername || "", avatarUrl: DEFAULT_AVATAR_URL };
     return currentProfile;
   }
 }
@@ -3186,8 +3181,10 @@ avatarOptions?.addEventListener("click", async (event) => {
 
 avatarConfirm?.addEventListener("click", async () => {
   if (!PROFILE_AVATARS.includes(pendingProfileAvatarUrl)) return;
-  await saveProfileAvatar(pendingProfileAvatarUrl);
-  closeAvatarSheet();
+  avatarConfirm.disabled = true;
+  const saved = await saveProfileAvatar(pendingProfileAvatarUrl);
+  avatarConfirm.disabled = false;
+  if (saved) closeAvatarSheet();
 });
 
 inviteModalDecline?.addEventListener("click", async () => {
@@ -3301,7 +3298,6 @@ authForm.addEventListener("submit", async (event) => {
           { merge: true }
         );
       }
-      localStorage.setItem(`novaAvatar:${credential.user.uid}`, DEFAULT_AVATAR_URL);
       await new Promise((resolve) => setTimeout(resolve, 600));
       showOnboarding(credential.user);
       setAuthRoutingView(false);
@@ -3347,7 +3343,7 @@ usernameForm.addEventListener("submit", async (event) => {
           usernameLower: username.toLowerCase(),
           email: onboardingUser.email || "",
           name: onboardingUser.displayName || authName.value.trim() || username,
-          avatarUrl: currentProfile?.avatarUrl || localStorage.getItem(`novaAvatar:${onboardingUser.uid}`) || DEFAULT_AVATAR_URL,
+          avatarUrl: currentProfile?.avatarUrl || DEFAULT_AVATAR_URL,
           updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
         },
         { merge: true }
@@ -3360,7 +3356,7 @@ usernameForm.addEventListener("submit", async (event) => {
       usernameLower: username.toLowerCase(),
       email: onboardingUser.email || "",
       name: onboardingUser.displayName || authName.value.trim() || username,
-      avatarUrl: currentProfile?.avatarUrl || localStorage.getItem(`novaAvatar:${onboardingUser.uid}`) || DEFAULT_AVATAR_URL,
+      avatarUrl: currentProfile?.avatarUrl || DEFAULT_AVATAR_URL,
     };
     isGuestUser = false;
     await new Promise((resolve) => setTimeout(resolve, 450));
