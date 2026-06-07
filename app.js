@@ -719,15 +719,16 @@ function updateProfileView() {
 }
 
 async function openProfile() {
-  if (!isGuestUser && auth?.currentUser) {
-    try {
-      currentProfile = await getUserProfile(auth.currentUser);
-    } catch {
-      currentProfile = currentProfile || {};
-    }
-  }
   updateProfileView();
   setScreen("profile");
+  if (!isGuestUser && auth?.currentUser) {
+    getUserProfile(auth.currentUser).then((profile) => {
+      currentProfile = profile || currentProfile || {};
+      if (phone.classList.contains("profile-view")) updateProfileView();
+    }).catch(() => {
+      currentProfile = currentProfile || {};
+    });
+  }
 }
 
 function readFriendData(key) {
