@@ -11222,3 +11222,147 @@ img {
     font-size: 14px;
   }
 }
+
+/* Group checkout compact typography */
+.group-checkout-restaurant-card h2 {
+  font-size: 18px;
+  font-weight: 680;
+}
+
+.group-checkout-restaurant-card p {
+  font-size: 12.5px;
+}
+
+.group-checkout-edit {
+  height: 40px;
+  min-width: 84px;
+  font-size: 12.5px;
+}
+
+.group-checkout-tab {
+  min-height: 70px;
+  padding: 12px 14px;
+}
+
+.group-checkout-tab h3 {
+  font-size: 14.5px;
+  font-weight: 650;
+}
+
+.group-checkout-tab p {
+  font-size: 12px;
+}
+
+.group-checkout-panel {
+  padding: 14px 12px 12px;
+}
+
+.group-checkout-panel > h2 {
+  font-size: 19px;
+  font-weight: 680;
+}
+
+.group-checkout-items-card {
+  padding: 15px 13px 0;
+}
+
+.group-checkout-items-card h3,
+.group-checkout-delivery-card strong,
+.group-checkout-payment-card strong {
+  font-size: 14.5px;
+}
+
+.group-checkout-item {
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 11px;
+}
+
+.group-checkout-item img {
+  width: 52px;
+  height: 52px;
+}
+
+.group-checkout-item h4 {
+  font-size: 14.5px;
+}
+
+.group-checkout-item p {
+  font-size: 12.5px;
+}
+
+.group-checkout-item p strong {
+  font-size: 14.5px;
+  font-weight: 560;
+}
+
+.group-checkout-subtotal {
+  font-size: 14.5px;
+}
+
+.group-checkout-subtotal strong {
+  font-size: 17px;
+  font-weight: 680;
+}
+
+.group-checkout-delivery-card h2,
+.group-checkout-payment-card h2 {
+  font-size: 16.5px;
+  font-weight: 680;
+}
+
+.group-checkout-delivery-card b {
+  font-size: 16px;
+  font-weight: 620;
+}
+
+.group-checkout-delivery-card small {
+  font-size: 12px;
+}
+
+.group-checkout-total-card h2 {
+  font-size: 18.5px;
+  font-weight: 680;
+}
+
+.group-checkout-total-card p {
+  font-size: 12px;
+}
+
+.group-checkout-total-card strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.group-checkout-payment-card img {
+  width: 42px;
+  height: 42px;
+}
+
+.group-checkout-payment-card button,
+.group-checkout-pay-summary p,
+.group-checkout-footer > p {
+  font-size: 12.5px;
+}
+
+.group-checkout-pay-summary strong {
+  font-size: 19px;
+  font-weight: 680;
+}
+
+.group-checkout-pay-summary p:last-child strong {
+  font-size: 12.5px;
+}
+
+.group-checkout-pay-button {
+  min-height: 56px;
+}
+
+.group-checkout-pay-button span {
+  font-size: 14.5px;
+  font-weight: 680;
+}
+
+.group-checkout-pay-button strong {
+  font-size: 15.5px;
+  font-weight: 700;
+}

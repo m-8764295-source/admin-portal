@@ -617,7 +617,29 @@ function continueToHome() {
   setScreen("home");
   watchFriendRequests();
   watchIncomingGroupInvites();
-  seedPromoNotifications().then(loadNotifications).catch(() => {});
+  warmHomeData();
+}
+
+function warmHomeData() {
+  if (isGuestUser) {
+    loadNotifications().catch(() => {});
+    return;
+  }
+
+  initFirebase();
+  Promise.allSettled([
+    loadNotifications(),
+    loadFirebaseFriends(),
+    loadFirebaseFriendRequests(),
+    loadFirebaseGroupInvites(),
+    loadGroupOrders().then((groups) => {
+      cachedGroupOrders = groups;
+      if (phone.classList.contains("group-list-view")) renderGroupOrders(cachedGroupOrders);
+    }),
+  ]).then(() => {
+    if (phone.classList.contains("friends-view")) renderFriends();
+    if (phone.classList.contains("group-list-view")) renderGroupOrders(cachedGroupOrders);
+  });
 }
 
 function firstLetter(value) {
@@ -1006,6 +1028,7 @@ function notificationIcon(type) {
 
 function renderNotifications() {
   const items = notificationItems.filter((item) => activeNotificationFilter === "all" || item.type === activeNotificationFilter);
+  if (notificationsEmpty) notificationsEmpty.textContent = "No notifications yet";
   notificationsEmpty.hidden = items.length > 0;
   notificationsList.innerHTML = "";
   if (items.length === 0) return;
@@ -1157,6 +1180,10 @@ async function openNotifications(returnScreen = "home") {
   notificationsTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.notificationFilter === "all"));
   setScreen("notifications");
   renderNotifications();
+  if (notificationItems.length === 0 && notificationsEmpty) {
+    notificationsEmpty.textContent = "Loading notifications...";
+    notificationsEmpty.hidden = false;
+  }
   loadNotifications().catch((error) => console.error(error));
 }
 
@@ -1690,6 +1717,7 @@ function sortGroupsNewestFirst(groups = []) {
 function renderGroupOrders(groups = [], options = {}) {
   if (!groupOrdersList || !groupOrdersEmpty) return;
   const list = sortGroupsNewestFirst(uniqueGroups(groups));
+  groupOrdersEmpty.textContent = "No groups listed yet";
   groupOrdersEmpty.hidden = options.hideEmpty || list.length > 0;
   groupOrdersList.innerHTML = list.map(groupListCard).join("");
 }
@@ -1747,6 +1775,10 @@ async function hydrateGroupOrderAvatars(groups = []) {
 async function openGroupList() {
   const loadToken = ++groupListLoadToken;
   renderGroupOrders(cachedGroupOrders, { hideEmpty: true });
+  if (cachedGroupOrders.length === 0 && groupOrdersEmpty) {
+    groupOrdersEmpty.textContent = "Loading groups...";
+    groupOrdersEmpty.hidden = false;
+  }
   setScreen("group-list");
   try {
     const groups = await loadGroupOrders();
