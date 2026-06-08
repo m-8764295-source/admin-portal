@@ -148,6 +148,23 @@ const groupCartYourName = document.querySelector("#groupCartYourName");
 const groupCartYourItems = document.querySelector("#groupCartYourItems");
 const groupCartYourDelivery = document.querySelector("#groupCartYourDelivery");
 const groupCartYouPay = document.querySelector("#groupCartYouPay");
+const groupCheckoutBack = document.querySelector(".group-checkout-back");
+const groupCheckoutEdit = document.querySelector(".group-checkout-edit");
+const groupCheckoutRestaurantName = document.querySelector("#groupCheckoutRestaurantName");
+const groupCheckoutDeliveryTo = document.querySelector("#groupCheckoutDeliveryTo");
+const groupCheckoutDeliveryTime = document.querySelector("#groupCheckoutDeliveryTime");
+const groupCheckoutItemsTitle = document.querySelector("#groupCheckoutItemsTitle");
+const groupCheckoutItems = document.querySelector("#groupCheckoutItems");
+const groupCheckoutSubtotalLabel = document.querySelector("#groupCheckoutSubtotalLabel");
+const groupCheckoutSubtotal = document.querySelector("#groupCheckoutSubtotal");
+const groupCheckoutSplitCount = document.querySelector("#groupCheckoutSplitCount");
+const groupCheckoutDeliveryFee = document.querySelector("#groupCheckoutDeliveryFee");
+const groupCheckoutDeliveryShare = document.querySelector("#groupCheckoutDeliveryShare");
+const groupCheckoutMyTotal = document.querySelector("#groupCheckoutMyTotal");
+const groupCheckoutPaySummary = document.querySelector("#groupCheckoutPaySummary");
+const groupCheckoutSave = document.querySelector("#groupCheckoutSave");
+const groupCheckoutPayButtonTotal = document.querySelector("#groupCheckoutPayButtonTotal");
+const groupCheckoutPayButton = document.querySelector(".group-checkout-pay-button");
 const groupCartCheckout = document.querySelector(".group-cart-checkout");
 const inviteFriendsBack = document.querySelector(".invite-friends-back");
 const inviteFriendSearchInput = document.querySelector("#inviteFriendSearchInput");
@@ -573,7 +590,7 @@ function activeChoice(groupId) {
 }
 
 function setScreen(screen) {
-  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-list-view", "group-order-view", "group-created-view", "group-chat-view", "group-cart-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
+  phone.classList.remove("auth-view", "home-view", "detail-view", "cart-view", "checkout-view", "profile-view", "friends-view", "add-friends-view", "group-list-view", "group-order-view", "group-created-view", "group-chat-view", "group-cart-view", "group-checkout-view", "invite-friends-view", "location-view", "notifications-view", "payment-view", "payment-success-view", "order-placed-view", "payment-success-overlay-active", "payment-success-ready");
   phone.classList.add(`${screen}-view`);
 }
 
@@ -2281,6 +2298,72 @@ function participantAvatarMarkup(participant) {
   return `<div class="participant-avatar"><img src="${participant.avatarUrl || DEFAULT_AVATAR_URL}" alt="" /></div>`;
 }
 
+function groupDeliveryTimeLabel() {
+  const slot = currentGroupDeliveryTime || "Select time";
+  if (/today/i.test(slot)) return slot;
+  if (/^2\s*pm$/i.test(slot)) return "Today, 2:00 PM - 2:30 PM";
+  if (/^7\s*pm$/i.test(slot)) return "Today, 7:00 PM - 7:30 PM";
+  if (slot === "Select time") return slot;
+  return `Today, ${slot}`;
+}
+
+function groupCheckoutData() {
+  const participants = groupCartParticipantsData();
+  const ownUid = groupCartOwner().uid;
+  const groupItems = [...groupCart.values()];
+  const groupItemTotal = groupItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const groupDelivery = groupItemTotal > 0 ? discountedGroupDeliveryFee(groupItemTotal) : 0;
+  const deliverySaving = Math.max(0, groupItemTotal > 0 ? GROUP_DELIVERY_FEE - groupDelivery : 0);
+  const participantCount = Math.max(1, participants.length);
+  const ownItems = groupItems.filter((item) => (item.owner?.uid || ownUid) === ownUid);
+  const ownItemCount = ownItems.reduce((sum, item) => sum + item.qty, 0);
+  const ownSubtotal = ownItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const ownDeliveryShare = groupDelivery / participantCount;
+  const ownDeliverySaving = deliverySaving / participantCount;
+  const ownTotal = ownSubtotal + ownDeliveryShare;
+  return {
+    ownItems,
+    ownItemCount,
+    ownSubtotal,
+    groupDelivery,
+    deliverySaving,
+    participantCount,
+    ownDeliveryShare,
+    ownDeliverySaving,
+    ownTotal,
+  };
+}
+
+function renderGroupCheckout() {
+  if (!groupCheckoutItems) return;
+  const data = groupCheckoutData();
+  const itemWord = data.ownItemCount === 1 ? "item" : "items";
+
+  if (groupCheckoutRestaurantName) groupCheckoutRestaurantName.textContent = currentGroupRestaurant || "Mori Cafe";
+  if (groupCheckoutDeliveryTo) groupCheckoutDeliveryTo.textContent = `Delivery to ${currentGroupDeliveryTo || "Select location"}`;
+  if (groupCheckoutDeliveryTime) groupCheckoutDeliveryTime.textContent = groupDeliveryTimeLabel();
+  if (groupCheckoutItemsTitle) groupCheckoutItemsTitle.textContent = `My items (${data.ownItemCount})`;
+  if (groupCheckoutSubtotalLabel) groupCheckoutSubtotalLabel.textContent = `Subtotal (${data.ownItemCount} ${itemWord})`;
+  if (groupCheckoutSubtotal) groupCheckoutSubtotal.textContent = money(data.ownSubtotal);
+  if (groupCheckoutSplitCount) groupCheckoutSplitCount.textContent = `(split between ${data.participantCount})`;
+  if (groupCheckoutDeliveryFee) groupCheckoutDeliveryFee.textContent = data.groupDelivery === 0 ? "Free" : money(data.groupDelivery);
+  if (groupCheckoutDeliveryShare) groupCheckoutDeliveryShare.textContent = `${money(data.ownDeliveryShare)} per person`;
+  if (groupCheckoutMyTotal) groupCheckoutMyTotal.textContent = money(data.ownTotal);
+  if (groupCheckoutPaySummary) groupCheckoutPaySummary.textContent = money(data.ownTotal);
+  if (groupCheckoutPayButtonTotal) groupCheckoutPayButtonTotal.textContent = money(data.ownTotal);
+  if (groupCheckoutSave) groupCheckoutSave.textContent = money(data.ownDeliverySaving);
+
+  groupCheckoutItems.innerHTML = data.ownItems.length ? data.ownItems.map((item) => `
+    <article class="group-checkout-item">
+      <img src="${item.image || groupCartItemImage(item)}" alt="" />
+      <div>
+        <h4>${item.name || "Item"}</h4>
+      </div>
+      <p><strong>${money(item.price * item.qty)}</strong><span>x${item.qty}</span></p>
+    </article>
+  `).join("") : `<p class="group-checkout-empty">No items in your order yet</p>`;
+}
+
 function renderGroupCart() {
   if (!groupCartParticipants) return;
 
@@ -2307,6 +2390,7 @@ function renderGroupCart() {
   if (groupCartYourItems) groupCartYourItems.textContent = money(yourItems);
   if (groupCartYourDelivery) groupCartYourDelivery.textContent = money(yourDelivery);
   if (groupCartYouPay) groupCartYouPay.textContent = money(yourTotal);
+  renderGroupCheckout();
 
   if (participants.length === 0 || itemCount === 0) {
     groupCartParticipants.innerHTML = `<p class="group-cart-empty">No group cart items yet</p>`;
@@ -2575,6 +2659,14 @@ function openGroupCart() {
   window.scrollTo(0, 0);
   setScreen("group-cart");
   requestAnimationFrame(() => document.querySelector(".group-cart-scroll")?.scrollTo(0, 0));
+}
+
+function openGroupCheckout() {
+  cartMode = "group";
+  renderGroupCheckout();
+  window.scrollTo(0, 0);
+  setScreen("group-checkout");
+  requestAnimationFrame(() => document.querySelector(".group-checkout-scroll")?.scrollTo(0, 0));
 }
 
 function renderInviteFriends() {
@@ -3004,8 +3096,11 @@ chatCheckoutButton?.addEventListener("click", () => {
 });
 groupCartBack?.addEventListener("click", () => setScreen("group-chat"));
 groupCartCheckout?.addEventListener("click", () => {
-  alert("Group order checkout is coming soon.");
+  openGroupCheckout();
 });
+groupCheckoutBack?.addEventListener("click", openGroupCart);
+groupCheckoutEdit?.addEventListener("click", openGroupCart);
+groupCheckoutPayButton?.addEventListener("click", () => {});
 groupCartParticipants?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-group-cart-action]");
   if (!button || button.disabled) return;
