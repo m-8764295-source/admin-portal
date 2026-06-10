@@ -144,10 +144,12 @@ const groupCartItemCount = document.querySelector("#groupCartItemCount");
 const groupCartItemTotal = document.querySelector("#groupCartItemTotal");
 const groupCartDeliveryFee = document.querySelector("#groupCartDeliveryFee");
 const groupCartGroupTotal = document.querySelector("#groupCartGroupTotal");
+const groupCartParticipantCount = document.querySelector("#groupCartParticipantCount");
 const groupCartYourName = document.querySelector("#groupCartYourName");
 const groupCartYourItems = document.querySelector("#groupCartYourItems");
 const groupCartYourDelivery = document.querySelector("#groupCartYourDelivery");
 const groupCartYouPay = document.querySelector("#groupCartYouPay");
+const groupCartFooterPay = document.querySelector("#groupCartFooterPay");
 const groupCheckoutBack = document.querySelector(".group-checkout-back");
 const groupCheckoutEdit = document.querySelector(".group-checkout-edit");
 const groupCheckoutRestaurantName = document.querySelector("#groupCheckoutRestaurantName");
@@ -2418,10 +2420,12 @@ function renderGroupCart() {
   if (groupCartItemTotal) groupCartItemTotal.textContent = money(itemTotal);
   if (groupCartDeliveryFee) groupCartDeliveryFee.textContent = delivery === 0 ? "Free" : money(delivery);
   if (groupCartGroupTotal) groupCartGroupTotal.textContent = money(itemTotal + delivery);
+  if (groupCartParticipantCount) groupCartParticipantCount.textContent = `${participantCount} ${participantCount === 1 ? "participant" : "participants"}`;
   if (groupCartYourName) groupCartYourName.textContent = ownParticipant.name || ownParticipant.username || "You";
   if (groupCartYourItems) groupCartYourItems.textContent = money(yourItems);
   if (groupCartYourDelivery) groupCartYourDelivery.textContent = money(yourDelivery);
   if (groupCartYouPay) groupCartYouPay.textContent = money(yourTotal);
+  if (groupCartFooterPay) groupCartFooterPay.textContent = money(yourTotal);
   renderGroupCheckout();
 
   if (participants.length === 0 || itemCount === 0) {
@@ -2429,44 +2433,31 @@ function renderGroupCart() {
     return;
   }
 
-  groupCartParticipants.innerHTML = participants.map((participant) => {
+  const participantRows = [...participants].sort((a, b) => {
+    if (a.uid === ownUid) return -1;
+    if (b.uid === ownUid) return 1;
+    return (a.name || a.username || "").localeCompare(b.name || b.username || "");
+  });
+
+  groupCartParticipants.innerHTML = participantRows.map((participant) => {
     const items = participant.items;
     const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
     const canEdit = participant.uid === ownUid;
-    const itemWord = items.length === 1 ? "item" : "items";
-    const itemRows = items.length ? items.map((item) => `
-      <article class="participant-item">
-        <img src="${item.image || groupCartItemImage(item)}" alt="" />
-        <div>
-          <h4>${item.name || "Item"}</h4>
-          <small>x${item.qty}</small>
-        </div>
-        <div class="participant-item-price">
-          <strong>${money(item.price * item.qty)}</strong>
-          <div class="participant-qty">
-            <button type="button" data-group-cart-action="decrease" data-group-cart-id="${item.id}" ${canEdit ? "" : "disabled"} aria-label="Decrease ${item.name}">−</button>
-            <span>${item.qty}</span>
-            <button type="button" data-group-cart-action="increase" data-group-cart-id="${item.id}" ${canEdit ? "" : "disabled"} aria-label="Increase ${item.name}">+</button>
-          </div>
-        </div>
-      </article>
-    `).join("") : `<p class="group-cart-empty">No items yet</p>`;
+    const participantTotal = subtotal + yourDelivery;
 
     return `
-      <article class="participant-order-card">
-        <header class="participant-order-head">
+      <article class="participant-order-card ${canEdit ? "is-you" : ""}">
+        <div class="participant-order-head">
           ${participantAvatarMarkup(participant)}
           <div>
             <h3>${participant.name || participant.username || "Member"}</h3>
-            <p>${items.length} ${itemWord}</p>
+            ${canEdit ? "<em>You</em>" : ""}
           </div>
           <div class="participant-subtotal">
-            <span>Subtotal</span>
-            <strong>${money(subtotal)}</strong>
+            <strong>${money(participantTotal)}</strong>
           </div>
           <b class="participant-chevron">›</b>
-        </header>
-        <div class="participant-items">${itemRows}</div>
+        </div>
       </article>
     `;
   }).join("");

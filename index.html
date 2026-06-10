@@ -1107,39 +1107,52 @@
             <button class="group-cart-back" type="button" aria-label="Back to group chat">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
             </button>
-            <h1>Group Cart</h1>
+            <div>
+              <h1>Group Cart</h1>
+              <p>Everyone orders together, you pay once 🎉</p>
+            </div>
           </header>
 
           <section class="group-cart-restaurant">
-            <img id="groupCartRestaurantImage" src="assets/mori.png" alt="" />
-            <div>
+            <div class="group-cart-restaurant-image">
+              <img id="groupCartRestaurantImage" src="assets/mori.png" alt="" />
+            </div>
+            <div class="group-cart-restaurant-copy">
               <h2 id="groupCartRestaurantName">Mori Cafe</h2>
-              <p><span>★</span> 4.9 <i>•</i> 15–25 min <i>•</i> 0.8 km</p>
+              <span class="group-cart-order-pill">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="3" /><path d="M2.5 20c.8-4 3-6 6-6s5.2 2 6 6" /><path d="M13 20c.5-2.7 2-4.3 4-4.3 2.3 0 3.8 1.6 4.5 4.3" /></svg>
+                Group order
+              </span>
+              <p class="group-cart-meta"><span>★</span> 4.9 <i>•</i> <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" /><path d="M12 8v5l3 2" /></svg> 15–25 min <i>•</i> <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.3 7-12A7 7 0 1 0 5 9c0 6.7 7 12 7 12Z" /><circle cx="12" cy="9" r="2.4" /></svg> 0.8 km</p>
+              <p class="group-cart-quality"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-5" /></svg> Great food <i>•</i> Friendly service</p>
+            </div>
+          </section>
+
+          <section class="group-cart-total-banner">
+            <img src="assets/group-total.png" alt="" />
+            <div class="group-cart-total-copy">
+              <h2>Group Total</h2>
+              <strong id="groupCartGroupTotal">RM0.00</strong>
+              <p><span>Food &amp; drinks</span><b id="groupCartItemTotal">RM0.00</b></p>
+              <p><span>Delivery fee <i>i</i></span><b id="groupCartDeliveryFee">RM2.00</b></p>
+              <hr />
+              <p class="group-cart-total-participants"><span id="groupCartParticipantCount">0 participants</span></p>
+              <em id="groupCartItemCount">(0 items)</em>
             </div>
           </section>
 
           <section class="group-cart-participants-section">
-            <h2>Orders by participant</h2>
+            <h2>Participants</h2>
             <div class="group-cart-participants" id="groupCartParticipants"></div>
           </section>
 
-          <section class="group-cart-summary-grid">
-            <article class="group-cart-summary-card">
-              <h2>Order Summary (Group)</h2>
-              <p><span>Item total <em id="groupCartItemCount">(0 items)</em></span><strong id="groupCartItemTotal">RM0.00</strong></p>
-              <p><span>Delivery fee</span><strong id="groupCartDeliveryFee">RM2.00</strong></p>
+          <section class="group-cart-your-bill">
+            <h2>Your Bill</h2>
+            <article class="group-cart-bill-card">
+              <p><span>Your food &amp; drinks</span><strong id="groupCartYourItems">RM0.00</strong></p>
+              <p><span>Delivery fee <i>i</i></span><strong id="groupCartYourDelivery">RM0.00</strong></p>
               <div></div>
-              <p class="group-cart-total-row"><span>Total (Group)</span><strong id="groupCartGroupTotal">RM0.00</strong></p>
-              <small>This amount includes all participants' orders.</small>
-            </article>
-
-            <article class="group-cart-summary-card group-cart-your-order">
-              <h2>Your Order</h2>
-              <h3 id="groupCartYourName">You</h3>
-              <p><span>Your items total</span><strong id="groupCartYourItems">RM0.00</strong></p>
-              <p><span>Delivery share <i>i</i></span><strong id="groupCartYourDelivery">RM0.00</strong></p>
-              <div></div>
-              <p class="group-cart-total-row"><span>You pay</span><strong id="groupCartYouPay">RM0.00</strong></p>
+              <p class="group-cart-bill-total"><span><b>You Pay</b><small>Only for your order + delivery fee</small></span><strong id="groupCartYouPay">RM0.00</strong></p>
               <aside><b>✓</b><span>You only pay for your own order + your share of delivery fee.</span></aside>
             </article>
           </section>
@@ -1147,7 +1160,9 @@
 
         <footer class="group-cart-footer">
           <button class="group-cart-checkout" type="button">
-            <span>Checkout Group Order</span>
+            <span><small>You Pay</small><strong id="groupCartFooterPay">RM0.00</strong></span>
+            <i></i>
+            <b>Checkout Group Order</b>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg>
           </button>
         </footer>
