@@ -11554,7 +11554,7 @@ img {
   min-height: 176px;
   margin: 12px 0 18px;
   border-radius: 20px;
-  background: #fff6d6;
+  background: #050505;
   overflow: hidden;
   box-shadow: 0 8px 22px rgba(17, 17, 17, 0.045);
 }
@@ -12122,7 +12122,15 @@ img {
 }
 
 .group-cart-total-copy h2 {
-  display: none;
+  position: absolute;
+  left: 5.8%;
+  top: 10.8%;
+  display: block;
+  margin: 0;
+  color: #fff;
+  font-size: 13.2px;
+  line-height: 1;
+  font-weight: 620;
 }
 
 .group-cart-total-copy > strong {
@@ -12130,6 +12138,7 @@ img {
   left: 5.8%;
   top: 19.5%;
   margin: 0;
+  color: #fff;
   font-size: 31px;
   line-height: 1;
   font-weight: 760;
@@ -12145,7 +12154,7 @@ img {
   gap: 8px;
   margin: 0;
   padding: 0;
-  color: #111219;
+  color: #f8f8f5;
   font-size: 12.2px;
   line-height: 1;
   font-weight: 410;
@@ -12169,6 +12178,7 @@ img {
 }
 
 .group-cart-total-copy p b {
+  color: #fff;
   font-size: 12.2px;
   font-weight: 480;
 }
@@ -12176,6 +12186,8 @@ img {
 .group-cart-total-copy p i {
   width: 13px;
   height: 13px;
+  border-color: rgba(255, 255, 255, 0.66);
+  color: rgba(255, 255, 255, 0.78);
   font-size: 8.5px;
 }
 
