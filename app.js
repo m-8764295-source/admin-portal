@@ -156,14 +156,11 @@ const groupCheckoutRestaurantName = document.querySelector("#groupCheckoutRestau
 const groupCheckoutDeliveryTo = document.querySelector("#groupCheckoutDeliveryTo");
 const groupCheckoutDeliveryTime = document.querySelector("#groupCheckoutDeliveryTime");
 const groupCheckoutItemsTitle = document.querySelector("#groupCheckoutItemsTitle");
+const groupCheckoutViewCount = document.querySelector("#groupCheckoutViewCount");
 const groupCheckoutItems = document.querySelector("#groupCheckoutItems");
-const groupCheckoutSubtotalLabel = document.querySelector("#groupCheckoutSubtotalLabel");
-const groupCheckoutSubtotal = document.querySelector("#groupCheckoutSubtotal");
 const groupCheckoutSplitCount = document.querySelector("#groupCheckoutSplitCount");
 const groupCheckoutDeliveryFee = document.querySelector("#groupCheckoutDeliveryFee");
-const groupCheckoutDeliveryShare = document.querySelector("#groupCheckoutDeliveryShare");
 const groupCheckoutMyTotal = document.querySelector("#groupCheckoutMyTotal");
-const groupCheckoutPaySummary = document.querySelector("#groupCheckoutPaySummary");
 const groupCheckoutSave = document.querySelector("#groupCheckoutSave");
 const groupCheckoutPayButtonTotal = document.querySelector("#groupCheckoutPayButtonTotal");
 const groupCheckoutPayButton = document.querySelector(".group-checkout-pay-button");
@@ -2372,28 +2369,26 @@ function renderGroupCheckout() {
   if (!groupCheckoutItems) return;
   const data = groupCheckoutData();
   const itemWord = data.ownItemCount === 1 ? "item" : "items";
+  const personWord = data.participantCount === 1 ? "person" : "people";
 
   if (groupCheckoutRestaurantName) groupCheckoutRestaurantName.textContent = currentGroupRestaurant || "Mori Cafe";
-  if (groupCheckoutDeliveryTo) groupCheckoutDeliveryTo.textContent = `Delivery to ${currentGroupDeliveryTo || "Select location"}`;
+  if (groupCheckoutDeliveryTo) groupCheckoutDeliveryTo.textContent = currentGroupDeliveryTo || "Select location";
   if (groupCheckoutDeliveryTime) groupCheckoutDeliveryTime.textContent = groupDeliveryTimeLabel();
-  if (groupCheckoutItemsTitle) groupCheckoutItemsTitle.textContent = `My items (${data.ownItemCount})`;
-  if (groupCheckoutSubtotalLabel) groupCheckoutSubtotalLabel.textContent = `Subtotal (${data.ownItemCount} ${itemWord})`;
-  if (groupCheckoutSubtotal) groupCheckoutSubtotal.textContent = money(data.ownSubtotal);
-  if (groupCheckoutSplitCount) groupCheckoutSplitCount.textContent = `(split between ${data.participantCount})`;
+  if (groupCheckoutItemsTitle) groupCheckoutItemsTitle.textContent = `${data.ownItemCount} ${itemWord}`;
+  if (groupCheckoutViewCount) groupCheckoutViewCount.textContent = data.ownItemCount;
+  if (groupCheckoutSplitCount) groupCheckoutSplitCount.textContent = `Split between ${data.participantCount} ${personWord}`;
   if (groupCheckoutDeliveryFee) groupCheckoutDeliveryFee.textContent = data.groupDelivery === 0 ? "Free" : money(data.groupDelivery);
-  if (groupCheckoutDeliveryShare) groupCheckoutDeliveryShare.textContent = `${money(data.ownDeliveryShare)} per person`;
   if (groupCheckoutMyTotal) groupCheckoutMyTotal.textContent = money(data.ownTotal);
-  if (groupCheckoutPaySummary) groupCheckoutPaySummary.textContent = money(data.ownTotal);
   if (groupCheckoutPayButtonTotal) groupCheckoutPayButtonTotal.textContent = money(data.ownTotal);
-  if (groupCheckoutSave) groupCheckoutSave.textContent = money(data.ownDeliverySaving);
+  if (groupCheckoutSave) groupCheckoutSave.textContent = `- ${money(data.ownDeliverySaving)}`;
 
   groupCheckoutItems.innerHTML = data.ownItems.length ? data.ownItems.map((item) => `
     <article class="group-checkout-item">
-      <img src="${item.image || groupCartItemImage(item)}" alt="" />
       <div>
         <h4>${item.name || "Item"}</h4>
+        <p>${money(item.price)} each</p>
       </div>
-      <p><strong>${money(item.price * item.qty)}</strong><span>x${item.qty}</span></p>
+      <div class="group-checkout-item-price"><span>x${item.qty}</span><strong>${money(item.price * item.qty)}</strong></div>
     </article>
   `).join("") : `<p class="group-checkout-empty">No items in your order yet</p>`;
 }

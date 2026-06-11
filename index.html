@@ -1157,82 +1157,71 @@
         <div class="group-checkout-scroll">
           <header class="group-checkout-header">
             <button class="group-checkout-back" type="button" aria-label="Back to group cart">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></svg>
             </button>
             <h1>Checkout</h1>
             <p>Review your order, delivery and total.</p>
           </header>
 
           <section class="group-checkout-restaurant-card">
-            <div class="group-checkout-bag">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z" /><path d="M9 8a3 3 0 0 1 6 0" /></svg>
-              <span>+</span>
-            </div>
+            <img class="group-checkout-restaurant-image" src="assets/mori.png" alt="" />
             <div>
               <h2 id="groupCheckoutRestaurantName">Mori Cafe</h2>
-              <p><span id="groupCheckoutDeliveryTo">Delivery</span><i></i><span id="groupCheckoutDeliveryTime">Today, 2:00 PM</span></p>
+              <p><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-5.1 7-11a7 7 0 0 0-14 0c0 5.9 7 11 7 11Z" /><circle cx="12" cy="10" r="2.4" /></svg><span id="groupCheckoutDeliveryTo">Ixora Apartment</span></p>
+              <p><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l4 2" /></svg><span id="groupCheckoutDeliveryTime">Today, 2:00 PM - 2:30 PM</span></p>
             </div>
             <button class="group-checkout-edit" type="button">Edit order</button>
           </section>
 
-          <section class="group-checkout-tabs">
-            <article class="group-checkout-tab is-active">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="7" r="4" /><path d="M4 21c1-5 4-7 8-7s7 2 8 7" /></svg>
-              <div>
-                <h3>My order &amp; bill</h3>
-                <p>See your items, delivery and total</p>
-              </div>
-            </article>
-          </section>
-
-          <section class="group-checkout-panel">
-            <h2>My order</h2>
-            <article class="group-checkout-items-card">
-              <h3 id="groupCheckoutItemsTitle">My items (0)</h3>
-              <div class="group-checkout-items" id="groupCheckoutItems"></div>
-              <p class="group-checkout-subtotal"><span id="groupCheckoutSubtotalLabel">Subtotal (0 items)</span><strong id="groupCheckoutSubtotal">RM0.00</strong></p>
-            </article>
+          <section class="group-checkout-order-card">
+            <div class="group-checkout-section-title">
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8" /><path d="M11 3v8" /><path d="M7 7h4" /><path d="M9 11v10" /><path d="M17 3v18" /><path d="M14 3v7a3 3 0 0 0 6 0V3" /></svg></span>
+              <h2>My Order</h2>
+              <button class="group-checkout-items-toggle" type="button"><strong id="groupCheckoutItemsTitle">0 items</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
+            </div>
+            <div class="group-checkout-items" id="groupCheckoutItems"></div>
+            <button class="group-checkout-view-items" type="button">View all items (<span id="groupCheckoutViewCount">0</span>) <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></button>
           </section>
 
           <section class="group-checkout-delivery-card">
-            <h2>Delivery <span id="groupCheckoutSplitCount">(split between 1)</span></h2>
-            <div>
-              <span class="group-checkout-scooter">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 16h7l2-6h3l2 6" /><circle cx="7" cy="17" r="2" /><circle cx="18" cy="17" r="2" /><path d="M5 13H3v-3h5" /></svg>
-              </span>
-              <strong>Delivery fee</strong>
-              <p><b id="groupCheckoutDeliveryFee">RM0.00</b><small id="groupCheckoutDeliveryShare">RM0.00 per person</small></p>
+            <div class="group-checkout-fee-row">
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7L6 8Z" /><path d="M9 8a3 3 0 0 1 6 0" /></svg></span>
+              <div>
+                <h2>Delivery Fee</h2>
+                <p id="groupCheckoutSplitCount">Split between 1 person</p>
+              </div>
+              <strong id="groupCheckoutDeliveryFee">RM0.00</strong>
+            </div>
+            <div class="group-checkout-fee-row">
+              <span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3.5 19c.8-4 3-6 6-6s5.2 2 6 6" /><circle cx="17" cy="9" r="2.4" /><path d="M14.5 14.2c2.7.3 4.6 1.9 5.2 4.8" /></svg></span>
+              <div>
+                <h2>Group Order Savings</h2>
+                <p>You saved</p>
+              </div>
+              <strong class="is-saving" id="groupCheckoutSave">- RM0.00</strong>
             </div>
           </section>
 
           <section class="group-checkout-total-card">
             <div>
-              <h2>My total</h2>
-              <p>Includes my items + my share of delivery</p>
+              <h2>Total To Pay</h2>
             </div>
             <strong id="groupCheckoutMyTotal">RM0.00</strong>
           </section>
 
           <section class="group-checkout-payment-card">
-            <h2>Payment method</h2>
+            <img src="assets/tng-cropped.png" alt="Touch 'n Go eWallet" />
             <div>
-              <img src="assets/tng.png" alt="TNG eWallet" />
-              <strong>TNG eWallet</strong>
-              <button type="button">Change</button>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+              <h2>Payment Method</h2>
+              <p>TNG eWallet</p>
             </div>
-          </section>
-
-          <section class="group-checkout-pay-summary">
-            <p><span>You pay</span><strong id="groupCheckoutPaySummary">RM0.00</strong></p>
-            <p><span>You save</span><strong id="groupCheckoutSave">RM0.00</strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg></p>
           </section>
         </div>
 
         <footer class="group-checkout-footer">
           <button class="group-checkout-pay-button" type="button">
-            <span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></svg>Pay with TNG eWallet</span>
-            <strong id="groupCheckoutPayButtonTotal">RM0.00</strong>
+            <span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /><path d="m13 6 6 6-6 6" /></svg></span>
+            <strong>Pay <em id="groupCheckoutPayButtonTotal">RM0.00</em></strong>
           </button>
           <p><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-5" /></svg>Secure &amp; encrypted payment</p>
         </footer>
