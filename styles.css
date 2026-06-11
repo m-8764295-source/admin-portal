@@ -12147,15 +12147,15 @@ img {
 .group-cart-total-copy p {
   position: absolute;
   left: 13.2%;
-  width: 29%;
+  width: 38%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-columns: max-content minmax(46px, 1fr);
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   padding: 0;
   color: #f8f8f5;
-  font-size: 12.2px;
+  font-size: 11.6px;
   line-height: 1;
   font-weight: 410;
   transform: translateY(-50%);
@@ -12170,16 +12170,27 @@ img {
 }
 
 .group-cart-total-participants {
-  top: 78.8%;
+  top: 80%;
   margin: 0 !important;
-  width: 26% !important;
-  font-size: 12.8px !important;
+  width: 34% !important;
+  font-size: 12.4px !important;
   font-weight: 430 !important;
 }
 
+.group-cart-total-copy p span {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  white-space: nowrap;
+}
+
 .group-cart-total-copy p b {
+  justify-self: end;
+  min-width: 50px;
+  text-align: right;
+  white-space: nowrap;
   color: #fff;
-  font-size: 12.2px;
+  font-size: 11.6px;
   font-weight: 480;
 }
 
