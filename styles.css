@@ -12016,12 +12016,13 @@ img {
 .group-cart-scroll {
   padding-top: 30px;
   padding-inline: 13px;
+  padding-bottom: calc(106px + env(safe-area-inset-bottom, 0px));
 }
 
 .group-cart-header {
   grid-template-columns: 50px minmax(0, 1fr);
   gap: 14px;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
 }
 
 .group-cart-back {
@@ -12106,7 +12107,7 @@ img {
 .group-cart-total-banner {
   min-height: 0;
   aspect-ratio: 1208 / 653;
-  margin: 11px 0 16px;
+  margin: 0 0 16px;
   border-radius: 18px;
 }
 
@@ -12305,6 +12306,33 @@ img {
   gap: 10px;
   padding: 0 10px 0 15px;
   border-radius: 15px;
+}
+
+.group-cart-footer {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  padding-bottom: 0;
+  pointer-events: none;
+}
+
+.group-cart-footer::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  right: -14px;
+  bottom: -12px;
+  height: 92px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 38%);
+  pointer-events: none;
+}
+
+.group-cart-footer .group-cart-checkout {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .group-cart-checkout small {
