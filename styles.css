@@ -12046,30 +12046,30 @@ img {
 }
 
 .group-cart-restaurant {
-  min-height: 132px;
-  grid-template-columns: minmax(124px, 38%) minmax(0, 1fr);
-  gap: 16px;
-  border-radius: 18px;
+  min-height: 116px;
+  grid-template-columns: minmax(108px, 34%) minmax(0, 1fr);
+  gap: 14px;
+  border-radius: 16px;
 }
 
 .group-cart-restaurant-image {
-  min-height: 132px;
+  min-height: 116px;
 }
 
 .group-cart-restaurant-copy {
-  padding: 15px 14px 15px 0;
+  padding: 12px 12px 12px 0;
 }
 
 .group-cart-restaurant h2 {
-  margin-bottom: 11px;
-  font-size: 21px;
+  margin-bottom: 9px;
+  font-size: 19px;
   font-weight: 700 !important;
 }
 
 .group-cart-order-pill {
-  margin-bottom: 13px;
-  padding: 7px 10px;
-  font-size: 11.8px !important;
+  margin-bottom: 10px;
+  padding: 6px 9px;
+  font-size: 11px !important;
 }
 
 .group-cart-order-pill svg {
@@ -12079,8 +12079,8 @@ img {
 
 .group-cart-meta {
   gap: 6px;
-  margin-bottom: 10px !important;
-  font-size: 11.8px !important;
+  margin-bottom: 8px !important;
+  font-size: 11px !important;
 }
 
 .group-cart-meta span {
@@ -12094,8 +12094,8 @@ img {
 
 .group-cart-quality {
   gap: 6px;
-  padding: 7px 9px;
-  font-size: 11.2px !important;
+  padding: 6px 8px;
+  font-size: 10.6px !important;
 }
 
 .group-cart-quality svg {
@@ -12105,7 +12105,7 @@ img {
 
 .group-cart-total-banner {
   min-height: 0;
-  aspect-ratio: 1443 / 594;
+  aspect-ratio: 1246 / 497;
   margin: 11px 0 16px;
   border-radius: 18px;
 }
@@ -12122,28 +12122,23 @@ img {
 }
 
 .group-cart-total-copy h2 {
-  position: absolute;
-  left: 5.8%;
-  top: 11.5%;
-  margin: 0;
-  font-size: 13.2px;
-  font-weight: 620;
+  display: none;
 }
 
 .group-cart-total-copy > strong {
   position: absolute;
-  left: 5.8%;
-  top: 19.5%;
+  left: 3.8%;
+  top: 14.8%;
   margin: 0;
-  font-size: 29px;
+  font-size: 35px;
   line-height: 1;
-  font-weight: 720;
+  font-weight: 760;
 }
 
 .group-cart-total-copy p {
   position: absolute;
-  left: 12%;
-  width: 29%;
+  left: 9.5%;
+  width: 30%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
@@ -12158,15 +12153,15 @@ img {
 }
 
 .group-cart-total-copy p:nth-of-type(1) {
-  top: 32.3%;
+  top: 46.7%;
 }
 
 .group-cart-total-copy p:nth-of-type(2) {
-  top: 54%;
+  top: 68.4%;
 }
 
 .group-cart-total-participants {
-  top: 77.3%;
+  top: 94.8%;
   margin: 0 !important;
   width: 26% !important;
   font-size: 12.8px !important;
