@@ -10662,17 +10662,20 @@ img {
 
 .group-checkout-header {
   position: relative;
-  min-height: 70px;
+  min-height: 62px;
   display: grid;
-  justify-items: center;
-  align-content: center;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  grid-template-areas:
+    "back title spacer"
+    ". subtitle .";
+  align-items: center;
+  row-gap: 8px;
   text-align: center;
 }
 
 .group-checkout-back {
-  position: absolute;
-  left: 0;
-  top: 2px;
+  position: static;
+  grid-area: back;
   width: 32px;
   height: 32px;
   display: grid;
@@ -10694,7 +10697,8 @@ img {
 }
 
 .group-checkout-header h1 {
-  margin: 0 0 8px;
+  grid-area: title;
+  margin: 0;
   color: #090909;
   font-size: 22px;
   line-height: 1;
@@ -10702,6 +10706,7 @@ img {
 }
 
 .group-checkout-header p {
+  grid-area: subtitle;
   margin: 0;
   color: #505266;
   font-size: 12px;
@@ -10721,24 +10726,24 @@ img {
 
 .group-checkout-restaurant-card {
   display: grid;
-  grid-template-columns: 62px minmax(0, 1fr) auto;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  min-height: 88px;
-  padding: 11px 12px;
+  gap: 12px;
+  min-height: 104px;
+  padding: 14px;
 }
 
 .group-checkout-restaurant-image {
-  width: 58px;
-  height: 58px;
-  border-radius: 10px;
+  width: 66px;
+  height: 66px;
+  border-radius: 11px;
   object-fit: cover;
 }
 
 .group-checkout-restaurant-card h2 {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   color: #090909;
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1;
   font-weight: 800;
 }
@@ -10746,10 +10751,10 @@ img {
 .group-checkout-restaurant-card p {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin: 0 0 7px;
+  gap: 8px;
+  margin: 0 0 8px;
   color: #55576d;
-  font-size: 11.8px;
+  font-size: 12.5px;
   line-height: 1.1;
   font-weight: 460;
 }
@@ -10759,9 +10764,9 @@ img {
 }
 
 .group-checkout-restaurant-card p svg {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 14px;
+  width: 15px;
+  height: 15px;
+  flex: 0 0 15px;
   fill: none;
   stroke: #f6a400;
   stroke-width: 2.4;
@@ -10770,13 +10775,13 @@ img {
 }
 
 .group-checkout-edit {
-  min-width: 72px;
-  height: 34px;
+  min-width: 82px;
+  height: 38px;
   border: 1px solid rgba(246, 164, 0, 0.55);
   border-radius: 12px;
   background: #fff;
   color: #f6a400;
-  font-size: 11.8px;
+  font-size: 12.5px;
   font-weight: 700;
 }
 
@@ -11118,19 +11123,19 @@ img {
   }
 
   .group-checkout-restaurant-card {
-    grid-template-columns: 56px minmax(0, 1fr);
+    grid-template-columns: 64px minmax(0, 1fr);
   }
 
   .group-checkout-restaurant-image {
-    width: 52px;
-    height: 52px;
+    width: 60px;
+    height: 60px;
   }
 
   .group-checkout-edit {
     grid-column: 2;
     justify-self: start;
-    height: 32px;
-    min-width: 70px;
+    height: 34px;
+    min-width: 76px;
   }
 
   .group-checkout-section-title,
