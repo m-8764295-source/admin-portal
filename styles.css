@@ -3546,6 +3546,43 @@ svg {
   stroke-width: 1.7;
 }
 
+.join-icon {
+  position: relative;
+  width: 24px;
+  height: 22px;
+  display: block;
+  color: currentColor;
+  background:
+    linear-gradient(currentColor, currentColor) 18px 6px / 7px 1.8px no-repeat,
+    linear-gradient(currentColor, currentColor) 20.6px 3.4px / 1.8px 7px no-repeat;
+}
+
+.join-icon::before,
+.join-icon::after {
+  content: "";
+  position: absolute;
+  border: 1.8px solid currentColor;
+  border-radius: 999px 999px 8px 8px;
+}
+
+.join-icon::before {
+  left: 2px;
+  top: 2px;
+  width: 11px;
+  height: 16px;
+  box-shadow:
+    0 -8px 0 -3.4px currentColor;
+}
+
+.join-icon::after {
+  left: 10px;
+  top: 5px;
+  width: 10px;
+  height: 13px;
+  background: #fff;
+  box-shadow: 0 -7px 0 -3px currentColor;
+}
+
 .nav-item.active {
   color: #e5a000;
 }
