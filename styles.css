@@ -3548,39 +3548,77 @@ svg {
 
 .join-icon {
   position: relative;
-  width: 24px;
-  height: 22px;
+  width: 28px;
+  height: 24px;
   display: block;
   color: currentColor;
-  background:
-    linear-gradient(currentColor, currentColor) 18px 6px / 7px 1.8px no-repeat,
-    linear-gradient(currentColor, currentColor) 20.6px 3.4px / 1.8px 7px no-repeat;
 }
 
-.join-icon::before,
-.join-icon::after {
+.join-icon span {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+}
+
+.join-person-main {
+  left: 1px;
+  top: 1px;
+  width: 16px;
+  height: 21px;
+  border-radius: 50% 50% 8px 8px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(45deg);
+}
+
+.join-person-main::before,
+.join-person-side::before {
   content: "";
   position: absolute;
-  border: 1.8px solid currentColor;
-  border-radius: 999px 999px 8px 8px;
-}
-
-.join-icon::before {
-  left: 2px;
-  top: 2px;
-  width: 11px;
-  height: 16px;
-  box-shadow:
-    0 -8px 0 -3.4px currentColor;
-}
-
-.join-icon::after {
-  left: 10px;
-  top: 5px;
-  width: 10px;
-  height: 13px;
+  display: block;
+  border: 2px solid currentColor;
+  border-radius: 50%;
   background: #fff;
-  box-shadow: 0 -7px 0 -3px currentColor;
+}
+
+.join-person-main::before {
+  left: -1px;
+  top: -1px;
+  width: 9px;
+  height: 9px;
+}
+
+.join-person-side {
+  left: 13px;
+  top: 5px;
+  width: 11px;
+  height: 14px;
+  border-radius: 50% 50% 7px 7px;
+  border: 2px solid currentColor;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
+  transform: rotate(-38deg);
+}
+
+.join-person-side::before {
+  right: -2px;
+  top: -3px;
+  width: 7px;
+  height: 7px;
+}
+
+.join-plus {
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  background:
+    linear-gradient(currentColor, currentColor) center / 7px 2px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 2px 7px no-repeat,
+    #fff;
 }
 
 .nav-item.active {
