@@ -10662,14 +10662,14 @@ img {
 
 .group-checkout-header {
   position: relative;
-  min-height: 62px;
+  min-height: 52px;
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) 32px;
   grid-template-areas:
     "back title spacer"
     ". subtitle .";
   align-items: center;
-  row-gap: 8px;
+  row-gap: 3px;
   text-align: center;
 }
 
@@ -10707,7 +10707,7 @@ img {
 
 .group-checkout-header p {
   grid-area: subtitle;
-  margin: 0;
+  margin: -2px 0 0;
   color: #505266;
   font-size: 12px;
   line-height: 1.25;
