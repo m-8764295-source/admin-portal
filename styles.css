@@ -3548,8 +3548,8 @@ svg {
 
 .join-icon {
   position: relative;
-  width: 28px;
-  height: 24px;
+  width: 23px;
+  height: 22px;
   display: block;
   color: currentColor;
 }
@@ -3561,63 +3561,79 @@ svg {
 }
 
 .join-person-main {
-  left: 1px;
-  top: 1px;
-  width: 16px;
-  height: 21px;
-  border-radius: 50% 50% 8px 8px;
-  border: 2px solid currentColor;
-  border-right-color: transparent;
-  border-bottom-color: transparent;
-  transform: rotate(45deg);
+  left: 0;
+  top: 0;
+  width: 15px;
+  height: 20px;
 }
 
 .join-person-main::before,
-.join-person-side::before {
+.join-person-main::after,
+.join-person-side::before,
+.join-person-side::after {
   content: "";
   position: absolute;
   display: block;
-  border: 2px solid currentColor;
-  border-radius: 50%;
   background: #fff;
 }
 
 .join-person-main::before {
-  left: -1px;
-  top: -1px;
-  width: 9px;
-  height: 9px;
+  left: 5px;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  border: 1.8px solid currentColor;
+  border-radius: 50%;
+}
+
+.join-person-main::after {
+  left: 0;
+  top: 9px;
+  width: 17px;
+  height: 13px;
+  border: 1.8px solid currentColor;
+  border-radius: 15px 15px 0 0;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .join-person-side {
-  left: 13px;
-  top: 5px;
-  width: 11px;
+  left: 12px;
+  top: 4px;
+  width: 10px;
   height: 14px;
-  border-radius: 50% 50% 7px 7px;
-  border: 2px solid currentColor;
-  border-left-color: transparent;
-  border-bottom-color: transparent;
-  transform: rotate(-38deg);
 }
 
 .join-person-side::before {
-  right: -2px;
-  top: -3px;
-  width: 7px;
-  height: 7px;
+  left: 2px;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  border: 1.7px solid currentColor;
+  border-radius: 50%;
+}
+
+.join-person-side::after {
+  left: 0;
+  top: 8px;
+  width: 12px;
+  height: 8px;
+  border: 1.7px solid currentColor;
+  border-radius: 11px 11px 0 0;
+  border-left-color: transparent;
+  border-bottom-color: transparent;
 }
 
 .join-plus {
   right: 0;
-  bottom: 0;
-  width: 12px;
-  height: 12px;
-  border: 2px solid currentColor;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border: 1.7px solid currentColor;
   border-radius: 50%;
   background:
-    linear-gradient(currentColor, currentColor) center / 7px 2px no-repeat,
-    linear-gradient(currentColor, currentColor) center / 2px 7px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 5.5px 1.6px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 1.6px 5.5px no-repeat,
     #fff;
 }
 
